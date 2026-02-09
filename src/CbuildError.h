@@ -15,7 +15,9 @@ enum ErrorType {
 };
 
 enum MachineCode {
-
+	MISSING_SEPERATOR,
+	MISSING_TARGET_PATTERN,
+	NO_TARGETS,
 };
 
 class CbuildError : public std::exception {
