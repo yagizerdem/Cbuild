@@ -16,4 +16,12 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
+add_executable(
+        lineTest
+        line.cc
+)
+
+target_link_libraries(lineTest PRIVATE core GTest::gtest GTest::gtest_main)
+
 include(GoogleTest)
+gtest_discover_tests(lineTest)

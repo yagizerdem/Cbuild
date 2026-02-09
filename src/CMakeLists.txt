@@ -3,10 +3,19 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/*.h
 )
 
-add_executable(Cbuild
-        ${SOURCES}
+#remove main.cpp
+list(REMOVE_ITEM SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 )
 
+
+add_library(core STATIC ${SOURCES})
+
+add_executable(Cbuild
+        main.cpp
+)
+
+target_link_libraries(Cbuild PUBLIC core)
 
 add_subdirectory(backward)
 target_link_libraries(Cbuild PUBLIC Backward::Interface)
