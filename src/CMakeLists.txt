@@ -13,6 +13,10 @@ add_library(core STATIC ${SOURCES})
 
 add_executable(Cbuild
         main.cpp
+        scanner.h
+        env.h
+        scanner.cpp
+        CbuildError.h
 )
 
 target_link_libraries(Cbuild PUBLIC core)
