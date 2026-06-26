@@ -7,7 +7,6 @@ public class Main {
     public static void main(String[] args) {
         String program =
 """
-thing_wrong := *.o # Don't do this! '*' will not get expanded
 
 """;
 

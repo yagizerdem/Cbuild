@@ -16,30 +16,31 @@ conditional
     ;
 
 conditional_in_recipe
-    : if_eq_kw ws? condition  recipes_opt ENDIF comment_opt
-    | if_eq_kw ws? condition  recipes_opt ELSE recipes_opt ENDIF comment_opt
-    | if_eq_kw ws? condition  recipes_opt ELSE conditional_in_recipe
-    | if_def_kw ws? identifier recipes_opt ENDIF comment_opt
-    | if_def_kw ws? identifier recipes_opt ELSE recipes_opt ENDIF comment_opt
-    | if_def_kw ws? identifier recipes_opt ELSE conditional_in_recipe
+    : if_eq_kw ws? condition NL recipes_opt  ENDIF comment_opt
+    | if_eq_kw ws? condition  NL recipes_opt  ELSE NL recipes_opt  ENDIF comment_opt
+    | if_eq_kw ws? condition  NL recipes_opt  ELSE NL conditional_in_recipe
+    | if_def_kw ws? identifier NL recipes_opt  ENDIF comment_opt
+    | if_def_kw ws? identifier NL recipes_opt  ELSE NL recipes_opt  ENDIF comment_opt
+    | if_def_kw ws? identifier NL recipes_opt  ELSE NL conditional_in_recipe
     ;
 
 statements_opt
     : comment_opt br statements?
     ;
 
-statement: COMMENT
-    | assignment br
-    | function br
-    | rule
-    | conditional
-    | define
-    | include
-    | export br
+statement: ws? COMMENT
+    | ws? assignment br
+    | ws? function br
+    | ws? rule
+    | ws? conditional
+    | ws? define
+    | ws? include
+    | ws? export br
+    | ws? vpath
     ;
 
 define
-    : specifiers? DEFINE pattern ASSIGN_OP? definition ENDEF br
+    : specifiers? DEFINE ws pattern ws? ASSIGN_OP? ws? definition ENDEF br
     ;
 
 definition
@@ -48,7 +49,7 @@ definition
     ;
 
 include
-    : INCLUDE expressions br
+    : include_kw ws? expressions ws? br
     ;
 
 export
@@ -57,12 +58,16 @@ export
     | assignment_prefix (ws targets)?
     ;
 
+vpath
+    : VPATH ws expressions br
+    ;
+
 assignment
     : pattern ws? ASSIGN_OP ws? exprs_in_assign? ws? comment_opt
     | assignment_prefix ws? ASSIGN_OP ws? exprs_in_assign? ws? comment_opt
     ;
 
-assignment_prefix: specifiers pattern;
+assignment_prefix: specifiers ws pattern;
 
 
 if_eq_kw
@@ -73,6 +78,12 @@ if_eq_kw
 if_def_kw
     : IFDEF
     | IFNDEF
+    ;
+
+include_kw
+    : INCLUDE
+    | DASH_INCLUDE
+    | SINCLUDE
     ;
 
 condition
@@ -154,7 +165,13 @@ function
     | DOLLAR_LPAREN function_name COMMA arguments RPAREN
     | DOLLAR_LPAREN function_name COLON expressions RPAREN
     | DOLLAR_LPAREN function_name ASSIGN_OP expressions RPAREN
-    ;
+
+	| DOLLAR_L_CURLY_BRACE function_name R_CURLY_BRACE
+	| DOLLAR_L_CURLY_BRACE function_name ws arguments R_CURLY_BRACE
+	| DOLLAR_L_CURLY_BRACE function_name COMMA arguments R_CURLY_BRACE
+	| DOLLAR_L_CURLY_BRACE function_name COLON expressions R_CURLY_BRACE
+	| DOLLAR_L_CURLY_BRACE function_name ASSIGN_OP expressions R_CURLY_BRACE
+	;
 
 function_name
     : function_name_atom+
@@ -166,7 +183,7 @@ function_name_atom
     ;
 
 arguments
-    : argument? (COMMA argument? )*
+    : ws? argument? (ws? COMMA ws? argument?)* ws?
     ;
 
 argument
@@ -174,8 +191,13 @@ argument
     ;
 
 rule
-    : targets ws? colon ws? prerequisites ws? NL recipes?
+    : static_pattern_rule
+    | targets ws? colon ws? prerequisites ws? NL recipes?
     | targets ws? colon ws? assignment ws? NL
+    ;
+
+static_pattern_rule
+    : targets ws? colon ws? pattern ws? colon ws? prerequisites NL recipes?
     ;
 
 target
@@ -199,13 +221,15 @@ recipes
     ;
 
 recipes_opt
-    : comment_opt recipes? NL
+    : comment_opt recipes?
     ;
 
 recipe
     : LEADING_TAB ws? exprs_in_recipe NL
     | LEADING_TAB ws? COMMENT NL
-    | NL conditional_in_recipe
+    | ws? COMMENT NL
+    | conditional_in_recipe
+    | NL
     ;
 
 specifiers
@@ -238,6 +262,7 @@ char: CHARS
     | SLIT
     | ASSIGN_OP
     | COLON
+    | DOUBLE_DOLLAR
     ;
 
 char_nested: char | ',' ;
@@ -269,7 +294,7 @@ char_in_def
     | UNDEFINE
     ;
 
-char_in_recipe: char_in_assign | COMMENT;
+char_in_recipe: char_in_assign  | DOUBLE_DOLLAR |COMMENT;
 
 text
     : char+
@@ -301,6 +326,7 @@ keywords
     | DEFINE
     | ENDEF
     | UNDEFINE
+    | VPATH
     ;
 
 colon
@@ -325,21 +351,28 @@ ASSIGN_OP
     | '='
     ;
 
-DOLLAR_LPAREN
-    : '$('
-    ;
+DOLLAR_LPAREN: '$(';
+DOLLAR_L_CURLY_BRACE: '${';
 
 VAR
     : '$' [a-zA-Z0-9_@%<?^+*]
+    ;
+
+DOUBLE_DOLLAR
+    : '$$'
     ;
 
 DOUBLE_COLON : '::';
 COLON        : ':';
 LPAREN : '(';
 RPAREN : ')';
+L_CURLY_BRACE: '{';
+R_CURLY_BRACE: '}';
 COMMA  : ',';
 
 INCLUDE  : 'include';
+DASH_INCLUDE  : '-include';
+SINCLUDE      : 'sinclude';
 ENDEF    : 'endef';
 IFDEF  : 'ifdef';
 IFNDEF : 'ifndef';
@@ -352,6 +385,7 @@ EXPORT   : 'export';
 UNEXPORT : 'unexport';
 UNDEFINE : 'undefine';
 DEFINE : 'define';
+VPATH : 'vpath';
 
 SLIT
     : '"'  ( '\\' . | ~["\\\r\n] )* '"'
@@ -359,7 +393,7 @@ SLIT
     ;
 
 CHARS
-    : ~[ \t\r\n$():,=#]+
+    : ~[ \t\r\n$(){}:,=#]+
     ;
 
 NL : '\r'? '\n' ;
