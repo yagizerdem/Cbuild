@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 public class ParserTest {
 
     @Test
-    public void SimpleHelloWorl() {
+    public void SimpleHelloWorld() {
         String buildFile =
 """
 hello:
