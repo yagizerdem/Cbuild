@@ -1,20 +1,16 @@
 package io.Cbuild;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 
 public class Main {
     public static void main(String[] args) {
-        String program =
-"""
 
-""";
+        Common.Chunk chunk = new Common.Chunk();
 
-        CharStream charStream = CharStreams.fromString(program);
-        cbuildLexer lexer = new cbuildLexer(charStream);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        cbuildParser parser = new cbuildParser(tokens);
-        var t =  parser.cbuildfile();
+        int idx = chunk.addConstant(new Common.Value());
+        chunk.writeChunk(Common.OpCodeType.OP_CONSTANT.opcode(), 10);
+        chunk.writeChunk((byte) idx, 10);
+        chunk.writeChunk(Common.OpCodeType.OP_RETURN.opcode(), 10);
+
+        Common.disassembleChunk(chunk, "===test===");
 
     }
 }
