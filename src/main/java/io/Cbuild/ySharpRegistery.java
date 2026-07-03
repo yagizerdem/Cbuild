@@ -1,7 +1,7 @@
 package io.Cbuild;
 
-import io.Cbuild.ySharpNatives.fs.fsModule;
-import io.Cbuild.ySharpNatives.fs.processModule;
+import io.Cbuild.ySharpNatives.fsModule;
+import io.Cbuild.ySharpNatives.processModule;
 import ysharp.treewalk.evaluator.Interpreter;
 
 

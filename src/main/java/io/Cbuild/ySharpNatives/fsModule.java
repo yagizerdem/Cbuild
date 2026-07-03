@@ -1,4 +1,4 @@
-package io.Cbuild.ySharpNatives.fs;
+package io.Cbuild.ySharpNatives;
 
 import ysharp.treewalk.YsharpException;
 import ysharp.treewalk.evaluator.*;
