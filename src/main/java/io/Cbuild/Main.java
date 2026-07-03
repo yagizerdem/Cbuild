@@ -1,16 +1,41 @@
 package io.Cbuild;
 
+import ysharp.treewalk.evaluator.Interpreter;
+
 public class Main {
     public static void main(String[] args) {
 
-        Common.Chunk chunk = new Common.Chunk();
+        Interpreter ySharpInterpreter = new Interpreter();
+        ySharpInterpreter.cwd = System.getProperty("user.dir");
+        try {
+            ySharpRegistery.register(ySharpInterpreter);
+        }catch (Exception ex) {
+            System.err.println(ex.getMessage());
+            System.exit(1);
+        }
 
-        int idx = chunk.addConstant(new Common.Value());
-        chunk.writeChunk(Common.OpCodeType.OP_CONSTANT.opcode(), 10);
-        chunk.writeChunk((byte) idx, 10);
-        chunk.writeChunk(Common.OpCodeType.OP_RETURN.opcode(), 10);
+        System.out.println(ySharpInterpreter.cwd);
 
-        Common.disassembleChunk(chunk, "===test===");
+        String program =
+                "println fs.exists(\"C:\\\\Users\\\\yagiz\\\\Desktop\\\\staj\\\\test.js\");";
+
+
+        ySharpExecutor.exec(ySharpInterpreter, program);
+
+
+
+//        Common.Chunk chunk = new Common.Chunk();
+//
+//        int idx = chunk.addConstant(new Common.Value());
+//        chunk.writeChunk(Common.OpCodeType.OP_CONSTANT.opcode(), 10);
+//        chunk.writeChunk((byte) idx, 10);
+//        chunk.writeChunk(Common.OpCodeType.OP_RETURN.opcode(), 10);
+//
+//        Common.disassembleChunk(chunk, "===test===");
+
+
+
+
 
     }
 }

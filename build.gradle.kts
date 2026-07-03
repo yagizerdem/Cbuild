@@ -23,6 +23,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     antlr("org.antlr:antlr4:4.13.2")
     implementation("org.antlr:antlr4-runtime:4.13.2")
+    implementation(files("lib/ysv0.0.7.jar"))
 }
 
 tasks.test {
