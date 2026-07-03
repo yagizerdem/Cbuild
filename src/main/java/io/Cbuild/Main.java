@@ -15,7 +15,7 @@ public class Main {
         }
 
         String program =
-                "print process.arch();";
+                "print math.min(1, 2);";
 
 
         ySharpExecutor.exec(ySharpInterpreter, program);

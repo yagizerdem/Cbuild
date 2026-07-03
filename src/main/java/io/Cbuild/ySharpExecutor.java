@@ -45,9 +45,6 @@ public class ySharpExecutor {
                 return;
             }
 
-
-
-
             interpreter.interpret(program.program);
             if(interpreter.hadErrors()) {
                 System.err.println(interpreter.errors);
