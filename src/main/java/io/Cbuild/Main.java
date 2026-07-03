@@ -14,10 +14,8 @@ public class Main {
             System.exit(1);
         }
 
-        System.out.println(ySharpInterpreter.cwd);
-
         String program =
-                "println fs.exists(\"C:\\\\Users\\\\yagiz\\\\Desktop\\\\staj\\\\test.js\");";
+                "print process.arch();";
 
 
         ySharpExecutor.exec(ySharpInterpreter, program);

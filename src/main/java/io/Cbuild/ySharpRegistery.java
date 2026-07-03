@@ -1,6 +1,7 @@
 package io.Cbuild;
 
 import io.Cbuild.ySharpNatives.fs.fsModule;
+import io.Cbuild.ySharpNatives.fs.processModule;
 import ysharp.treewalk.evaluator.Interpreter;
 
 
@@ -10,5 +11,6 @@ public class ySharpRegistery {
 
         // fs module
         fsModule.Register(interpreter);
+        processModule.Register(interpreter);
     }
 }

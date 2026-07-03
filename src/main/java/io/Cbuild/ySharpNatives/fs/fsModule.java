@@ -2,9 +2,11 @@ package io.Cbuild.ySharpNatives.fs;
 
 import ysharp.treewalk.YsharpException;
 import ysharp.treewalk.evaluator.*;
+import ysharp.treewalk.evaluator.Native.Collections.Array.yArray;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.io.IOException;
 import java.nio.file.StandardCopyOption;
@@ -286,7 +288,7 @@ public class fsModule {
                         .map(path -> new Variable.Variant(path.getFileName().toString()))
                         .toList();
 
-                return new Variable.Variant(files);
+                return new Variable.Variant(new yArray.yArrayInstance(new ArrayList<Variable.Variant>(files)));
             } catch (IOException e) {
                 throw new YsharpException(YsharpException.YsharpErrorType.PROCESS, -1,
                         "Cannot list directory '" + pathValue + "'.");
@@ -307,7 +309,8 @@ public class fsModule {
             String pathValue = requireString(arguments.getFirst(), getFnName(), 1);
 
             try {
-                return new Variable.Variant(Files.getLastModifiedTime(Path.of(pathValue)).toMillis());
+                String time = Files.getLastModifiedTime(Path.of(pathValue)).toString();
+                return new Variable.Variant(new yString.yStringInstance(time));
             } catch (IOException e) {
                 throw new YsharpException(YsharpException.YsharpErrorType.PROCESS, -1,
                         "Cannot get last modified time of '" + pathValue + "'.");
@@ -328,7 +331,7 @@ public class fsModule {
             String pathValue = requireString(arguments.getFirst(), getFnName(), 1);
 
             try {
-                return new Variable.Variant(Files.size(Path.of(pathValue)));
+                return new Variable.Variant((double) Files.size(Path.of(pathValue)));
             } catch (IOException e) {
                 throw new YsharpException(YsharpException.YsharpErrorType.PROCESS, -1,
                         "Cannot get size of '" + pathValue + "'.");
@@ -349,7 +352,7 @@ public class fsModule {
             String pathValue = requireString(arguments.getFirst(), getFnName(), 1);
 
             try {
-                return new Variable.Variant(Path.of(pathValue).toRealPath().toString());
+                return new Variable.Variant(new yString.yStringInstance(Path.of(pathValue).toRealPath().toString()));
             } catch (IOException e) {
                 throw new YsharpException(YsharpException.YsharpErrorType.PROCESS, -1,
                         "Cannot resolve real path of '" + pathValue + "'.");
@@ -370,7 +373,7 @@ public class fsModule {
             String pathValue = requireString(arguments.getFirst(), getFnName(), 1);
 
             Path parent = Path.of(pathValue).getParent();
-            return new Variable.Variant(parent == null ? "" : parent.toString());
+            return new Variable.Variant(new yString.yStringInstance(parent == null ? "" : parent.toString()));
         }
 
         @Override public String getFnName() { return "parent"; }
@@ -387,7 +390,7 @@ public class fsModule {
             String pathValue = requireString(arguments.getFirst(), getFnName(), 1);
 
             Path fileName = Path.of(pathValue).getFileName();
-            return new Variable.Variant(fileName == null ? "" : fileName.toString());
+            return new Variable.Variant(new yString.yStringInstance(fileName == null ? "" : fileName.toString()));
         }
 
         @Override public String getFnName() { return "basename"; }
@@ -415,7 +418,7 @@ public class fsModule {
                 return new Variable.Variant("");
             }
 
-            return new Variable.Variant(fileName.substring(dotIndex));
+            return new Variable.Variant(new yString.yStringInstance(fileName.substring(dotIndex)));
         }
 
         @Override public String getFnName() { return "extname"; }
