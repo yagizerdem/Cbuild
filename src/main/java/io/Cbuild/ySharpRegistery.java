@@ -3,6 +3,7 @@ package io.Cbuild;
 import io.Cbuild.ySharpNatives.fsModule;
 import io.Cbuild.ySharpNatives.mathModule;
 import io.Cbuild.ySharpNatives.processModule;
+import io.Cbuild.ySharpNatives.randomModule;
 import ysharp.treewalk.evaluator.Interpreter;
 
 
@@ -14,5 +15,6 @@ public class ySharpRegistery {
         fsModule.Register(interpreter);
         processModule.Register(interpreter);
         mathModule.Register(interpreter);
+        randomModule.Register(interpreter);
     }
 }

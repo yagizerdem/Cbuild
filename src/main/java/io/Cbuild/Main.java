@@ -15,7 +15,7 @@ public class Main {
         }
 
         String program =
-                "print math.min(1, 2);";
+                "print random.int(10, 20);";
 
 
         ySharpExecutor.exec(ySharpInterpreter, program);
