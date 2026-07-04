@@ -5,32 +5,41 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import ysharp.treewalk.evaluator.Interpreter;
 
+import java.util.List;
+
 public class Main {
     public static void main(String[] args) {
 
-        Interpreter ySharpInterpreter = new Interpreter();
-        ySharpInterpreter.cwd = System.getProperty("user.dir");
+//        Interpreter ySharpInterpreter = new Interpreter();
+//        ySharpInterpreter.cwd = System.getProperty("user.dir");
+//        try {
+//            ySharpRegistery.register(ySharpInterpreter);
+//        }catch (Exception ex) {
+//            System.err.println(ex.getMessage());
+//            System.exit(1);
+//        }
+
         try {
-            ySharpRegistery.register(ySharpInterpreter);
+            String cBuildProgram = """
+res = $(subst ee, EE, $(subst ee, EE, " yagiz erdem ") on the       street)
+
+""";
+
+            CharStream charStream = CharStreams.fromString(cBuildProgram);
+            cbuildLexer lexer = new cbuildLexer(charStream);
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
+            cbuildParser parser = new cbuildParser(tokens);
+            parser.removeErrorListeners();
+            parser.addErrorListener(ThrowingErrorListener.INSTANCE);
+            cbuildParser.CbuildfileContext context = parser.cbuildfile();
+
+            cBuildCompiler cBuildCompiler = new cBuildCompiler();
+            List<cBuildIR.IR> ir = cBuildCompiler.compile(context);
+            int a = 10;
+
         }catch (Exception ex) {
-            System.err.println(ex.getMessage());
-            System.exit(1);
+            System.out.println(ex.getMessage());
         }
-
-        String cBuildProgram = """
-a = 10
-                """;
-
-        CharStream charStream = CharStreams.fromString(cBuildProgram);
-        cbuildLexer lexer = new cbuildLexer(charStream);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        cbuildParser parser = new cbuildParser(tokens);
-        parser.removeErrorListeners();
-        parser.addErrorListener(ThrowingErrorListener.INSTANCE);
-        cbuildParser.CbuildfileContext context = parser.cbuildfile();
-
-        cBuildCompiler cBuildCompiler = new cBuildCompiler();
-        context.accept(cBuildCompiler);
 
 
     }

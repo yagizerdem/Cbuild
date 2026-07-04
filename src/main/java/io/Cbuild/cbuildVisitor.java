@@ -70,6 +70,12 @@ public interface cbuildVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitExport(cbuildParser.ExportContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link cbuildParser#vpath}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitVpath(cbuildParser.VpathContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link cbuildParser#assignment}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -93,6 +99,12 @@ public interface cbuildVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitIf_def_kw(cbuildParser.If_def_kwContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link cbuildParser#include_kw}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInclude_kw(cbuildParser.Include_kwContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link cbuildParser#condition}.
 	 * @param ctx the parse tree
@@ -225,6 +237,12 @@ public interface cbuildVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitRule(cbuildParser.RuleContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link cbuildParser#static_pattern_rule}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStatic_pattern_rule(cbuildParser.Static_pattern_ruleContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link cbuildParser#target}.
 	 * @param ctx the parse tree

@@ -136,6 +136,18 @@ public class cbuildBaseListener implements cbuildListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterVpath(cbuildParser.VpathContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitVpath(cbuildParser.VpathContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterAssignment(cbuildParser.AssignmentContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -179,6 +191,18 @@ public class cbuildBaseListener implements cbuildListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitIf_def_kw(cbuildParser.If_def_kwContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterInclude_kw(cbuildParser.Include_kwContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitInclude_kw(cbuildParser.Include_kwContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -443,6 +467,18 @@ public class cbuildBaseListener implements cbuildListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitRule(cbuildParser.RuleContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterStatic_pattern_rule(cbuildParser.Static_pattern_ruleContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitStatic_pattern_rule(cbuildParser.Static_pattern_ruleContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

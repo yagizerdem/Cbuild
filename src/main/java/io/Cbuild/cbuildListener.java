@@ -107,6 +107,16 @@ public interface cbuildListener extends ParseTreeListener {
 	 */
 	void exitExport(cbuildParser.ExportContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link cbuildParser#vpath}.
+	 * @param ctx the parse tree
+	 */
+	void enterVpath(cbuildParser.VpathContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link cbuildParser#vpath}.
+	 * @param ctx the parse tree
+	 */
+	void exitVpath(cbuildParser.VpathContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link cbuildParser#assignment}.
 	 * @param ctx the parse tree
 	 */
@@ -146,6 +156,16 @@ public interface cbuildListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitIf_def_kw(cbuildParser.If_def_kwContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link cbuildParser#include_kw}.
+	 * @param ctx the parse tree
+	 */
+	void enterInclude_kw(cbuildParser.Include_kwContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link cbuildParser#include_kw}.
+	 * @param ctx the parse tree
+	 */
+	void exitInclude_kw(cbuildParser.Include_kwContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link cbuildParser#condition}.
 	 * @param ctx the parse tree
@@ -366,6 +386,16 @@ public interface cbuildListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitRule(cbuildParser.RuleContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link cbuildParser#static_pattern_rule}.
+	 * @param ctx the parse tree
+	 */
+	void enterStatic_pattern_rule(cbuildParser.Static_pattern_ruleContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link cbuildParser#static_pattern_rule}.
+	 * @param ctx the parse tree
+	 */
+	void exitStatic_pattern_rule(cbuildParser.Static_pattern_ruleContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link cbuildParser#target}.
 	 * @param ctx the parse tree
