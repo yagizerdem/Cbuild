@@ -9,6 +9,8 @@ import ysharp.treewalk.lexer.Lexer;
 import ysharp.treewalk.lexer.Preprocess;
 
 import ysharp.treewalk.parser.Parser;
+import ysharp.treewalk.parser.Stmt;
+
 import java.util.List;
 
 public class ySharpExecutor {
@@ -36,6 +38,9 @@ public class ySharpExecutor {
                 System.err.println(parser.errors);
                 return;
             }
+
+            // check valid subset of  ysharp is used
+            ySharpSemanticAnalysis.restrictFeatures(program);
 
             Resolver resolver = new Resolver(interpreter);
             resolver.resolve(program.program);

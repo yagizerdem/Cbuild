@@ -15,7 +15,7 @@ public class Main {
         }
 
         String program =
-                "print random.int(10, 20);";
+                "var a = 10; println a; ";
 
 
         ySharpExecutor.exec(ySharpInterpreter, program);
