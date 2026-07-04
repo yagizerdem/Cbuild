@@ -1,5 +1,8 @@
 package io.Cbuild;
 
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 import ysharp.treewalk.evaluator.Interpreter;
 
 public class Main {
@@ -14,25 +17,20 @@ public class Main {
             System.exit(1);
         }
 
-        String program =
-                "var a = 10; println a; ";
+        String cBuildProgram = """
+a = 10
+                """;
 
+        CharStream charStream = CharStreams.fromString(cBuildProgram);
+        cbuildLexer lexer = new cbuildLexer(charStream);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        cbuildParser parser = new cbuildParser(tokens);
+        parser.removeErrorListeners();
+        parser.addErrorListener(ThrowingErrorListener.INSTANCE);
+        cbuildParser.CbuildfileContext context = parser.cbuildfile();
 
-        ySharpExecutor.exec(ySharpInterpreter, program);
-
-
-
-//        Common.Chunk chunk = new Common.Chunk();
-//
-//        int idx = chunk.addConstant(new Common.Value());
-//        chunk.writeChunk(Common.OpCodeType.OP_CONSTANT.opcode(), 10);
-//        chunk.writeChunk((byte) idx, 10);
-//        chunk.writeChunk(Common.OpCodeType.OP_RETURN.opcode(), 10);
-//
-//        Common.disassembleChunk(chunk, "===test===");
-
-
-
+        cBuildCompiler cBuildCompiler = new cBuildCompiler();
+        context.accept(cBuildCompiler);
 
 
     }
