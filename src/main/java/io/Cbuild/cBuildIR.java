@@ -1,5 +1,7 @@
 package io.Cbuild;
 
+import jdk.jshell.spi.ExecutionControl;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +37,12 @@ public class cBuildIR {
 
     public static class ValueIR implements IR {
         public final List<ValuePart> parts = new ArrayList<>();
+
+        public ValueIR() {}
+
+        public ValueIR(List<ValuePart> parts) {
+            this.parts.addAll(parts);
+        }
     }
 
     public static class FunctionIR implements IR {
@@ -47,7 +55,7 @@ public class cBuildIR {
     }
 
 
-    public enum AssignmentType {
+    public static enum AssignmentType {
         RECURSIVE,          // =
         SIMPLE,             // :=
         POSIX_SIMPLE,       // ::=
@@ -57,9 +65,73 @@ public class cBuildIR {
         SHELL               // !=
     }
 
-    public final class AssignmentIR implements IR {
+    public static enum AssignmentPrefix {
+        OVERRIDE("override"),
+        EXPORT("export"),
+        UNEXPORT("unexport"),
+        OVERRIDE_EXPORT("override export"),
+        EXPORT_OVERRIDE("export override"),
+        UNDEFINE("undefine"),
+        OVERRIDE_UNDEFINE("override undefine"),
+        UNDEFINE_OVERRIDE("undefine override");
+
+        private final String prefix;
+
+        AssignmentPrefix(String prefix) {
+            this.prefix = prefix;
+        }
+
+        public String getPrefix() {
+            return prefix;
+        }
+
+        public static AssignmentPrefix mapToEnum(String prefix) {
+            if (prefix == null) {
+                throw new IllegalArgumentException("Assignment prefix cannot be null");
+            }
+
+            String normalized = prefix.trim().replaceAll("\\s+", " ");
+
+            for (AssignmentPrefix value : AssignmentPrefix.values()) {
+                if (value.getPrefix().equals(normalized)) {
+                    return value;
+                }
+            }
+
+            throw new IllegalArgumentException("Unknown assignment prefix: " + prefix);
+        }
+    }
+
+    public static final class AssignmentIR implements IR {
         public ValueIR left;
         public ValueIR right;
         public AssignmentType type;
+        public AssignmentPrefix prefix;
+
+        public AssignmentIR() {}
+
+        public AssignmentIR(ValueIR left, ValueIR right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        public AssignmentIR(ValueIR left, ValueIR right,  AssignmentType type) {
+            this.left = left;
+            this.right = right;
+            this.type = type;
+        }
+
+        public AssignmentIR(ValueIR left, ValueIR right,  AssignmentPrefix prefix) {
+            this.left = left;
+            this.right = right;
+            this.prefix = prefix;
+        }
+
+        public AssignmentIR(ValueIR left, ValueIR right,  AssignmentPrefix prefix, AssignmentType type) {
+            this.left = left;
+            this.right = right;
+            this.prefix = prefix;
+            this.type = type;
+        }
     }
 }

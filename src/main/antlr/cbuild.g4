@@ -236,11 +236,11 @@ specifiers
     : OVERRIDE
     | EXPORT
     | UNEXPORT
-    | OVERRIDE EXPORT
-    | EXPORT OVERRIDE
+    | OVERRIDE ws EXPORT
+    | EXPORT ws OVERRIDE
     | UNDEFINE
-    | OVERRIDE UNDEFINE
-    | UNDEFINE OVERRIDE
+    | OVERRIDE ws UNDEFINE
+    | UNDEFINE ws OVERRIDE
     ;
 
 identifier

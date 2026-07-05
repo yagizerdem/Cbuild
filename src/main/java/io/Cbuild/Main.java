@@ -21,7 +21,7 @@ public class Main {
 
         try {
             String cBuildProgram = """
-res = $(findstring find,in)
+override export res =$(findstring find,in) fucker
                     
 
 """;

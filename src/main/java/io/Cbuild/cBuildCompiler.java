@@ -1,6 +1,8 @@
 package io.Cbuild;
 
 import io.Cbuild.gnu_make_functions.make_function_dispatcher;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.javatuples.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,99 +11,122 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
 
     private final make_function_dispatcher dispatcher;
 
-    public List<cBuildIR.IR> cBuildIR;
+    public List<cBuildIR.IR> compiled_program;
 
     public cBuildCompiler() {
         this.dispatcher = new make_function_dispatcher();
-        this.cBuildIR = new ArrayList<>();
+        this.compiled_program = new ArrayList<>();
     }
 
     public List<cBuildIR.IR> compile(cbuildParser.CbuildfileContext cbuildfileContext) {
-        this.cBuildIR = new ArrayList<>(); // clear
+        this.compiled_program = new ArrayList<>(); // clear
         cbuildfileContext.accept(this);
-        return this.cBuildIR;
+        return this.compiled_program;
     }
 
     @Override
     public Object visitAssignment(cbuildParser.AssignmentContext ctx) {
-        if(ctx.pattern() != null) {
-            String identifier = (String) ctx.pattern().accept(this);
-            ctx.exprs_in_assign().accept(this);
+        cBuildIR.AssignmentIR assignmentIR = new cBuildIR.AssignmentIR();
+
+        if(ctx.pattern() != null && !ctx.pattern().isEmpty()) {
+            // left value
+            List<cBuildIR.ValuePart> left_parts = (List<cBuildIR.ValuePart>) ctx.pattern().accept(this);
+            cBuildIR.ValueIR left_valueIR = new cBuildIR.ValueIR(left_parts);
+
+            List<cBuildIR.ValuePart> right_parts = (List<cBuildIR.ValuePart>) ctx.exprs_in_assign().accept(this);
+            cBuildIR.ValueIR right_valueIR = new cBuildIR.ValueIR(right_parts);
+
+            assignmentIR.left = left_valueIR;
+            assignmentIR.right = right_valueIR;
         }
         else {
-            ctx.assignment_prefix().accept(this);
-            ctx.exprs_in_assign().accept(this);
+            Pair<cBuildIR.AssignmentPrefix, List<cBuildIR.ValuePart>> pair=
+                    (Pair<cBuildIR.AssignmentPrefix, List<cBuildIR.ValuePart>>)ctx.assignment_prefix().accept(this);
+
+            List<cBuildIR.ValuePart> left_parts = pair.getValue1();
+            cBuildIR.ValueIR left_valueIR = new cBuildIR.ValueIR(left_parts);
+
+
+            List<cBuildIR.ValuePart> right_parts = (List<cBuildIR.ValuePart>) ctx.exprs_in_assign().accept(this);
+            cBuildIR.ValueIR right_valueIR = new cBuildIR.ValueIR(right_parts);
+
+            assignmentIR.left = left_valueIR;
+            assignmentIR.right = right_valueIR;
+
+            cBuildIR.AssignmentPrefix specifier = pair.getValue0();
+            assignmentIR.prefix = specifier;
         }
 
-        return super.visitAssignment(ctx);
+        return assignmentIR;
     }
 
     @Override
     public Object visitAssignment_prefix(cbuildParser.Assignment_prefixContext ctx) {
-        return super.visitAssignment_prefix(ctx);
+        String specifier = ctx.specifiers().getText().trim();
+        cBuildIR.AssignmentPrefix prefix = cBuildIR.AssignmentPrefix.mapToEnum(specifier);
+        List<cBuildIR.ValuePart> parts = (List<cBuildIR.ValuePart>) ctx.pattern().accept(this);
+        Pair<cBuildIR.AssignmentPrefix, List<cBuildIR.ValuePart>> pair =
+                new Pair<cBuildIR.AssignmentPrefix, List<cBuildIR.ValuePart>>(prefix, parts);
+        return pair;
     }
 
     @Override
     public Object visitPattern(cbuildParser.PatternContext ctx) {
-        if(ctx.identifier() != null && !ctx.identifier().isEmpty()) {
-            StringBuilder identifier = new StringBuilder();
-            for(cbuildParser.IdentifierContext identifierContext : ctx.identifier()) {
-                identifier.append((String) identifierContext.accept(this));
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+
+        for(ParseTree ast_node : ctx.children) {
+            Object part = ast_node.accept(this);
+            if(part instanceof cBuildIR.FunctionCallPart callee) {
+                parts.add(callee);
             }
-            return identifier.toString();
-        }
-        if(ctx.function() != null && !ctx.function().isEmpty()) {
-            for(cbuildParser.FunctionContext functionContext : ctx.function()) {
-                functionContext.accept(this);
+            else if(part instanceof cBuildIR.TextPart textPart) {
+                parts.add(textPart);
             }
+
         }
-        return "";
+
+        return parts;
     }
 
     @Override
     public Object visitExprs_in_assign(cbuildParser.Exprs_in_assignContext ctx) {
-        return super.visitExprs_in_assign(ctx);
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+        for(ParseTree ast_node : ctx.children) {
+            Object part_s = ast_node.accept(this);
+            if (part_s instanceof List<?> list) {
+                for (Object obj : list) {
+                    if (obj instanceof cBuildIR.ValuePart valuePart) {
+                        parts.add(valuePart);
+                    }
+                }
+            }
+            else if(part_s instanceof cBuildIR.ValuePart part) {
+                parts.add(part);
+            }
+        }
+        return parts;
     }
 
     @Override
     public Object visitExpr_in_assign(cbuildParser.Expr_in_assignContext ctx) {
-        return super.visitExpr_in_assign(ctx);
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+        for(cbuildParser.Expr_in_assign_atomContext atom_ctx : ctx.expr_in_assign_atom()) {
+            if(atom_ctx.function() != null && !atom_ctx.function().isEmpty()) {
+                cBuildIR.FunctionCallPart callee = (cBuildIR.FunctionCallPart)atom_ctx.function().accept(this);
+                parts.add(callee);
+            }
+            else if(atom_ctx.text_in_assign() != null && !atom_ctx.text_in_assign().isEmpty()) {
+                String lexeme = atom_ctx.text_in_assign().getText();
+                cBuildIR.TextPart text_part = new cBuildIR.TextPart(lexeme);
+                parts.add(text_part);
+            }
+        }
+        return parts;
     }
 
-    @Override
-    public Object visitExpr_in_assign_atom(cbuildParser.Expr_in_assign_atomContext ctx) {
-        return super.visitExpr_in_assign_atom(ctx);
-    }
 
-    @Override
-    public Object visitText_in_assign(cbuildParser.Text_in_assignContext ctx) {
-        return super.visitText_in_assign(ctx);
-    }
 
-    @Override
-    public Object visitChar_in_assign(cbuildParser.Char_in_assignContext ctx) {
-        return super.visitChar_in_assign(ctx);
-    }
 
-    @Override
-    public Object visitExpression(cbuildParser.ExpressionContext ctx) {
-        return super.visitExpression(ctx);
-    }
-
-    @Override
-    public Object visitExpression_atom(cbuildParser.Expression_atomContext ctx) {
-        return super.visitExpression_atom(ctx);
-    }
-
-    @Override
-    public Object visitExpr_nested(cbuildParser.Expr_nestedContext ctx) {
-        return super.visitExpr_nested(ctx);
-    }
-
-    @Override
-    public Object visitExpr_nested_atom(cbuildParser.Expr_nested_atomContext ctx) {
-        return super.visitExpr_nested_atom(ctx);
-    }
 
     @Override
     public Object visitFunction(cbuildParser.FunctionContext ctx) {
@@ -119,34 +144,16 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         return ref;
     }
 
-    @Override
-    public Object visitFunction_name(cbuildParser.Function_nameContext ctx) {
-        return super.visitFunction_name(ctx);
-    }
-
-    @Override
-    public Object visitFunction_name_atom(cbuildParser.Function_name_atomContext ctx) {
-        return super.visitFunction_name_atom(ctx);
-    }
-
-    @Override
-    public Object visitArguments(cbuildParser.ArgumentsContext ctx) {
-        return super.visitArguments(ctx);
-    }
-
-    @Override
-    public Object visitArgument(cbuildParser.ArgumentContext ctx) {
-        return super.visitArgument(ctx);
-    }
 
     @Override
     public Object visitIdentifier(cbuildParser.IdentifierContext ctx) {
-        return ctx.getText();
+        io.Cbuild.cBuildIR.TextPart textPart = new cBuildIR.TextPart(ctx.getText());
+        return textPart;
     }
 
     @Override
-    public Object visitIdentifier_atom(cbuildParser.Identifier_atomContext ctx) {
-        return ctx.getText();
+    public Object visitWs(cbuildParser.WsContext ctx) {
+        cBuildIR.TextPart part = new cBuildIR.TextPart(ctx.getText());
+        return part;
     }
-
 }
