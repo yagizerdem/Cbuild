@@ -21,7 +21,8 @@ public class Main {
 
         try {
             String cBuildProgram = """
-res = $(wordlist 5 2,6  ,  afa   a b c)
+res = $(findstring find,in)
+                    
 
 """;
 

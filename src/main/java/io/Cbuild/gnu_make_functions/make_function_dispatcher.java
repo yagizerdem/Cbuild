@@ -16,6 +16,9 @@ public class make_function_dispatcher {
 
     static  {
         register("subst", new type.substFn());
+        register("patsubst", new type.patsubstFn());
+        register("strip", new type.stripFn());
+        register("findstring", new type.findstringFn());
         register("wordlist", new type.wordlistFn());
     }
 
