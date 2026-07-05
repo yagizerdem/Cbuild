@@ -21,7 +21,7 @@ public class Main {
 
         try {
             String cBuildProgram = """
-res = $(subst ee, EE, $(subst ee, EE, " yagiz erdem ") on the       street)
+res = $(wordlist 5 2,6  ,  afa   a b c)
 
 """;
 

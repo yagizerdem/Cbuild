@@ -49,7 +49,7 @@ definition
     ;
 
 include
-    : include_kw ws? expressions ws? br
+    : include_kw expressions br
     ;
 
 export
@@ -63,8 +63,8 @@ vpath
     ;
 
 assignment
-    : pattern ws? ASSIGN_OP ws? exprs_in_assign? ws? comment_opt
-    | assignment_prefix ws? ASSIGN_OP ws? exprs_in_assign? ws? comment_opt
+    : pattern ws? ASSIGN_OP exprs_in_assign? comment_opt
+    | assignment_prefix ws? ASSIGN_OP exprs_in_assign? comment_opt
     ;
 
 assignment_prefix: specifiers ws pattern;
@@ -87,7 +87,7 @@ include_kw
     ;
 
 condition
-    : LPAREN ws? expressions_opt ws? COMMA ws? expressions_opt ws? RPAREN
+    : LPAREN expressions_opt  COMMA expressions_opt RPAREN
     | SLIT ws? SLIT
     ;
 
@@ -96,19 +96,19 @@ expressions_opt
     ;
 
 expressions
-    : expression (ws expression)*
+    : ws? expression ws? (ws expression)* ws?
     ;
 
 exprs_nested
-    : expr_nested (ws expr_nested)*
+    : ws? expr_nested ws? (ws expr_nested)* ws?
     ;
 
 exprs_in_assign
-    : expr_in_assign (ws expr_in_assign)*
+    : ws? expr_in_assign ws? (ws expr_in_assign)* ws?
     ;
 
 exprs_in_recipe
-    : expr_in_recipe (ws expr_in_recipe)*
+    : ws? expr_in_recipe ws? (ws expr_in_recipe)* ws?
     ;
 
 exprs_in_def
@@ -183,7 +183,7 @@ function_name_atom
     ;
 
 arguments
-    : ws? argument? (ws? COMMA ws? argument?)* ws?
+    : argument? (COMMA argument?)*
     ;
 
 argument

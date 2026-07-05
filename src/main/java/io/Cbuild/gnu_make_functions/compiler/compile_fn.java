@@ -9,12 +9,12 @@ import io.Cbuild.gnu_make_functions.type;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 
-public class compile_subst extends cbuildBaseVisitor<cBuildIR.ValueIR > implements I_compiler_base {
+public class compile_fn extends cbuildBaseVisitor<cBuildIR.ValueIR > implements I_compiler_base {
 
 
     private final make_function_dispatcher dispatcher;
 
-    public compile_subst() {
+    public compile_fn() {
         this.dispatcher = new make_function_dispatcher();
     }
 

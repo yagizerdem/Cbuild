@@ -15,7 +15,8 @@ public class make_function_dispatcher {
     private static final Map<String, MakeFunctionHandler> handlers = new HashMap<>();
 
     static  {
-        register("subst", new type.IsubstFn());
+        register("subst", new type.substFn());
+        register("wordlist", new type.wordlistFn());
     }
 
     public static void register(String name, MakeFunctionHandler handler) {
