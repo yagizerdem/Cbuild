@@ -21,7 +21,7 @@ public class Main {
 
         try {
             String cBuildProgram = """
-export res =$(findstring find,in) fucker
+s =
                     
 
 """;

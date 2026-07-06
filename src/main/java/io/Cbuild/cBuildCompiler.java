@@ -61,8 +61,11 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
             List<cBuildIR.ValuePart> left_parts = (List<cBuildIR.ValuePart>) ctx.pattern().accept(this);
             cBuildIR.ValueIR left_valueIR = new cBuildIR.ValueIR(left_parts);
 
-            List<cBuildIR.ValuePart> right_parts = (List<cBuildIR.ValuePart>) ctx.exprs_in_assign().accept(this);
-            cBuildIR.ValueIR right_valueIR = new cBuildIR.ValueIR(right_parts);
+            cBuildIR.ValueIR right_valueIR = new cBuildIR.ValueIR(List.of(new cBuildIR.TextPart("")));
+            if(ctx.exprs_in_assign() != null) {
+                List<cBuildIR.ValuePart> right_parts = (List<cBuildIR.ValuePart>) ctx.exprs_in_assign().accept(this);
+                right_valueIR = new cBuildIR.ValueIR(right_parts);
+            }
 
             assignmentIR.left = left_valueIR;
             assignmentIR.right = right_valueIR;
@@ -75,8 +78,11 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
             cBuildIR.ValueIR left_valueIR = new cBuildIR.ValueIR(left_parts);
 
 
-            List<cBuildIR.ValuePart> right_parts = (List<cBuildIR.ValuePart>) ctx.exprs_in_assign().accept(this);
-            cBuildIR.ValueIR right_valueIR = new cBuildIR.ValueIR(right_parts);
+            cBuildIR.ValueIR right_valueIR = new cBuildIR.ValueIR(List.of(new cBuildIR.TextPart("")));
+            if(ctx.exprs_in_assign() != null) {
+                List<cBuildIR.ValuePart> right_parts = (List<cBuildIR.ValuePart>) ctx.exprs_in_assign().accept(this);
+                right_valueIR = new cBuildIR.ValueIR(right_parts);
+            }
 
             assignmentIR.left = left_valueIR;
             assignmentIR.right = right_valueIR;
