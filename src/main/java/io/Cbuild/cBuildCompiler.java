@@ -6,6 +6,7 @@ import org.javatuples.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.RecursiveTask;
 
 public class cBuildCompiler extends cbuildBaseVisitor<Object> {
 
@@ -20,8 +21,35 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
 
     public List<cBuildIR.IR> compile(cbuildParser.CbuildfileContext cbuildfileContext) {
         this.compiled_program = new ArrayList<>(); // clear
-        cbuildfileContext.accept(this);
+        this.compiled_program = (List<cBuildIR.IR>) cbuildfileContext.accept(this);
         return this.compiled_program;
+    }
+
+    @Override
+    public Object visitCbuildfile(cbuildParser.CbuildfileContext ctx) {
+        if (ctx.statements() == null) {
+            return new ArrayList<cBuildIR.IR>();
+        }
+
+        return ctx.statements().accept(this);
+    }
+
+    @Override
+    public Object visitStatements(cbuildParser.StatementsContext ctx) {
+        List<cBuildIR.IR> statements = new ArrayList<>();
+        for(cbuildParser.StatementContext stmt_ctx : ctx.statement()) {
+           cBuildIR.IR ir = (cBuildIR.IR) stmt_ctx.accept(this);
+            statements.add(ir);
+        }
+        return statements;
+    }
+
+    @Override
+    public Object visitStatement(cbuildParser.StatementContext ctx) {
+        if(ctx.assignment() != null) {
+            return ctx.assignment().accept(this);
+        }
+        return null;
     }
 
     @Override
