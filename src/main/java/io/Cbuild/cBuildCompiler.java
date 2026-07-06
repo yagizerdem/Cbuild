@@ -49,6 +49,9 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         if(ctx.assignment() != null) {
             return ctx.assignment().accept(this);
         }
+        else if(ctx.conditional() != null) {
+            return ctx.conditional().accept(this);
+        }
         return null;
     }
 
@@ -159,9 +162,6 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
     }
 
 
-
-
-
     @Override
     public Object visitFunction(cbuildParser.FunctionContext ctx) {
         String name = ctx.function_name().getText();
@@ -178,12 +178,234 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         return ref;
     }
 
+    @Override
+    public Object visitConditional(cbuildParser.ConditionalContext ctx) {
+        cBuildIR.ConditionalIR conditionalIR = new cBuildIR.ConditionalIR();
+
+        if (ctx.if_eq_kw() != null) {
+            conditionalIR.kind = cBuildIR.ConditionKind.fromKeyword( ctx.if_eq_kw().getText());
+            conditionalIR.condition = (cBuildIR.Condition) ctx.condition().accept(this);
+        }
+        else if (ctx.if_def_kw() != null) {
+            conditionalIR.kind = cBuildIR.ConditionKind.fromKeyword( ctx.if_eq_kw().getText());
+
+            cBuildIR.Condition condition = new cBuildIR.Condition();
+            List<cBuildIR.ValuePart> parts =
+                    (List<cBuildIR.ValuePart>) ctx.identifier().accept(this);
+
+            condition.left = new cBuildIR.ValueIR(parts);
+            condition.right = null;
+
+            conditionalIR.condition = condition;
+        }
+
+        if (ctx.statements_opt(0) != null) {
+            Object thenResult = ctx.statements_opt(0).accept(this);
+
+            if (thenResult instanceof List<?> list) {
+                for (Object obj : list) {
+                    if (obj instanceof cBuildIR.IR ir) {
+                        conditionalIR.thenBranch.add(ir);
+                    }
+                }
+            }
+        }
+
+        if (ctx.statements_opt().size() > 1 && ctx.statements_opt(1) != null) {
+            Object elseResult = ctx.statements_opt(1).accept(this);
+
+            if (elseResult instanceof List<?> list) {
+                for (Object obj : list) {
+                    if (obj instanceof cBuildIR.IR ir) {
+                        conditionalIR.elseBranch.add(ir);
+                    }
+                }
+            }
+        }
+        else if (ctx.conditional() != null) {
+            Object elseConditional = ctx.conditional().accept(this);
+
+            if (elseConditional instanceof cBuildIR.IR ir) {
+                conditionalIR.elseBranch.add(ir);
+            }
+        }
+
+        return conditionalIR;
+    }
+
+
+    @Override
+    public Object visitCondition(cbuildParser.ConditionContext ctx) {
+        cBuildIR.Condition condition = new cBuildIR.Condition();
+
+        if (ctx.expressions_opt().size() == 2) {
+            if (ctx.expressions_opt(0).expressions() != null) {
+                List<cBuildIR.ValuePart> leftParts =
+                        (List<cBuildIR.ValuePart>) ctx.expressions_opt(0).accept(this);
+                condition.left = new cBuildIR.ValueIR(leftParts);
+            }
+            else {
+                condition.left = new cBuildIR.ValueIR();
+            }
+
+            if (ctx.expressions_opt(1).expressions() != null) {
+                List<cBuildIR.ValuePart> rightParts =
+                        (List<cBuildIR.ValuePart>) ctx.expressions_opt(1).accept(this);
+                condition.right = new cBuildIR.ValueIR(rightParts);
+            }
+            else {
+                condition.right = new cBuildIR.ValueIR();
+            }
+
+            return condition;
+        }
+
+        String left = Common.unquote(ctx.SLIT(0).getText());
+        String right = Common.unquote(ctx.SLIT(1).getText());
+
+        condition.left = new cBuildIR.ValueIR(
+                List.of(new cBuildIR.TextPart(left))
+        );
+
+        condition.right = new cBuildIR.ValueIR(
+                List.of(new cBuildIR.TextPart(right))
+        );
+
+        return condition;
+    }
 
     @Override
     public Object visitIdentifier(cbuildParser.IdentifierContext ctx) {
         io.Cbuild.cBuildIR.TextPart textPart = new cBuildIR.TextPart(ctx.getText());
         return textPart;
     }
+
+
+    @Override
+    public Object visitExpressions_opt(cbuildParser.Expressions_optContext ctx) {
+        if (ctx.expressions() == null) {
+            return new ArrayList<cBuildIR.ValuePart>();
+        }
+
+        return ctx.expressions().accept(this);
+    }
+
+    @Override
+    public Object visitExpressions(cbuildParser.ExpressionsContext ctx) {
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+
+        for (ParseTree astNode : ctx.children) {
+            Object part = astNode.accept(this);
+
+            if (part instanceof List<?> list) {
+                for (Object obj : list) {
+                    if (obj instanceof cBuildIR.ValuePart valuePart) {
+                        parts.add(valuePart);
+                    }
+                }
+            }
+            else if (part instanceof cBuildIR.ValuePart valuePart) {
+                parts.add(valuePart);
+            }
+        }
+
+        return parts;
+    }
+
+    @Override
+    public Object visitExpression(cbuildParser.ExpressionContext ctx) {
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+
+        for (ParseTree astNode : ctx.children) {
+            Object part = astNode.accept(this);
+
+            if (part instanceof List<?> list) {
+                for (Object obj : list) {
+                    if (obj instanceof cBuildIR.ValuePart valuePart) {
+                        parts.add(valuePart);
+                    }
+                }
+            }
+            else if (part instanceof cBuildIR.ValuePart valuePart) {
+                parts.add(valuePart);
+            }
+        }
+
+        return parts;
+    }
+
+    @Override
+    public Object visitExpression_atom(cbuildParser.Expression_atomContext ctx) {
+        if (ctx.text() != null) {
+            return new cBuildIR.TextPart(ctx.text().getText());
+        }
+
+        if (ctx.function() != null) {
+            return ctx.function().accept(this);
+        }
+
+        if (ctx.exprs_nested() != null) {
+            List<cBuildIR.ValuePart> parts =
+                    (List<cBuildIR.ValuePart>) ctx.exprs_nested().accept(this);
+
+            return new cBuildIR.VarRefPart(new cBuildIR.ValueIR(parts));
+        }
+
+        return null;
+    }
+
+    @Override
+    public Object visitExpr_nested(cbuildParser.Expr_nestedContext ctx) {
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+
+        for (ParseTree astNode : ctx.children) {
+            Object part = astNode.accept(this);
+
+            if (part instanceof List<?> list) {
+                for (Object obj : list) {
+                    if (obj instanceof cBuildIR.ValuePart valuePart) {
+                        parts.add(valuePart);
+                    }
+                }
+            }
+            else if (part instanceof cBuildIR.ValuePart valuePart) {
+                parts.add(valuePart);
+            }
+        }
+
+        return parts;
+    }
+
+    @Override
+    public Object visitExpr_nested_atom(cbuildParser.Expr_nested_atomContext ctx) {
+        if (ctx.text_nested() != null) {
+            return new cBuildIR.TextPart(ctx.text_nested().getText());
+        }
+
+        if (ctx.function() != null) {
+            return ctx.function().accept(this);
+        }
+
+        if (ctx.exprs_nested() != null) {
+            List<cBuildIR.ValuePart> parts =
+                    (List<cBuildIR.ValuePart>) ctx.exprs_nested().accept(this);
+
+            return new cBuildIR.VarRefPart(new cBuildIR.ValueIR(parts));
+        }
+
+        return null;
+    }
+
+    @Override
+    public Object visitStatements_opt(cbuildParser.Statements_optContext ctx) {
+        if(ctx.statements() != null) {
+            return ctx.statements().accept(this);
+        }
+
+        return new ArrayList<>();
+    }
+
+
 
     @Override
     public Object visitWs(cbuildParser.WsContext ctx) {

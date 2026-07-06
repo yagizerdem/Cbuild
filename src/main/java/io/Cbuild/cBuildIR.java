@@ -134,4 +134,200 @@ public class cBuildIR {
             this.type = type;
         }
     }
+
+    public enum ConditionKind {
+        IFEQ("ifeq"),
+        IFNEQ("ifneq"),
+        IFDEF("ifdef"),
+        IFNDEF("ifndef");
+
+        private final String keyword;
+
+        ConditionKind(String keyword) {
+            this.keyword = keyword;
+        }
+
+        public String keyword() {
+            return keyword;
+        }
+
+        public static ConditionKind fromKeyword(String keyword) {
+            if (keyword == null || keyword.isBlank()) {
+                throw new IllegalArgumentException("Condition keyword cannot be null or blank");
+            }
+
+            return switch (keyword.trim().toLowerCase()) {
+                case "ifeq" -> IFEQ;
+                case "ifneq" -> IFNEQ;
+                case "ifdef" -> IFDEF;
+                case "ifndef" -> IFNDEF;
+                default -> throw new IllegalArgumentException(
+                        "Unknown condition keyword: " + keyword
+                );
+            };
+        }
+    }
+
+    public static class ConditionalIR implements IR {
+        public ConditionKind kind;
+        public Condition condition;
+        public List<IR> thenBranch = new ArrayList<>();
+        public List<IR> elseBranch = new ArrayList<>();
+    }
+
+    public static class Condition  {
+        public ValueIR left;
+        public ValueIR right;
+    }
+
+    public static interface Rule extends IR {
+
+        List<ValueIR> targets();
+        List<RecipeIR> recipes();
+    }
+
+    public enum RuleSeparator {
+        SINGLE_COLON,
+        DOUBLE_COLON
+    }
+
+    public static class NormalRuleIR implements Rule {
+        public final List<ValueIR> targets = new ArrayList<>();
+        public RuleSeparator separator = RuleSeparator.SINGLE_COLON;
+        public final List<ValueIR> prerequisites = new ArrayList<>();
+        public final List<RecipeIR> recipes = new ArrayList<>();
+
+        public NormalRuleIR() {}
+
+        public NormalRuleIR(List<ValueIR> targets, List<ValueIR> prerequisites) {
+            this.targets.addAll(targets);
+            this.prerequisites.addAll(prerequisites);
+        }
+
+        public NormalRuleIR(List<ValueIR> targets, List<ValueIR> prerequisites, RuleSeparator separator) {
+            this.targets.addAll(targets);
+            this.prerequisites.addAll(prerequisites);
+            this.separator = separator;
+        }
+
+        @Override
+        public List<ValueIR> targets() {
+            return targets;
+        }
+
+        @Override
+        public List<RecipeIR> recipes() {
+            return recipes;
+        }
+    }
+
+    public static class TargetRuleIR implements Rule {
+        public final List<ValueIR> targets = new ArrayList<>();
+        public AssignmentIR assignment;
+
+        public TargetRuleIR () {}
+
+        public TargetRuleIR(List<ValueIR> _targets) {
+            this.targets.addAll(_targets);
+        }
+
+        public TargetRuleIR(List<ValueIR> targets, AssignmentIR assignmentIR) {
+            this.targets.addAll(targets);
+            this.assignment = assignmentIR;
+        }
+
+        @Override
+        public List<ValueIR> targets() {
+            return targets;
+        }
+
+        @Override
+        public List<RecipeIR> recipes() {
+            return List.of();
+        }
+    }
+
+    public static class StaticPatternRuleIR implements Rule {
+        public final List<ValueIR> targets = new ArrayList<>();
+        public ValueIR targetPattern;
+        public final List<ValueIR> prerequisites = new ArrayList<>();
+        public final List<RecipeIR> recipes = new ArrayList<>();
+
+        public StaticPatternRuleIR() {}
+
+        public StaticPatternRuleIR(List<ValueIR> _targets) {
+            this.targets.addAll(_targets);
+        }
+
+        public StaticPatternRuleIR(List<ValueIR> _targets, ValueIR targetPattern) {
+            this.targets.addAll(_targets);
+            this.targetPattern = targetPattern;
+        }
+
+        public StaticPatternRuleIR(List<ValueIR> _targets, ValueIR targetPattern, List<ValueIR> _prerequisites) {
+            this.targets.addAll(_targets);
+            this.targetPattern = targetPattern;
+            this.prerequisites.addAll(_prerequisites);
+        }
+
+        public StaticPatternRuleIR(List<ValueIR> _targets, ValueIR targetPattern, List<ValueIR> _prerequisites, List<RecipeIR> recipes) {
+            this.targets.addAll(_targets);
+            this.targetPattern = targetPattern;
+            this.prerequisites.addAll(_prerequisites);
+            this.recipes.addAll(recipes);
+        }
+
+        @Override
+        public List<ValueIR> targets() {
+            return targets;
+        }
+
+        @Override
+        public List<RecipeIR> recipes() {
+            return recipes;
+        }
+    }
+
+    public enum RecipeKind {
+        COMMAND,
+        COMMENT,
+        EMPTY_LINE,
+        CONDITIONAL
+    }
+
+    public static class RecipeIR implements IR {
+        public RecipeKind kind;
+        public ValueIR command;
+        public String comment;
+        public ConditionalIR conditional;
+
+        public static RecipeIR command(ValueIR command) {
+            RecipeIR recipe = new RecipeIR();
+            recipe.kind = RecipeKind.COMMAND;
+            recipe.command = command;
+            return recipe;
+        }
+
+        public static RecipeIR comment(String comment) {
+            RecipeIR recipe = new RecipeIR();
+            recipe.kind = RecipeKind.COMMENT;
+            recipe.comment = comment;
+            return recipe;
+        }
+
+        public static RecipeIR emptyLine() {
+            RecipeIR recipe = new RecipeIR();
+            recipe.kind = RecipeKind.EMPTY_LINE;
+            return recipe;
+        }
+
+        public static RecipeIR conditional(ConditionalIR conditional) {
+            RecipeIR recipe = new RecipeIR();
+            recipe.kind = RecipeKind.CONDITIONAL;
+            recipe.conditional = conditional;
+            return recipe;
+        }
+    }
+
+
 }

@@ -21,9 +21,9 @@ public class Main {
 
         try {
             String cBuildProgram = """
-s =
-                    
-
+ifeq ($(strip $(foo)),)
+a = 10
+endif
 """;
 
             CharStream charStream = CharStreams.fromString(cBuildProgram);
