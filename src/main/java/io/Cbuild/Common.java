@@ -2,6 +2,7 @@ package io.Cbuild;
 
 public class Common {
 
+    // hook related commonds
     public static enum OpCodeType {
         OP_CONSTANT(0),
         OP_RETURN(1),
@@ -158,4 +159,10 @@ public class Common {
         return offset + 2;
     }
 
+    // cBuild commons
+    public static String unquote(String quoted) {
+        if(quoted.length() < 2) return quoted;
+        if(quoted.charAt(0) != '\'' || quoted.charAt(quoted.length() -1) != '\'') return quoted;
+        return quoted.substring(1, quoted.length() -1);
+    }
 }

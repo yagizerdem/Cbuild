@@ -134,4 +134,88 @@ public class cBuildIR {
             this.type = type;
         }
     }
+
+    public enum ConditionKind {
+        IFEQ("ifeq"),
+        IFNEQ("ifneq"),
+        IFDEF("ifdef"),
+        IFNDEF("ifndef");
+
+        private final String keyword;
+
+        ConditionKind(String keyword) {
+            this.keyword = keyword;
+        }
+
+        public String keyword() {
+            return keyword;
+        }
+
+        public static ConditionKind fromKeyword(String keyword) {
+            if (keyword == null || keyword.isBlank()) {
+                throw new IllegalArgumentException("Condition keyword cannot be null or blank");
+            }
+
+            return switch (keyword.trim().toLowerCase()) {
+                case "ifeq" -> IFEQ;
+                case "ifneq" -> IFNEQ;
+                case "ifdef" -> IFDEF;
+                case "ifndef" -> IFNDEF;
+                default -> throw new IllegalArgumentException(
+                        "Unknown condition keyword: " + keyword
+                );
+            };
+        }
+    }
+
+    public static class ConditionalIR implements IR {
+        public ConditionKind kind;
+        public Condition condition;
+        public List<IR> thenBranch = new ArrayList<>();
+        public List<IR> elseBranch = new ArrayList<>();
+    }
+
+    public static class Condition  {
+        public ValueIR left;
+        public ValueIR right;
+    }
+
+    public static interface Rule extends IR {
+
+        List<ValueIR> targets();
+        List<RecipeIR> recipes();
+    }
+
+    public enum RuleSeparator {
+        SINGLE_COLON,
+        DOUBLE_COLON
+    }
+
+    public static class NormalRuleIR implements Rule {
+        public final List<ValueIR> targets = new ArrayList<>();
+        public RuleSeparator separator = RuleSeparator.SINGLE_COLON;
+        public final List<ValueIR> prerequisites = new ArrayList<>();
+        public final List<RecipeIR> recipes = new ArrayList<>();
+
+        @Override
+        public List<ValueIR> targets() {
+            return targets;
+        }
+
+        @Override
+        public List<RecipeIR> recipes() {
+            return recipes;
+        }
+    }
+    public static class TargetRuleIR implements Rule {
+
+    }
+
+    public static class StaticPatternRuleIR implements Rule {
+
+    }
+
+    public static class RecipeIR implements IR {}
+
+
 }
