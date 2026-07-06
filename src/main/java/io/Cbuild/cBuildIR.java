@@ -197,6 +197,19 @@ public class cBuildIR {
         public final List<ValueIR> prerequisites = new ArrayList<>();
         public final List<RecipeIR> recipes = new ArrayList<>();
 
+        public NormalRuleIR() {}
+
+        public NormalRuleIR(List<ValueIR> targets, List<ValueIR> prerequisites) {
+            this.targets.addAll(targets);
+            this.prerequisites.addAll(prerequisites);
+        }
+
+        public NormalRuleIR(List<ValueIR> targets, List<ValueIR> prerequisites, RuleSeparator separator) {
+            this.targets.addAll(targets);
+            this.prerequisites.addAll(prerequisites);
+            this.separator = separator;
+        }
+
         @Override
         public List<ValueIR> targets() {
             return targets;
@@ -207,15 +220,114 @@ public class cBuildIR {
             return recipes;
         }
     }
-    public static class TargetRuleIR implements Rule {
 
+    public static class TargetRuleIR implements Rule {
+        public final List<ValueIR> targets = new ArrayList<>();
+        public AssignmentIR assignment;
+
+        public TargetRuleIR () {}
+
+        public TargetRuleIR(List<ValueIR> _targets) {
+            this.targets.addAll(_targets);
+        }
+
+        public TargetRuleIR(List<ValueIR> targets, AssignmentIR assignmentIR) {
+            this.targets.addAll(targets);
+            this.assignment = assignmentIR;
+        }
+
+        @Override
+        public List<ValueIR> targets() {
+            return targets;
+        }
+
+        @Override
+        public List<RecipeIR> recipes() {
+            return List.of();
+        }
     }
 
     public static class StaticPatternRuleIR implements Rule {
+        public final List<ValueIR> targets = new ArrayList<>();
+        public ValueIR targetPattern;
+        public final List<ValueIR> prerequisites = new ArrayList<>();
+        public final List<RecipeIR> recipes = new ArrayList<>();
 
+        public StaticPatternRuleIR() {}
+
+        public StaticPatternRuleIR(List<ValueIR> _targets) {
+            this.targets.addAll(_targets);
+        }
+
+        public StaticPatternRuleIR(List<ValueIR> _targets, ValueIR targetPattern) {
+            this.targets.addAll(_targets);
+            this.targetPattern = targetPattern;
+        }
+
+        public StaticPatternRuleIR(List<ValueIR> _targets, ValueIR targetPattern, List<ValueIR> _prerequisites) {
+            this.targets.addAll(_targets);
+            this.targetPattern = targetPattern;
+            this.prerequisites.addAll(_prerequisites);
+        }
+
+        public StaticPatternRuleIR(List<ValueIR> _targets, ValueIR targetPattern, List<ValueIR> _prerequisites, List<RecipeIR> recipes) {
+            this.targets.addAll(_targets);
+            this.targetPattern = targetPattern;
+            this.prerequisites.addAll(_prerequisites);
+            this.recipes.addAll(recipes);
+        }
+
+        @Override
+        public List<ValueIR> targets() {
+            return targets;
+        }
+
+        @Override
+        public List<RecipeIR> recipes() {
+            return recipes;
+        }
     }
 
-    public static class RecipeIR implements IR {}
+    public enum RecipeKind {
+        COMMAND,
+        COMMENT,
+        EMPTY_LINE,
+        CONDITIONAL
+    }
+
+    public static class RecipeIR implements IR {
+        public RecipeKind kind;
+        public ValueIR command;
+        public String comment;
+        public ConditionalIR conditional;
+
+        public static RecipeIR command(ValueIR command) {
+            RecipeIR recipe = new RecipeIR();
+            recipe.kind = RecipeKind.COMMAND;
+            recipe.command = command;
+            return recipe;
+        }
+
+        public static RecipeIR comment(String comment) {
+            RecipeIR recipe = new RecipeIR();
+            recipe.kind = RecipeKind.COMMENT;
+            recipe.comment = comment;
+            return recipe;
+        }
+
+        public static RecipeIR emptyLine() {
+            RecipeIR recipe = new RecipeIR();
+            recipe.kind = RecipeKind.EMPTY_LINE;
+            return recipe;
+        }
+
+        public static RecipeIR conditional(ConditionalIR conditional) {
+            RecipeIR recipe = new RecipeIR();
+            recipe.kind = RecipeKind.CONDITIONAL;
+            recipe.conditional = conditional;
+            return recipe;
+        }
+    }
 
 
 }
