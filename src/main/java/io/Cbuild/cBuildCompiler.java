@@ -56,6 +56,11 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         else if(ctx.rule_() != null) {
             return ctx.rule_().accept(this);
         }
+        else if(ctx.function() != null) {
+            cBuildIR.FunctionCallPart callee = (cBuildIR.FunctionCallPart) ctx.function().accept(this);
+            cBuildIR.ValueIR value = new cBuildIR.ValueIR(List.of(callee));
+            return value;
+        }
         return null;
     }
 
