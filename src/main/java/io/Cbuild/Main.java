@@ -21,13 +21,7 @@ public class Main {
 
         try {
             String cBuildProgram = """
-define two-lines
-
-echo foo
-
-echo $(bar)
-
-endef
+vpath %.c foo:bar
 """;
 
             CharStream charStream = CharStreams.fromString(cBuildProgram);

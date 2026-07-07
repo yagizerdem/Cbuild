@@ -65,7 +65,18 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
             cBuildIR.DefineIR defineIR = (cBuildIR.DefineIR) ctx.define().accept(this);
             return defineIR;
         }
-        return null;
+        else if(ctx.vpath() != null) {
+            cBuildIR.VpathIR vpathIR = (cBuildIR.VpathIR) ctx.vpath().accept(this);
+            return vpathIR;
+        }
+
+        throw new IllegalArgumentException(
+                "Unsupported statement at line " +
+                        ctx.getStart().getLine() +
+                        ", column " +
+                        ctx.getStart().getCharPositionInLine() +
+                        ": `" + ctx.getText() + "`"
+        );
     }
 
     @Override
@@ -774,6 +785,31 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
     @Override
     public Object visitChar_in_def(cbuildParser.Char_in_defContext ctx) {
         return new cBuildIR.TextPart(ctx.getText());
+    }
+
+    @Override
+    public Object visitVpath(cbuildParser.VpathContext ctx) {
+        if (ctx.vpath_args() == null) {
+            return cBuildIR.VpathIR.clearAll();
+        }
+
+        return ctx.vpath_args().accept(this);
+    }
+
+    @Override
+    public Object visitVpath_args(cbuildParser.Vpath_argsContext ctx) {
+        cBuildIR.ValueIR arg = new cBuildIR.ValueIR();
+                List<cBuildIR.VarRefPart> arg_parts = (List<cBuildIR.VarRefPart>) ctx.pattern().accept(this);
+        arg.parts.addAll(arg_parts);
+
+        if (ctx.expressions() == null) {
+            return cBuildIR.VpathIR.clearPattern(arg);
+        }
+
+        List<cBuildIR.ValueIR> directories =
+                (List<cBuildIR.ValueIR>) ctx.expressions().accept(this);
+
+        return cBuildIR.VpathIR.setPattern(arg, directories);
     }
 
     @Override

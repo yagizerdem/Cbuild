@@ -76,6 +76,12 @@ public interface cbuildVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitVpath(cbuildParser.VpathContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link cbuildParser#vpath_args}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitVpath_args(cbuildParser.Vpath_argsContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link cbuildParser#assignment}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

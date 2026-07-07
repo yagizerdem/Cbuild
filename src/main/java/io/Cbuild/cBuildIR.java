@@ -421,4 +421,35 @@ public class cBuildIR {
             this.value = value;
         }
     }
+
+    public static class VpathIR implements IR {
+
+        public enum Type {
+            CLEAR_ALL,
+            CLEAR_PATTERN,
+            SET_PATTERN
+        }
+
+        public final Type type;
+        public final ValueIR pattern;
+        public final List<ValueIR> directories;
+
+        private VpathIR(Type type, ValueIR pattern, List<ValueIR> directories) {
+            this.type = type;
+            this.pattern = pattern;
+            this.directories = directories;
+        }
+
+        public static VpathIR clearAll() {
+            return new VpathIR(Type.CLEAR_ALL, null, List.of());
+        }
+
+        public static VpathIR clearPattern(ValueIR pattern) {
+            return new VpathIR(Type.CLEAR_PATTERN, pattern, List.of());
+        }
+
+        public static VpathIR setPattern(ValueIR pattern, List<ValueIR> directories) {
+            return new VpathIR(Type.SET_PATTERN, pattern, directories);
+        }
+    }
 }
