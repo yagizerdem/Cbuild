@@ -148,6 +148,18 @@ public class cbuildBaseListener implements cbuildListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterVpath_args(cbuildParser.Vpath_argsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitVpath_args(cbuildParser.Vpath_argsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterAssignment(cbuildParser.AssignmentContext ctx) { }
 	/**
 	 * {@inheritDoc}

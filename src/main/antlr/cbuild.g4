@@ -28,15 +28,16 @@ statements_opt
     : comment_opt br statements?
     ;
 
-statement: ws? COMMENT
-    | ws? assignment br
-    | ws? function br
-    | ws? rule
+statement
+    : ws? COMMENT
     | ws? conditional
     | ws? define
     | ws? include
     | ws? export br
     | ws? vpath
+    | ws? assignment br
+    | ws? function br
+    | ws? rule
     ;
 
 define
@@ -59,7 +60,11 @@ export
     ;
 
 vpath
-    : VPATH ws expressions br
+    : VPATH vpath_args? comment_opt br
+    ;
+
+vpath_args
+    : ws pattern (ws expressions)?
     ;
 
 assignment

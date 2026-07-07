@@ -56,7 +56,27 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         else if(ctx.rule_() != null) {
             return ctx.rule_().accept(this);
         }
-        return null;
+        else if(ctx.function() != null) {
+            cBuildIR.FunctionCallPart callee = (cBuildIR.FunctionCallPart) ctx.function().accept(this);
+            cBuildIR.ValueIR value = new cBuildIR.ValueIR(List.of(callee));
+            return value;
+        }
+        else if(ctx.define() != null) {
+            cBuildIR.DefineIR defineIR = (cBuildIR.DefineIR) ctx.define().accept(this);
+            return defineIR;
+        }
+        else if(ctx.vpath() != null) {
+            cBuildIR.VpathIR vpathIR = (cBuildIR.VpathIR) ctx.vpath().accept(this);
+            return vpathIR;
+        }
+
+        throw new IllegalArgumentException(
+                "Unsupported statement at line " +
+                        ctx.getStart().getLine() +
+                        ", column " +
+                        ctx.getStart().getCharPositionInLine() +
+                        ": `" + ctx.getText() + "`"
+        );
     }
 
     @Override
@@ -104,7 +124,7 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
     @Override
     public Object visitAssignment_prefix(cbuildParser.Assignment_prefixContext ctx) {
         String specifier = ctx.specifiers().getText().trim();
-        cBuildIR.AssignmentPrefix prefix = cBuildIR.AssignmentPrefix.mapToEnum(specifier);
+        cBuildIR.AssignmentPrefix prefix = cBuildIR.AssignmentPrefix.fromSymbol(specifier);
         List<cBuildIR.ValuePart> parts = (List<cBuildIR.ValuePart>) ctx.pattern().accept(this);
         Pair<cBuildIR.AssignmentPrefix, List<cBuildIR.ValuePart>> pair =
                 new Pair<cBuildIR.AssignmentPrefix, List<cBuildIR.ValuePart>>(prefix, parts);
@@ -679,8 +699,124 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
     }
 
     @Override
+    public Object visitDefine(cbuildParser.DefineContext ctx) {
+        cBuildIR.DefineIR  defineIR = new cBuildIR.DefineIR();
+
+        if(ctx.specifiers() != null) {
+            String specifier = ctx.specifiers().getText().trim();
+            defineIR.specifiers = cBuildIR.AssignmentPrefix.fromSymbol(specifier);
+        }
+
+        List<cBuildIR.ValuePart> parts =  (List<cBuildIR.ValuePart>) ctx.pattern().accept(this);
+        defineIR.name = new cBuildIR.ValueIR(parts);
+
+        if(ctx.ASSIGN_OP() != null) {
+            defineIR.assignmentType = cBuildIR.AssignmentType.fromSymbol(ctx.ASSIGN_OP().getText().trim());
+        }
+
+        List<cBuildIR.ValuePart> valueParts = (List<cBuildIR.ValuePart>) ctx.definition().accept(this);
+        defineIR.value = new cBuildIR.ValueIR(valueParts);
+
+        return defineIR;
+    }
+
+    @Override
+    public Object visitDefinition(cbuildParser.DefinitionContext ctx) {
+        return ctx.exprs_in_def().accept(this);
+    }
+
+    @Override
+    public Object visitExprs_in_def(cbuildParser.Exprs_in_defContext ctx) {
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+
+        if (ctx.br() != null && ctx.first_expr_in_def().isEmpty()) {
+            return parts;
+        }
+
+        for (ParseTree astNode : ctx.children) {
+
+            if(astNode instanceof  cbuildParser.BrContext) {
+                cBuildIR.TextPart text = new cBuildIR.TextPart("\n");
+                parts.add(text);
+            }
+            else {
+                Object result = astNode.accept(this);
+
+                if (result instanceof List<?> list) {
+                    for (Object obj : list) {
+                        if (obj instanceof cBuildIR.ValuePart valuePart) {
+                            parts.add(valuePart);
+                        }
+                    }
+                }
+                else if (result instanceof cBuildIR.ValuePart valuePart) {
+                    parts.add(valuePart);
+                }
+
+            }
+
+        }
+
+        return parts;
+    }
+
+    @Override
+    public Object visitFirst_expr_in_def(cbuildParser.First_expr_in_defContext ctx) {
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+
+        for (ParseTree astNode : ctx.children) {
+            Object result = astNode.accept(this);
+
+            if (result instanceof List<?> list) {
+                for (Object obj : list) {
+                    if (obj instanceof cBuildIR.ValuePart valuePart) {
+                        parts.add(valuePart);
+                    }
+                }
+            }
+            else if (result instanceof cBuildIR.ValuePart valuePart) {
+                parts.add(valuePart);
+            }
+        }
+
+        return parts;
+    }
+
+    @Override
+    public Object visitChar_in_def(cbuildParser.Char_in_defContext ctx) {
+        return new cBuildIR.TextPart(ctx.getText());
+    }
+
+    @Override
+    public Object visitVpath(cbuildParser.VpathContext ctx) {
+        if (ctx.vpath_args() == null) {
+            return cBuildIR.VpathIR.clearAll();
+        }
+
+        return ctx.vpath_args().accept(this);
+    }
+
+    @Override
+    public Object visitVpath_args(cbuildParser.Vpath_argsContext ctx) {
+        cBuildIR.ValueIR arg = new cBuildIR.ValueIR();
+                List<cBuildIR.VarRefPart> arg_parts = (List<cBuildIR.VarRefPart>) ctx.pattern().accept(this);
+        arg.parts.addAll(arg_parts);
+
+        if (ctx.expressions() == null) {
+            return cBuildIR.VpathIR.clearPattern(arg);
+        }
+
+        List<cBuildIR.ValueIR> directories =
+                (List<cBuildIR.ValueIR>) ctx.expressions().accept(this);
+
+        return cBuildIR.VpathIR.setPattern(arg, directories);
+    }
+
+    @Override
     public Object visitWs(cbuildParser.WsContext ctx) {
         cBuildIR.TextPart part = new cBuildIR.TextPart(ctx.getText());
         return part;
     }
 }
+
+

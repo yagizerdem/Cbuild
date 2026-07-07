@@ -21,8 +21,7 @@ public class Main {
 
         try {
             String cBuildProgram = """
-$(OBJECTS): %.o: %.c
-\t	$(CC) -c $(CFLAGS) $< -o $@
+vpath %.c foo:bar
 """;
 
             CharStream charStream = CharStreams.fromString(cBuildProgram);

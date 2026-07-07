@@ -117,6 +117,16 @@ public interface cbuildListener extends ParseTreeListener {
 	 */
 	void exitVpath(cbuildParser.VpathContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link cbuildParser#vpath_args}.
+	 * @param ctx the parse tree
+	 */
+	void enterVpath_args(cbuildParser.Vpath_argsContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link cbuildParser#vpath_args}.
+	 * @param ctx the parse tree
+	 */
+	void exitVpath_args(cbuildParser.Vpath_argsContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link cbuildParser#assignment}.
 	 * @param ctx the parse tree
 	 */
