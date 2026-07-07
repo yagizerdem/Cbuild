@@ -187,8 +187,32 @@ public class cBuildIR {
     }
 
     public enum RuleSeparator {
-        SINGLE_COLON,
-        DOUBLE_COLON
+        SINGLE_COLON(":"),
+        DOUBLE_COLON("::");
+
+        private final String symbol;
+
+        RuleSeparator(String symbol) {
+            this.symbol = symbol;
+        }
+
+        public String symbol() {
+            return symbol;
+        }
+
+        public static RuleSeparator fromSymbol(String symbol) {
+            if (symbol == null || symbol.isBlank()) {
+                throw new IllegalArgumentException("Rule separator cannot be null or blank");
+            }
+
+            return switch (symbol.trim()) {
+                case ":" -> SINGLE_COLON;
+                case "::" -> DOUBLE_COLON;
+                default -> throw new IllegalArgumentException(
+                        "Unknown rule separator: " + symbol
+                );
+            };
+        }
     }
 
     public static class NormalRuleIR implements Rule {
@@ -210,6 +234,13 @@ public class cBuildIR {
             this.separator = separator;
         }
 
+        public NormalRuleIR(List<ValueIR> targets, List<ValueIR> prerequisites, RuleSeparator separator, List<RecipeIR> recipes) {
+            this.targets.addAll(targets);
+            this.prerequisites.addAll(prerequisites);
+            this.separator = separator;
+            this.recipes.addAll(recipes);
+        }
+
         @Override
         public List<ValueIR> targets() {
             return targets;
@@ -224,6 +255,7 @@ public class cBuildIR {
     public static class TargetRuleIR implements Rule {
         public final List<ValueIR> targets = new ArrayList<>();
         public AssignmentIR assignment;
+        public RuleSeparator separator; // not important for target rule
 
         public TargetRuleIR () {}
 
@@ -233,6 +265,14 @@ public class cBuildIR {
 
         public TargetRuleIR(List<ValueIR> targets, AssignmentIR assignmentIR) {
             this.targets.addAll(targets);
+            this.assignment = assignmentIR;
+        }
+
+        public TargetRuleIR(List<ValueIR> targets,
+                            RuleSeparator separator,
+                            AssignmentIR assignmentIR) {
+            this.targets.addAll(targets);
+            this.separator = separator;
             this.assignment = assignmentIR;
         }
 
@@ -252,6 +292,7 @@ public class cBuildIR {
         public ValueIR targetPattern;
         public final List<ValueIR> prerequisites = new ArrayList<>();
         public final List<RecipeIR> recipes = new ArrayList<>();
+        public RuleSeparator ruleSeparator;
 
         public StaticPatternRuleIR() {}
 
@@ -270,8 +311,13 @@ public class cBuildIR {
             this.prerequisites.addAll(_prerequisites);
         }
 
-        public StaticPatternRuleIR(List<ValueIR> _targets, ValueIR targetPattern, List<ValueIR> _prerequisites, List<RecipeIR> recipes) {
+        public StaticPatternRuleIR(List<ValueIR> _targets,
+                                   RuleSeparator ruleSeparator,
+                                   ValueIR targetPattern,
+                                   List<ValueIR> _prerequisites,
+                                   List<RecipeIR> recipes) {
             this.targets.addAll(_targets);
+            this.ruleSeparator = ruleSeparator;
             this.targetPattern = targetPattern;
             this.prerequisites.addAll(_prerequisites);
             this.recipes.addAll(recipes);
