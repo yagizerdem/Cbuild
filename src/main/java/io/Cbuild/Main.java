@@ -21,9 +21,8 @@ public class Main {
 
         try {
             String cBuildProgram = """
-ifeq ($(strip $(foo)),)
-a = 10
-endif
+$(OBJECTS): %.o: %.c
+\t	$(CC) -c $(CFLAGS) $< -o $@
 """;
 
             CharStream charStream = CharStreams.fromString(cBuildProgram);

@@ -1,6 +1,7 @@
 package io.Cbuild;
 
 import io.Cbuild.gnu_make_functions.make_function_dispatcher;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.javatuples.Pair;
 
@@ -51,6 +52,9 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         }
         else if(ctx.conditional() != null) {
             return ctx.conditional().accept(this);
+        }
+        else if(ctx.rule_() != null) {
+            return ctx.rule_().accept(this);
         }
         return null;
     }
@@ -164,6 +168,10 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
 
     @Override
     public Object visitFunction(cbuildParser.FunctionContext ctx) {
+        if(ctx.VAR() != null) {
+            return compileVarRef(ctx);
+        }
+
         String name = ctx.function_name().getText();
         if(dispatcher.has(name)) {
             make_function_dispatcher.MakeFunctionHandler handler = dispatcher.getHandler(name);
@@ -176,6 +184,13 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         value.parts.add(new cBuildIR.TextPart(ctx.function_name().getText()));
         cBuildIR.VarRefPart ref = new cBuildIR.VarRefPart(value);
         return ref;
+    }
+
+    private cBuildIR.VarRefPart compileVarRef(cbuildParser.FunctionContext ctx) {
+        String raw = ctx.VAR().getText();
+        cBuildIR.TextPart part = new cBuildIR.TextPart(raw);
+        cBuildIR.ValueIR value = new cBuildIR.ValueIR(List.of(part));
+        return new cBuildIR.VarRefPart(value);
     }
 
     @Override
@@ -405,7 +420,263 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         return new ArrayList<>();
     }
 
+    @Override
+    public Object visitRule(cbuildParser.RuleContext ctx) {
+        if(ctx.static_pattern_rule() != null) {
+            return ctx.static_pattern_rule().accept(this);
+        }
 
+        List<cBuildIR.ValueIR> targetsIR = (List<cBuildIR.ValueIR>) ctx.targets().accept(this);
+
+        cBuildIR.RuleSeparator ruleSeparator =
+                cBuildIR.RuleSeparator.fromSymbol(ctx.colon().getText().trim());
+
+        if(ctx.prerequisites() != null) {
+            List<cBuildIR.ValueIR> prerequisitesIR = (List<cBuildIR.ValueIR>) ctx.prerequisites().accept(this);
+            List<cBuildIR.RecipeIR> recipeIRS = new ArrayList<>();
+            if(ctx.recipes() != null) {
+                recipeIRS = (List<cBuildIR.RecipeIR>) ctx.recipes().accept(this);
+            }
+            cBuildIR.NormalRuleIR ruleIR = new cBuildIR.NormalRuleIR(targetsIR,
+                    prerequisitesIR,
+                    ruleSeparator,
+                    recipeIRS);
+
+            return ruleIR;
+        }
+        else {
+            cBuildIR.AssignmentIR assignmentIR = (cBuildIR.AssignmentIR) ctx.assignment().accept(this);
+
+            cBuildIR.TargetRuleIR ruleIR = new cBuildIR.TargetRuleIR(targetsIR,
+                    ruleSeparator,
+                    assignmentIR
+                    );
+
+            return ruleIR;
+        }
+
+    }
+
+    @Override
+    public Object visitTargets(cbuildParser.TargetsContext ctx) {
+        List<cBuildIR.ValueIR> targetsIR = new ArrayList<>();
+        for(cbuildParser.TargetContext target_ctx : ctx.target()) {
+            List<cBuildIR.ValuePart> parts =  (List<cBuildIR.ValuePart>) target_ctx.pattern().accept(this);
+            cBuildIR.ValueIR targetValueIR = new cBuildIR.ValueIR(parts);
+            targetsIR.add(targetValueIR);
+        }
+
+        return targetsIR;
+    }
+
+    @Override
+    public Object visitPrerequisites(cbuildParser.PrerequisitesContext ctx) {
+        return ctx.targets().accept(this);
+    }
+
+    @Override
+    public Object visitRecipes(cbuildParser.RecipesContext ctx) {
+        List<cBuildIR.RecipeIR> recipes = new ArrayList<>();
+
+        for (cbuildParser.RecipeContext recipeCtx : ctx.recipe()) {
+            Object result = recipeCtx.accept(this);
+
+            if (result instanceof cBuildIR.RecipeIR recipeIR) {
+                recipes.add(recipeIR);
+            }
+        }
+
+        return recipes;
+    }
+
+    @Override
+    public Object visitRecipe(cbuildParser.RecipeContext ctx) {
+        if (ctx.exprs_in_recipe() != null) {
+            List<cBuildIR.ValuePart> parts =
+                    (List<cBuildIR.ValuePart>) ctx.exprs_in_recipe().accept(this);
+
+            cBuildIR.RecipeIR recipeIR = new cBuildIR.RecipeIR();
+            recipeIR.command = new cBuildIR.ValueIR(parts);
+
+            return recipeIR;
+        }
+
+        if (ctx.COMMENT() != null) {
+            return null;
+        }
+
+        if (ctx.conditional_in_recipe() != null) {
+            return ctx.conditional_in_recipe().accept(this);
+        }
+
+        return null;
+    }
+
+    @Override
+    public Object visitExprs_in_recipe(cbuildParser.Exprs_in_recipeContext ctx) {
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+
+        for (ParseTree astNode : ctx.children) {
+            Object result = astNode.accept(this);
+
+            if (result instanceof List<?> list) {
+                for (Object obj : list) {
+                    if (obj instanceof cBuildIR.ValuePart valuePart) {
+                        parts.add(valuePart);
+                    }
+                }
+            }
+            else if (result instanceof cBuildIR.ValuePart valuePart) {
+                parts.add(valuePart);
+            }
+        }
+
+        return parts;
+    }
+
+    @Override
+    public Object visitExpr_in_recipe(cbuildParser.Expr_in_recipeContext ctx) {
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+
+        for (cbuildParser.Expr_in_recipe_atomContext atomCtx : ctx.expr_in_recipe_atom()) {
+            Object result = atomCtx.accept(this);
+
+            if (result instanceof List<?> list) {
+                for (Object obj : list) {
+                    if (obj instanceof cBuildIR.ValuePart valuePart) {
+                        parts.add(valuePart);
+                    }
+                }
+            }
+            else if (result instanceof cBuildIR.ValuePart valuePart) {
+                parts.add(valuePart);
+            }
+        }
+
+        return parts;
+    }
+
+    @Override
+    public Object visitExpr_in_recipe_atom(cbuildParser.Expr_in_recipe_atomContext ctx) {
+        if (ctx.text_in_recipe() != null) {
+            return new cBuildIR.TextPart(ctx.text_in_recipe().getText());
+        }
+
+        if (ctx.function() != null) {
+            return ctx.function().accept(this);
+        }
+
+        return null;
+    }
+
+    @Override
+    public Object visitText_in_recipe(cbuildParser.Text_in_recipeContext ctx) {
+        return new cBuildIR.TextPart(ctx.getText());
+    }
+
+    @Override
+    public Object visitConditional_in_recipe(cbuildParser.Conditional_in_recipeContext ctx) {
+        cBuildIR.ConditionalIR conditionalIR = new cBuildIR.ConditionalIR();
+
+        if (ctx.if_eq_kw() != null) {
+            conditionalIR.kind = cBuildIR.ConditionKind.fromKeyword(ctx.if_eq_kw().getText());
+            conditionalIR.condition = (cBuildIR.Condition) ctx.condition().accept(this);
+        }
+        else if (ctx.if_def_kw() != null) {
+            conditionalIR.kind = cBuildIR.ConditionKind.fromKeyword(ctx.if_def_kw().getText());
+
+            cBuildIR.Condition condition = new cBuildIR.Condition();
+
+            Object result = ctx.identifier().accept(this);
+            List<cBuildIR.ValuePart> parts = new ArrayList<>();
+
+            if (result instanceof cBuildIR.ValuePart valuePart) {
+                parts.add(valuePart);
+            }
+            else if (result instanceof List<?> list) {
+                for (Object obj : list) {
+                    if (obj instanceof cBuildIR.ValuePart valuePart) {
+                        parts.add(valuePart);
+                    }
+                }
+            }
+
+            condition.left = new cBuildIR.ValueIR(parts);
+            condition.right = null;
+
+            conditionalIR.condition = condition;
+        }
+
+        if (ctx.recipes_opt(0) != null) {
+            Object thenResult = ctx.recipes_opt(0).accept(this);
+
+            if (thenResult instanceof List<?> list) {
+                for (Object obj : list) {
+                    if (obj instanceof cBuildIR.RecipeIR recipeIR) {
+                        conditionalIR.thenBranch.add(recipeIR);
+                    }
+                }
+            }
+        }
+
+        if (ctx.recipes_opt().size() > 1 && ctx.recipes_opt(1) != null) {
+            Object elseResult = ctx.recipes_opt(1).accept(this);
+
+            if (elseResult instanceof List<?> list) {
+                for (Object obj : list) {
+                    if (obj instanceof cBuildIR.RecipeIR recipeIR) {
+                        conditionalIR.elseBranch.add(recipeIR);
+                    }
+                }
+            }
+        }
+        else if (ctx.conditional_in_recipe() != null) {
+            Object elseConditional = ctx.conditional_in_recipe().accept(this);
+
+            if (elseConditional instanceof cBuildIR.IR ir) {
+                conditionalIR.elseBranch.add(ir);
+            }
+        }
+
+        return conditionalIR;
+    }
+
+
+    @Override
+    public Object visitStatic_pattern_rule(cbuildParser.Static_pattern_ruleContext ctx) {
+        List<cBuildIR.ValueIR> targetsIR =
+                (List<cBuildIR.ValueIR>) ctx.targets().accept(this);
+
+        cBuildIR.RuleSeparator ruleSeparator =
+                cBuildIR.RuleSeparator.fromSymbol(ctx.colon(0).getText().trim());
+
+        List<cBuildIR.ValuePart> targetPatternParts =
+                (List<cBuildIR.ValuePart>) ctx.pattern().accept(this);
+
+        cBuildIR.ValueIR targetPatternIR = new cBuildIR.ValueIR(targetPatternParts);
+
+        List<cBuildIR.ValueIR> prerequisitesIR = new ArrayList<>();
+
+        if (ctx.prerequisites() != null) {
+            prerequisitesIR =
+                    (List<cBuildIR.ValueIR>) ctx.prerequisites().accept(this);
+        }
+
+        List<cBuildIR.RecipeIR> recipeIRS = new ArrayList<>();
+
+        if (ctx.recipes() != null) {
+            recipeIRS =
+                    (List<cBuildIR.RecipeIR>) ctx.recipes().accept(this);
+        }
+
+        return new cBuildIR.StaticPatternRuleIR(
+                targetsIR,
+                ruleSeparator,
+                targetPatternIR,
+                prerequisitesIR,
+                recipeIRS
+        );
+    }
 
     @Override
     public Object visitWs(cbuildParser.WsContext ctx) {
