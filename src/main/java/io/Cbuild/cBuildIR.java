@@ -56,13 +56,39 @@ public class cBuildIR {
 
 
     public static enum AssignmentType {
-        RECURSIVE,          // =
-        SIMPLE,             // :=
-        POSIX_SIMPLE,       // ::=
-        IMMEDIATE_ESCAPED,  // :::=
-        CONDITIONAL,        // ?=
-        APPEND,             // +=
-        SHELL               // !=
+        RECURSIVE("recursive"),          // =
+        SIMPLE("simple"),             // :=
+        POSIX_SIMPLE("posix simple"),       // ::=
+        IMMEDIATE_ESCAPED("immediate escaped"),  // :::=
+        CONDITIONAL("conditional"),        // ?=
+        APPEND("append"),             // +=
+        SHELL("shell");               // !=
+
+        private final String type;
+
+        AssignmentType(String type) {
+            this.type = type;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public static AssignmentType fromSymbol(String type) {
+            if (type == null) {
+                throw new IllegalArgumentException("Assignment type cannot be null");
+            }
+
+            String normalized = type.trim().replaceAll("\\s+", " ");
+
+            for (AssignmentType value : AssignmentType.values()) {
+                if (value.getType().equals(normalized)) {
+                    return value;
+                }
+            }
+
+            throw new IllegalArgumentException("Unknown assignment type: " + type);
+        }
     }
 
     public static enum AssignmentPrefix {
@@ -85,7 +111,7 @@ public class cBuildIR {
             return prefix;
         }
 
-        public static AssignmentPrefix mapToEnum(String prefix) {
+        public static AssignmentPrefix fromSymbol(String prefix) {
             if (prefix == null) {
                 throw new IllegalArgumentException("Assignment prefix cannot be null");
             }
@@ -375,5 +401,24 @@ public class cBuildIR {
         }
     }
 
+    public static class DefineIR implements IR {
+        public AssignmentPrefix specifiers;
+        public ValueIR name;
+        public AssignmentType assignmentType;
+        public ValueIR value;
 
+        public DefineIR() {}
+
+        public DefineIR(
+                AssignmentPrefix specifiers,
+                ValueIR name,
+                AssignmentType assignmentType,
+                ValueIR value
+        ) {
+            this.specifiers = specifiers;
+            this.name = name;
+            this.assignmentType = assignmentType;
+            this.value = value;
+        }
+    }
 }

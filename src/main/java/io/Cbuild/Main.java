@@ -21,7 +21,13 @@ public class Main {
 
         try {
             String cBuildProgram = """
-$(patsubst src/%.c, obj/%.o, $(SOURCES))
+define two-lines
+
+echo foo
+
+echo $(bar)
+
+endef
 """;
 
             CharStream charStream = CharStreams.fromString(cBuildProgram);
