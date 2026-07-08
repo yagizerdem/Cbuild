@@ -249,6 +249,7 @@ public class cBuildIR {
         public final List<ValueIR> targets = new ArrayList<>();
         public RuleSeparator separator = RuleSeparator.SINGLE_COLON;
         public final List<ValueIR> prerequisites = new ArrayList<>();
+        public final List<ValueIR> orderonlyprerequisites = new ArrayList<>();
         public final List<RecipeIR> recipes = new ArrayList<>();
 
         public NormalRuleIR() {}
@@ -267,6 +268,18 @@ public class cBuildIR {
         public NormalRuleIR(List<ValueIR> targets, List<ValueIR> prerequisites, RuleSeparator separator, List<RecipeIR> recipes) {
             this.targets.addAll(targets);
             this.prerequisites.addAll(prerequisites);
+            this.separator = separator;
+            this.recipes.addAll(recipes);
+        }
+
+        public NormalRuleIR(List<ValueIR> targets,
+                            List<ValueIR> prerequisites,
+                            List<ValueIR> orderonlyprerequisites,
+                            RuleSeparator separator,
+                            List<RecipeIR> recipes) {
+            this.targets.addAll(targets);
+            this.prerequisites.addAll(prerequisites);
+            this.orderonlyprerequisites.addAll(orderonlyprerequisites);
             this.separator = separator;
             this.recipes.addAll(recipes);
         }
@@ -321,6 +334,7 @@ public class cBuildIR {
         public final List<ValueIR> targets = new ArrayList<>();
         public ValueIR targetPattern;
         public final List<ValueIR> prerequisites = new ArrayList<>();
+        public final List<ValueIR> orderonlyprerequisites = new ArrayList<>();
         public final List<RecipeIR> recipes = new ArrayList<>();
         public RuleSeparator ruleSeparator;
 
@@ -350,6 +364,20 @@ public class cBuildIR {
             this.ruleSeparator = ruleSeparator;
             this.targetPattern = targetPattern;
             this.prerequisites.addAll(_prerequisites);
+            this.recipes.addAll(recipes);
+        }
+
+        public StaticPatternRuleIR(List<ValueIR> _targets,
+                                   RuleSeparator ruleSeparator,
+                                   ValueIR targetPattern,
+                                   List<ValueIR> _prerequisites,
+                                   List<ValueIR> _orderonlyprerequisites,
+                                   List<RecipeIR> recipes) {
+            this.targets.addAll(_targets);
+            this.ruleSeparator = ruleSeparator;
+            this.targetPattern = targetPattern;
+            this.prerequisites.addAll(_prerequisites);
+            this.orderonlyprerequisites.addAll(_orderonlyprerequisites);
             this.recipes.addAll(recipes);
         }
 

@@ -459,11 +459,18 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         if(ctx.prerequisites() != null) {
             List<cBuildIR.ValueIR> prerequisitesIR = (List<cBuildIR.ValueIR>) ctx.prerequisites().accept(this);
             List<cBuildIR.RecipeIR> recipeIRS = new ArrayList<>();
+            List<cBuildIR.ValueIR> orderonlyprerequisitesIR = new ArrayList<>();
+            if(ctx.orderonlyprerequisites() != null) {
+                orderonlyprerequisitesIR = (List<cBuildIR.ValueIR>) ctx.orderonlyprerequisites().accept(this);
+            }
+
+
             if(ctx.recipes() != null) {
                 recipeIRS = (List<cBuildIR.RecipeIR>) ctx.recipes().accept(this);
             }
             cBuildIR.NormalRuleIR ruleIR = new cBuildIR.NormalRuleIR(targetsIR,
                     prerequisitesIR,
+                    orderonlyprerequisitesIR,
                     ruleSeparator,
                     recipeIRS);
 
@@ -496,6 +503,11 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
 
     @Override
     public Object visitPrerequisites(cbuildParser.PrerequisitesContext ctx) {
+        return ctx.targets().accept(this);
+    }
+
+    @Override
+    public Object visitOrderonlyprerequisites(cbuildParser.OrderonlyprerequisitesContext ctx) {
         return ctx.targets().accept(this);
     }
 
@@ -681,10 +693,17 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         cBuildIR.ValueIR targetPatternIR = new cBuildIR.ValueIR(targetPatternParts);
 
         List<cBuildIR.ValueIR> prerequisitesIR = new ArrayList<>();
+        List<cBuildIR.ValueIR> orderonlyprerequisitesIR = new ArrayList<>();
 
         if (ctx.prerequisites() != null) {
             prerequisitesIR =
                     (List<cBuildIR.ValueIR>) ctx.prerequisites().accept(this);
+        }
+
+
+        if (ctx.orderonlyprerequisites() != null) {
+            prerequisitesIR =
+                    (List<cBuildIR.ValueIR>) ctx.orderonlyprerequisites().accept(this);
         }
 
         List<cBuildIR.RecipeIR> recipeIRS = new ArrayList<>();
@@ -699,6 +718,7 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
                 ruleSeparator,
                 targetPatternIR,
                 prerequisitesIR,
+                orderonlyprerequisitesIR,
                 recipeIRS
         );
     }

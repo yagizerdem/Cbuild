@@ -318,6 +318,13 @@ public class cbuildBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitOrderonlyprerequisites(cbuildParser.OrderonlyprerequisitesContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitTargets(cbuildParser.TargetsContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}

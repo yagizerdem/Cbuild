@@ -21,7 +21,7 @@ public class Main {
 
         try {
             String cBuildProgram = """
-a b &: x
+a b &: x y | t k
 \t	gen
 """;
 

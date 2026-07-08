@@ -268,6 +268,12 @@ public interface cbuildVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitPrerequisites(cbuildParser.PrerequisitesContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link cbuildParser#orderonlyprerequisites}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOrderonlyprerequisites(cbuildParser.OrderonlyprerequisitesContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link cbuildParser#targets}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
