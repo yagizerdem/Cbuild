@@ -2674,7 +2674,7 @@ public class cbuildParser extends Parser {
 			setState(527);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 292057337406L) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 292057370174L) != 0)) {
 				{
 				setState(526);
 				expr_in_recipe();
@@ -3181,7 +3181,7 @@ public class cbuildParser extends Parser {
 				setState(567); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-			} while ( (((_la) & ~0x3f) == 0 && ((1L << _la) & 292057337406L) != 0) );
+			} while ( (((_la) & ~0x3f) == 0 && ((1L << _la) & 292057370174L) != 0) );
 			}
 		}
 		catch (RecognitionException re) {
@@ -3235,6 +3235,7 @@ public class cbuildParser extends Parser {
 			case LPAREN:
 			case RPAREN:
 			case COMMA:
+			case PIPE:
 			case INCLUDE:
 			case ENDEF:
 			case IFDEF:
@@ -5445,6 +5446,7 @@ public class cbuildParser extends Parser {
 		}
 		public TerminalNode DOUBLE_DOLLAR() { return getToken(cbuildParser.DOUBLE_DOLLAR, 0); }
 		public TerminalNode COMMENT() { return getToken(cbuildParser.COMMENT, 0); }
+		public TerminalNode PIPE() { return getToken(cbuildParser.PIPE, 0); }
 		public Char_in_recipeContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -5468,7 +5470,7 @@ public class cbuildParser extends Parser {
 		Char_in_recipeContext _localctx = new Char_in_recipeContext(_ctx, getState());
 		enterRule(_localctx, 112, RULE_char_in_recipe);
 		try {
-			setState(856);
+			setState(857);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,118,_ctx) ) {
 			case 1:
@@ -5490,6 +5492,13 @@ public class cbuildParser extends Parser {
 				{
 				setState(855);
 				match(COMMENT);
+				}
+				break;
+			case 4:
+				enterOuterAlt(_localctx, 4);
+				{
+				setState(856);
+				match(PIPE);
 				}
 				break;
 			}
@@ -5539,7 +5548,7 @@ public class cbuildParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(859); 
+			setState(860); 
 			_errHandler.sync(this);
 			_alt = 1;
 			do {
@@ -5547,7 +5556,7 @@ public class cbuildParser extends Parser {
 				case 1:
 					{
 					{
-					setState(858);
+					setState(859);
 					char_();
 					}
 					}
@@ -5555,7 +5564,7 @@ public class cbuildParser extends Parser {
 				default:
 					throw new NoViableAltException(this);
 				}
-				setState(861); 
+				setState(862); 
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,119,_ctx);
 			} while ( _alt!=2 && _alt!= ATN.INVALID_ALT_NUMBER );
@@ -5606,7 +5615,7 @@ public class cbuildParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(864); 
+			setState(865); 
 			_errHandler.sync(this);
 			_alt = 1;
 			do {
@@ -5614,7 +5623,7 @@ public class cbuildParser extends Parser {
 				case 1:
 					{
 					{
-					setState(863);
+					setState(864);
 					char_nested();
 					}
 					}
@@ -5622,7 +5631,7 @@ public class cbuildParser extends Parser {
 				default:
 					throw new NoViableAltException(this);
 				}
-				setState(866); 
+				setState(867); 
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,120,_ctx);
 			} while ( _alt!=2 && _alt!= ATN.INVALID_ALT_NUMBER );
@@ -5673,7 +5682,7 @@ public class cbuildParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(869); 
+			setState(870); 
 			_errHandler.sync(this);
 			_alt = 1;
 			do {
@@ -5681,7 +5690,7 @@ public class cbuildParser extends Parser {
 				case 1:
 					{
 					{
-					setState(868);
+					setState(869);
 					char_in_assign();
 					}
 					}
@@ -5689,7 +5698,7 @@ public class cbuildParser extends Parser {
 				default:
 					throw new NoViableAltException(this);
 				}
-				setState(871); 
+				setState(872); 
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,121,_ctx);
 			} while ( _alt!=2 && _alt!= ATN.INVALID_ALT_NUMBER );
@@ -5740,7 +5749,7 @@ public class cbuildParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(874); 
+			setState(875); 
 			_errHandler.sync(this);
 			_alt = 1;
 			do {
@@ -5748,7 +5757,7 @@ public class cbuildParser extends Parser {
 				case 1:
 					{
 					{
-					setState(873);
+					setState(874);
 					char_in_recipe();
 					}
 					}
@@ -5756,7 +5765,7 @@ public class cbuildParser extends Parser {
 				default:
 					throw new NoViableAltException(this);
 				}
-				setState(876); 
+				setState(877); 
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,122,_ctx);
 			} while ( _alt!=2 && _alt!= ATN.INVALID_ALT_NUMBER );
@@ -5815,7 +5824,7 @@ public class cbuildParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(878);
+			setState(879);
 			_la = _input.LA(1);
 			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 4294508544L) != 0)) ) {
 			_errHandler.recoverInline(this);
@@ -5870,7 +5879,7 @@ public class cbuildParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(880);
+			setState(881);
 			_la = _input.LA(1);
 			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 960L) != 0)) ) {
 			_errHandler.recoverInline(this);
@@ -5921,12 +5930,12 @@ public class cbuildParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(883);
+			setState(884);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,123,_ctx) ) {
 			case 1:
 				{
-				setState(882);
+				setState(883);
 				match(COMMENT);
 				}
 				break;
@@ -5974,7 +5983,7 @@ public class cbuildParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(885);
+			setState(886);
 			_la = _input.LA(1);
 			if ( !(_la==WS || _la==TAB) ) {
 			_errHandler.recoverInline(this);
@@ -5998,7 +6007,7 @@ public class cbuildParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\u0004\u0001&\u0378\u0002\u0000\u0007\u0000\u0002\u0001\u0007\u0001\u0002"+
+		"\u0004\u0001&\u0379\u0002\u0000\u0007\u0000\u0002\u0001\u0007\u0001\u0002"+
 		"\u0002\u0007\u0002\u0002\u0003\u0007\u0003\u0002\u0004\u0007\u0004\u0002"+
 		"\u0005\u0007\u0005\u0002\u0006\u0007\u0006\u0002\u0007\u0007\u0007\u0002"+
 		"\b\u0007\b\u0002\t\u0007\t\u0002\n\u0007\n\u0002\u000b\u0007\u000b\u0002"+
@@ -6116,15 +6125,15 @@ public class cbuildParser extends Parser {
 		"3\u00014\u00014\u00015\u00015\u00035\u033b\b5\u00016\u00016\u00016\u0001"+
 		"6\u00036\u0341\b6\u00017\u00017\u00017\u00017\u00017\u00017\u00017\u0001"+
 		"7\u00017\u00017\u00017\u00017\u00017\u00017\u00017\u00017\u00017\u0003"+
-		"7\u0354\b7\u00018\u00018\u00018\u00038\u0359\b8\u00019\u00049\u035c\b"+
-		"9\u000b9\f9\u035d\u0001:\u0004:\u0361\b:\u000b:\f:\u0362\u0001;\u0004"+
-		";\u0366\b;\u000b;\f;\u0367\u0001<\u0004<\u036b\b<\u000b<\f<\u036c\u0001"+
-		"=\u0001=\u0001>\u0001>\u0001?\u0003?\u0374\b?\u0001@\u0001@\u0001@\u0000"+
+		"7\u0354\b7\u00018\u00018\u00018\u00018\u00038\u035a\b8\u00019\u00049\u035d"+
+		"\b9\u000b9\f9\u035e\u0001:\u0004:\u0362\b:\u000b:\f:\u0363\u0001;\u0004"+
+		";\u0367\b;\u000b;\f;\u0368\u0001<\u0004<\u036c\b<\u000b<\f<\u036d\u0001"+
+		"=\u0001=\u0001>\u0001>\u0001?\u0003?\u0375\b?\u0001@\u0001@\u0001@\u0000"+
 		"\u0000A\u0000\u0002\u0004\u0006\b\n\f\u000e\u0010\u0012\u0014\u0016\u0018"+
 		"\u001a\u001c\u001e \"$&(*,.02468:<>@BDFHJLNPRTVXZ\\^`bdfhjlnprtvxz|~\u0080"+
 		"\u0000\u0007\u0001\u0000\u0016\u0017\u0001\u0000\u0014\u0015\u0001\u0000"+
 		"\u0010\u0012\u0004\u0000\u0001\u0001\u0005\u0005\t\t !\u0002\u0000\u0010"+
-		"\u0010\u0013\u001f\u0001\u0000\u0006\t\u0001\u0000$%\u03ed\u0000\u0086"+
+		"\u0010\u0013\u001f\u0001\u0000\u0006\t\u0001\u0000$%\u03ef\u0000\u0086"+
 		"\u0001\u0000\u0000\u0000\u0002\u008c\u0001\u0000\u0000\u0000\u0004\u00cd"+
 		"\u0001\u0000\u0000\u0000\u0006\u0113\u0001\u0000\u0000\u0000\b\u0115\u0001"+
 		"\u0000\u0000\u0000\n\u0144\u0001\u0000\u0000\u0000\f\u0147\u0001\u0000"+
@@ -6150,10 +6159,10 @@ public class cbuildParser extends Parser {
 		"\u0329\u0001\u0000\u0000\u0000d\u0332\u0001\u0000\u0000\u0000f\u0334\u0001"+
 		"\u0000\u0000\u0000h\u0336\u0001\u0000\u0000\u0000j\u033a\u0001\u0000\u0000"+
 		"\u0000l\u0340\u0001\u0000\u0000\u0000n\u0353\u0001\u0000\u0000\u0000p"+
-		"\u0358\u0001\u0000\u0000\u0000r\u035b\u0001\u0000\u0000\u0000t\u0360\u0001"+
-		"\u0000\u0000\u0000v\u0365\u0001\u0000\u0000\u0000x\u036a\u0001\u0000\u0000"+
-		"\u0000z\u036e\u0001\u0000\u0000\u0000|\u0370\u0001\u0000\u0000\u0000~"+
-		"\u0373\u0001\u0000\u0000\u0000\u0080\u0375\u0001\u0000\u0000\u0000\u0082"+
+		"\u0359\u0001\u0000\u0000\u0000r\u035c\u0001\u0000\u0000\u0000t\u0361\u0001"+
+		"\u0000\u0000\u0000v\u0366\u0001\u0000\u0000\u0000x\u036b\u0001\u0000\u0000"+
+		"\u0000z\u036f\u0001\u0000\u0000\u0000|\u0371\u0001\u0000\u0000\u0000~"+
+		"\u0374\u0001\u0000\u0000\u0000\u0080\u0376\u0001\u0000\u0000\u0000\u0082"+
 		"\u0083\u0003\u0002\u0001\u0000\u0083\u0084\u0005\u0000\u0000\u0001\u0084"+
 		"\u0087\u0001\u0000\u0000\u0000\u0085\u0087\u0005\u0000\u0000\u0001\u0086"+
 		"\u0082\u0001\u0000\u0000\u0000\u0086\u0085\u0001\u0000\u0000\u0000\u0087"+
@@ -6573,25 +6582,26 @@ public class cbuildParser extends Parser {
 		"\u0000\u0000\u0353\u034e\u0001\u0000\u0000\u0000\u0353\u034f\u0001\u0000"+
 		"\u0000\u0000\u0353\u0350\u0001\u0000\u0000\u0000\u0353\u0351\u0001\u0000"+
 		"\u0000\u0000\u0353\u0352\u0001\u0000\u0000\u0000\u0354o\u0001\u0000\u0000"+
-		"\u0000\u0355\u0359\u0003l6\u0000\u0356\u0359\u0005\u0005\u0000\u0000\u0357"+
-		"\u0359\u0005&\u0000\u0000\u0358\u0355\u0001\u0000\u0000\u0000\u0358\u0356"+
-		"\u0001\u0000\u0000\u0000\u0358\u0357\u0001\u0000\u0000\u0000\u0359q\u0001"+
-		"\u0000\u0000\u0000\u035a\u035c\u0003h4\u0000\u035b\u035a\u0001\u0000\u0000"+
-		"\u0000\u035c\u035d\u0001\u0000\u0000\u0000\u035d\u035b\u0001\u0000\u0000"+
-		"\u0000\u035d\u035e\u0001\u0000\u0000\u0000\u035es\u0001\u0000\u0000\u0000"+
-		"\u035f\u0361\u0003j5\u0000\u0360\u035f\u0001\u0000\u0000\u0000\u0361\u0362"+
-		"\u0001\u0000\u0000\u0000\u0362\u0360\u0001\u0000\u0000\u0000\u0362\u0363"+
-		"\u0001\u0000\u0000\u0000\u0363u\u0001\u0000\u0000\u0000\u0364\u0366\u0003"+
-		"l6\u0000\u0365\u0364\u0001\u0000\u0000\u0000\u0366\u0367\u0001\u0000\u0000"+
-		"\u0000\u0367\u0365\u0001\u0000\u0000\u0000\u0367\u0368\u0001\u0000\u0000"+
-		"\u0000\u0368w\u0001\u0000\u0000\u0000\u0369\u036b\u0003p8\u0000\u036a"+
-		"\u0369\u0001\u0000\u0000\u0000\u036b\u036c\u0001\u0000\u0000\u0000\u036c"+
+		"\u0000\u0355\u035a\u0003l6\u0000\u0356\u035a\u0005\u0005\u0000\u0000\u0357"+
+		"\u035a\u0005&\u0000\u0000\u0358\u035a\u0005\u000f\u0000\u0000\u0359\u0355"+
+		"\u0001\u0000\u0000\u0000\u0359\u0356\u0001\u0000\u0000\u0000\u0359\u0357"+
+		"\u0001\u0000\u0000\u0000\u0359\u0358\u0001\u0000\u0000\u0000\u035aq\u0001"+
+		"\u0000\u0000\u0000\u035b\u035d\u0003h4\u0000\u035c\u035b\u0001\u0000\u0000"+
+		"\u0000\u035d\u035e\u0001\u0000\u0000\u0000\u035e\u035c\u0001\u0000\u0000"+
+		"\u0000\u035e\u035f\u0001\u0000\u0000\u0000\u035fs\u0001\u0000\u0000\u0000"+
+		"\u0360\u0362\u0003j5\u0000\u0361\u0360\u0001\u0000\u0000\u0000\u0362\u0363"+
+		"\u0001\u0000\u0000\u0000\u0363\u0361\u0001\u0000\u0000\u0000\u0363\u0364"+
+		"\u0001\u0000\u0000\u0000\u0364u\u0001\u0000\u0000\u0000\u0365\u0367\u0003"+
+		"l6\u0000\u0366\u0365\u0001\u0000\u0000\u0000\u0367\u0368\u0001\u0000\u0000"+
+		"\u0000\u0368\u0366\u0001\u0000\u0000\u0000\u0368\u0369\u0001\u0000\u0000"+
+		"\u0000\u0369w\u0001\u0000\u0000\u0000\u036a\u036c\u0003p8\u0000\u036b"+
 		"\u036a\u0001\u0000\u0000\u0000\u036c\u036d\u0001\u0000\u0000\u0000\u036d"+
-		"y\u0001\u0000\u0000\u0000\u036e\u036f\u0007\u0004\u0000\u0000\u036f{\u0001"+
-		"\u0000\u0000\u0000\u0370\u0371\u0007\u0005\u0000\u0000\u0371}\u0001\u0000"+
-		"\u0000\u0000\u0372\u0374\u0005&\u0000\u0000\u0373\u0372\u0001\u0000\u0000"+
-		"\u0000\u0373\u0374\u0001\u0000\u0000\u0000\u0374\u007f\u0001\u0000\u0000"+
-		"\u0000\u0375\u0376\u0007\u0006\u0000\u0000\u0376\u0081\u0001\u0000\u0000"+
+		"\u036b\u0001\u0000\u0000\u0000\u036d\u036e\u0001\u0000\u0000\u0000\u036e"+
+		"y\u0001\u0000\u0000\u0000\u036f\u0370\u0007\u0004\u0000\u0000\u0370{\u0001"+
+		"\u0000\u0000\u0000\u0371\u0372\u0007\u0005\u0000\u0000\u0372}\u0001\u0000"+
+		"\u0000\u0000\u0373\u0375\u0005&\u0000\u0000\u0374\u0373\u0001\u0000\u0000"+
+		"\u0000\u0374\u0375\u0001\u0000\u0000\u0000\u0375\u007f\u0001\u0000\u0000"+
+		"\u0000\u0376\u0377\u0007\u0006\u0000\u0000\u0377\u0081\u0001\u0000\u0000"+
 		"\u0000|\u0086\u008a\u008c\u0091\u009b\u00a7\u00b0\u00ba\u00c6\u00cd\u00d1"+
 		"\u00db\u00e8\u00f3\u00fd\u010a\u0113\u0118\u011b\u011f\u0123\u0127\u012b"+
 		"\u0131\u0135\u013b\u0141\u0144\u0147\u014d\u0150\u0153\u0161\u016d\u016f"+
@@ -6601,8 +6611,8 @@ public class cbuildParser extends Parser {
 		"\u022e\u0232\u0237\u023b\u0276\u027b\u027f\u0282\u0286\u028a\u0292\u0296"+
 		"\u029a\u029e\u02a1\u02a4\u02a8\u02ac\u02b0\u02b4\u02b8\u02bc\u02c0\u02c4"+
 		"\u02c8\u02cc\u02d0\u02d3\u02d6\u02da\u02e0\u02e2\u02e5\u02e8\u02f0\u02f6"+
-		"\u02fa\u02fe\u0305\u030a\u0310\u0326\u032b\u0332\u033a\u0340\u0353\u0358"+
-		"\u035d\u0362\u0367\u036c\u0373";
+		"\u02fa\u02fe\u0305\u030a\u0310\u0326\u032b\u0332\u033a\u0340\u0353\u0359"+
+		"\u035e\u0363\u0368\u036d\u0374";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

@@ -303,7 +303,7 @@ char_in_def
     | UNDEFINE
     ;
 
-char_in_recipe: char_in_assign  | DOUBLE_DOLLAR |COMMENT;
+char_in_recipe: char_in_assign  | DOUBLE_DOLLAR | COMMENT | PIPE;
 
 text
     : char+
