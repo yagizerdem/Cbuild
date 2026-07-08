@@ -702,7 +702,7 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
 
 
         if (ctx.orderonlyprerequisites() != null) {
-            prerequisitesIR =
+            orderonlyprerequisitesIR =
                     (List<cBuildIR.ValueIR>) ctx.orderonlyprerequisites().accept(this);
         }
 
