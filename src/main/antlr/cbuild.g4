@@ -197,12 +197,12 @@ argument
 
 rule
     : static_pattern_rule
-    | targets ws? colon ws? prerequisites ws? NL recipes?
+    | targets ws? colon ws? prerequisites ( ws? PIPE ws? orderonlyprerequisites)? ws? NL recipes?
     | targets ws? colon ws? assignment ws? NL
     ;
 
 static_pattern_rule
-    : targets ws? colon ws? pattern ws? colon ws? prerequisites NL recipes?
+    : targets ws? colon ws? pattern ws? colon ws? prerequisites (ws? PIPE ws? orderonlyprerequisites)? ws? NL recipes?
     ;
 
 target
@@ -214,6 +214,10 @@ pattern
     ;
 
 prerequisites
+    : targets?
+    ;
+
+orderonlyprerequisites
     : targets?
     ;
 
@@ -337,6 +341,8 @@ keywords
 colon
     : COLON
     | DOUBLE_COLON
+    | GROUPED_COLON
+    | GROUPED_DOUBLE_COLON
     ;
 
 comment_opt: COMMENT?;
@@ -367,13 +373,16 @@ DOUBLE_DOLLAR
     : '$$'
     ;
 
-DOUBLE_COLON : '::';
-COLON        : ':';
+GROUPED_DOUBLE_COLON : '&::';
+GROUPED_COLON        : '&:';
+DOUBLE_COLON         : '::';
+COLON                : ':';
 LPAREN : '(';
 RPAREN : ')';
 L_CURLY_BRACE: '{';
 R_CURLY_BRACE: '}';
 COMMA  : ',';
+PIPE: '|';
 
 INCLUDE  : 'include';
 DASH_INCLUDE  : '-include';
@@ -398,7 +407,7 @@ SLIT
     ;
 
 CHARS
-    : ~[ \t\r\n$(){}:,=#]+
+    : ~[ \t\r\n$(){}:,=#|]+
     ;
 
 NL : '\r'? '\n' ;
