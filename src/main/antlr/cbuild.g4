@@ -337,6 +337,8 @@ keywords
 colon
     : COLON
     | DOUBLE_COLON
+    | GROUPED_COLON
+    | GROUPED_DOUBLE_COLON
     ;
 
 comment_opt: COMMENT?;
@@ -367,8 +369,10 @@ DOUBLE_DOLLAR
     : '$$'
     ;
 
-DOUBLE_COLON : '::';
-COLON        : ':';
+GROUPED_DOUBLE_COLON : '&::';
+GROUPED_COLON        : '&:';
+DOUBLE_COLON         : '::';
+COLON                : ':';
 LPAREN : '(';
 RPAREN : ')';
 L_CURLY_BRACE: '{';

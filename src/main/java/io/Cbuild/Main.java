@@ -21,7 +21,8 @@ public class Main {
 
         try {
             String cBuildProgram = """
-a=$(filter-out a, b)
+a b &: x
+\t	gen
 """;
 
             CharStream charStream = CharStreams.fromString(cBuildProgram);

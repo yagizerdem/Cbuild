@@ -214,7 +214,9 @@ public class cBuildIR {
 
     public enum RuleSeparator {
         SINGLE_COLON(":"),
-        DOUBLE_COLON("::");
+        DOUBLE_COLON("::"),
+        GROUPED_COLON("&:"),
+        GROUPED_DOUBLE_COLON("&::");
 
         private final String symbol;
 
@@ -234,6 +236,8 @@ public class cBuildIR {
             return switch (symbol.trim()) {
                 case ":" -> SINGLE_COLON;
                 case "::" -> DOUBLE_COLON;
+                case "&:" -> GROUPED_COLON;
+                case "&::" -> GROUPED_DOUBLE_COLON;
                 default -> throw new IllegalArgumentException(
                         "Unknown rule separator: " + symbol
                 );
