@@ -173,8 +173,13 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         List<cBuildIR.ValuePart> parts = new ArrayList<>();
         for(cbuildParser.Expr_in_assign_atomContext atom_ctx : ctx.expr_in_assign_atom()) {
             if(atom_ctx.function() != null && !atom_ctx.function().isEmpty()) {
-                cBuildIR.FunctionCallPart callee = (cBuildIR.FunctionCallPart)atom_ctx.function().accept(this);
-                parts.add(callee);
+                java.lang.Object atom = atom_ctx.function().accept(this);
+                if(atom instanceof cBuildIR.FunctionCallPart callee)  {
+                    parts.add(callee);
+                }
+                else if(atom instanceof cBuildIR.VarRefPart part) {
+                    parts.add(part);
+                }
             }
             else if(atom_ctx.text_in_assign() != null && !atom_ctx.text_in_assign().isEmpty()) {
                 String lexeme = atom_ctx.text_in_assign().getText();

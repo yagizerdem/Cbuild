@@ -21,7 +21,7 @@ public class Main {
 
         try {
             String cBuildProgram = """
-vpath %.c foo:bar
+a=$(filter-out a, b)
 """;
 
             CharStream charStream = CharStreams.fromString(cBuildProgram);

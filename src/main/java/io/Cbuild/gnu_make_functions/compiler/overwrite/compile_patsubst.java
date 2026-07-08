@@ -11,7 +11,6 @@ import java.util.List;
 
 public class compile_patsubst extends compile_fn {
 
-
     @Override
     public cBuildIR.FunctionIR compile(cbuildParser.FunctionContext ctx, type.MakeFunction function) {
         cBuildIR.FunctionIR ir =super.compile(ctx, function);
