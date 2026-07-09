@@ -21,8 +21,8 @@ public class Main {
 
         try {
             String cBuildProgram = """
-a b &: x y | t k
-\t	gen
+objs: %.o: %.c | build
+\t	echo $<
 """;
 
             CharStream charStream = CharStreams.fromString(cBuildProgram);
