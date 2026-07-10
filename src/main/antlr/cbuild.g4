@@ -38,6 +38,7 @@ statement
     | ws? assignment br
     | ws? function br
     | ws? rule
+    | ws? ysharp_hook
     ;
 
 define
@@ -352,6 +353,10 @@ ws
     | TAB
     ;
 
+ysharp_hook : 'ysharp' ws? '{' ysharp_program '}' ws? ;
+
+ysharp_program : .*? ;
+
 ASSIGN_OP
     : ':::='
     | '::='
@@ -425,4 +430,5 @@ TAB
     ;
 
 COMMENT: '#' ~[\r\n]* ;
+
 
