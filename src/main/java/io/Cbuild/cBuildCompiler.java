@@ -4,6 +4,7 @@ import io.Cbuild.gnu_make_functions.make_function_dispatcher;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.javatuples.Pair;
+import org.stringtemplate.v4.ST;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +69,10 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         else if(ctx.vpath() != null) {
             cBuildIR.VpathIR vpathIR = (cBuildIR.VpathIR) ctx.vpath().accept(this);
             return vpathIR;
+        }
+        else if(ctx.ysharp_hook() != null) {
+            cBuildIR.YsharpHookIR ysharpHookIR = (cBuildIR.YsharpHookIR ) ctx.vpath().accept(this);
+            return ysharpHookIR;
         }
 
         throw new IllegalArgumentException(
@@ -842,6 +847,15 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         cBuildIR.TextPart part = new cBuildIR.TextPart(ctx.getText());
         return part;
     }
+
+    @Override
+    public Object visitYsharp_hook(cbuildParser.Ysharp_hookContext ctx) {
+        cBuildIR.YsharpHookIR ir = new cBuildIR.YsharpHookIR();
+        String program = ctx.ysharp_program().getText();
+        ir.program = program;
+        return ir;
+    }
+
 }
 
 
