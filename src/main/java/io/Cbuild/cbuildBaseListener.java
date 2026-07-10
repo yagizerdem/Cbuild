@@ -791,30 +791,6 @@ public class cbuildBaseListener implements cbuildListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitWs(cbuildParser.WsContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterYsharp_hook(cbuildParser.Ysharp_hookContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitYsharp_hook(cbuildParser.Ysharp_hookContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterYsharp_program(cbuildParser.Ysharp_programContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitYsharp_program(cbuildParser.Ysharp_programContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

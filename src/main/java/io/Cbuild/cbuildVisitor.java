@@ -399,16 +399,4 @@ public interface cbuildVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitWs(cbuildParser.WsContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link cbuildParser#ysharp_hook}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitYsharp_hook(cbuildParser.Ysharp_hookContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link cbuildParser#ysharp_program}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitYsharp_program(cbuildParser.Ysharp_programContext ctx);
 }

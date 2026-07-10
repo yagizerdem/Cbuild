@@ -21,15 +21,9 @@ public class Main {
 
         try {
             String cBuildProgram = """
-b = 20\
-# aljflajf laj
-a = 10
-
-
+objs: %.o: %.c | build
+\t	echo $<
 """;
-            cBuildProgram += Cursor.END;
-
-            List<Cursor.Pchar> processed = Preprocessor.mergeContinuation(cBuildProgram);
 
             CharStream charStream = CharStreams.fromString(cBuildProgram);
             cbuildLexer lexer = new cbuildLexer(charStream);
