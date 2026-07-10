@@ -5,6 +5,7 @@ on:
 
 jobs:
   unit-test:
+    name: unit-test-runner
     runs-on: ubuntu-latest
     steps:
       - name: Download repo code
@@ -17,5 +18,6 @@ jobs:
       - run: java --version
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
+      - run: chmod +x ./gradlew
       - name: Build with Gradle
         run: ./gradlew build
