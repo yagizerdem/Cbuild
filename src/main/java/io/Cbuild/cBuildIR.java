@@ -484,15 +484,4 @@ public class cBuildIR {
             return new VpathIR(Type.SET_PATTERN, pattern, directories);
         }
     }
-
-    public static class YsharpHookIR implements IR {
-        public String program;
-
-        public YsharpHookIR() {}
-
-        public YsharpHookIR(String program) {
-            this.program = program;
-        }
-    }
-
 }

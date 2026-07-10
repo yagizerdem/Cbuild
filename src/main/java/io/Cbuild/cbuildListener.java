@@ -656,24 +656,4 @@ public interface cbuildListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitWs(cbuildParser.WsContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link cbuildParser#ysharp_hook}.
-	 * @param ctx the parse tree
-	 */
-	void enterYsharp_hook(cbuildParser.Ysharp_hookContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link cbuildParser#ysharp_hook}.
-	 * @param ctx the parse tree
-	 */
-	void exitYsharp_hook(cbuildParser.Ysharp_hookContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link cbuildParser#ysharp_program}.
-	 * @param ctx the parse tree
-	 */
-	void enterYsharp_program(cbuildParser.Ysharp_programContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link cbuildParser#ysharp_program}.
-	 * @param ctx the parse tree
-	 */
-	void exitYsharp_program(cbuildParser.Ysharp_programContext ctx);
 }

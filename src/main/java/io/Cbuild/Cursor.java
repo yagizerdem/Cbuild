@@ -5,21 +5,7 @@ import java.util.*;
 public class Cursor {
 
     public static class CursorState {
-        public int current;
-        public int row;
-        public int col;
-
-        public CursorState() {}
-
-        public CursorState(int current) {
-            this.current = current;
-        }
-
-        public CursorState(int current, int row, int col) {
-            this.current = current;
-            this.row = row;
-            this.col = col;
-        }
+        int current;
     }
 
     public static class Floc {
@@ -67,8 +53,7 @@ public class Cursor {
         Caret           (1L << 30), // ^
         Question        (1L << 31), // ?
         Tilde           (1L << 32), // ~
-        BackTick        (1L << 33), // `
-        BackSlash       (1L << 34); // \
+        BackTick        (1L << 33); // `
 
         public final long value;
 
@@ -97,7 +82,7 @@ public class Cursor {
         STOPCHAR_MAP.put('|',  CharMask.Pipe.value);
         STOPCHAR_MAP.put('.',  CharMask.Dot.value);
         STOPCHAR_MAP.put(',',  CharMask.Comma.value);
-        STOPCHAR_MAP.put('\\', CharMask.Escape.value | CharMask.BackSlash.value);
+        STOPCHAR_MAP.put('\\', CharMask.Escape.value);
         STOPCHAR_MAP.put('+',  CharMask.Plus.value);
         STOPCHAR_MAP.put('-',  CharMask.Minus.value);
         STOPCHAR_MAP.put('*',  CharMask.Asterisk.value);
@@ -246,32 +231,17 @@ public class Cursor {
     }
 
     public static class Pchar {
-        int row;
-        int col;
-        char c;
-        boolean isEscpaed;
+        public char c;
+        public Floc loc;
 
-        public Pchar(char c) {
-            this(0, 0, c, false);
-        }
-
-        public Pchar(char c, boolean isEscpaed) {
-            this(0, 0, c, isEscpaed);
-        }
-
-        public Pchar(int row, int col, char c) {
-            this(row, col, c, false);
-        }
-
-        public Pchar(int row, int col, char c, boolean isEscpaed) {
-            this.row = row;
-            this.col = col;
-            this.c = c;
-            this.isEscpaed = isEscpaed;
+        public Pchar(char c, Floc loc) {
+            this.c   = c;
+            this.loc = loc;
         }
     }
 
-    private static final Pchar EOF_PCHAR = new Pchar(END);
+
+    private static final Pchar EOF_PCHAR = new Pchar(END, new Floc());
 
     public static boolean stopSet(Pchar p, CharMask m) {
         return stopSet(p.c, m);
@@ -299,24 +269,6 @@ public class Cursor {
         Pchar p = peek(buf, cursor.current);
         if (cursor.current < buf.size()) cursor.current++;
         return p;
-    }
-
-    public static Pchar prev(List<Pchar> buf, int current) {
-        if (current - 1 < 0) return EOF_PCHAR;
-        return buf.get(current - 1);
-    }
-
-    public static Pchar prev(List<Pchar> buf, CursorState cursorState) {
-        return prev(buf, cursorState.current);
-    }
-
-    public static char prevChar(List<Pchar> buf, int current) {
-        return prev(buf, current).c;
-    }
-
-    public static char prev(String text, CursorState cursor) {
-        if (cursor.current - 1 < 0) return END;
-        return text.charAt(cursor.current - 1);
     }
 
     public static char peekChar(List<Pchar> buf, int current) {
@@ -360,7 +312,7 @@ public class Cursor {
     public static List<Pchar> toPBuffer(String str, int line) {
         List<Pchar> buf = new ArrayList<>(str.length());
         for (int i = 0; i < str.length(); i++) {
-            buf.add(new Pchar(line, i + 1, str.charAt(i)));
+            buf.add(new Pchar(str.charAt(i), new Floc(line)));
         }
         return buf;
     }
