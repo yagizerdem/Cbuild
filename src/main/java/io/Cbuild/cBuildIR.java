@@ -1,6 +1,8 @@
 package io.Cbuild;
 
+import io.Cbuild.ySharpBackend.ySharpBackend;
 import jdk.jshell.spi.ExecutionControl;
+import org.stringtemplate.v4.ST;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +12,8 @@ public class cBuildIR {
     public interface IR {
         public int getRow();
         public int getCol();
+
+        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine);
     }
 
     public static abstract class BaseIR implements IR {
@@ -62,6 +66,10 @@ public class cBuildIR {
         public ValueIR(List<ValuePart> parts) {
             this.parts.addAll(parts);
         }
+
+        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
+            return expansionEngine.expand(this);
+        }
     }
 
     public static class FunctionIR extends BaseIR {
@@ -70,6 +78,10 @@ public class cBuildIR {
 
         public FunctionIR(String name) {
             this.name = name;
+        }
+
+        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
+            return expansionEngine.expand(this);
         }
     }
 
@@ -178,6 +190,10 @@ public class cBuildIR {
             this.prefix = prefix;
             this.type = type;
         }
+
+        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
+            return expansionEngine.expand(this);
+        }
     }
 
     public enum ConditionKind {
@@ -218,6 +234,10 @@ public class cBuildIR {
         public Condition condition;
         public List<IR> thenBranch = new ArrayList<>();
         public List<IR> elseBranch = new ArrayList<>();
+
+        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
+            return expansionEngine.expand(this);
+        }
     }
 
     public static class Condition  {
@@ -312,6 +332,10 @@ public class cBuildIR {
         public List<RecipeIR> recipes() {
             return recipes;
         }
+
+        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
+            return expansionEngine.expand(this);
+        }
     }
 
     public static class TargetRuleIR extends BaseIR implements Rule {
@@ -346,6 +370,11 @@ public class cBuildIR {
         @Override
         public List<RecipeIR> recipes() {
             return List.of();
+        }
+
+
+        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
+            return expansionEngine.expand(this);
         }
     }
 
@@ -409,6 +438,10 @@ public class cBuildIR {
         public List<RecipeIR> recipes() {
             return recipes;
         }
+
+        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
+            return expansionEngine.expand(this);
+        }
     }
 
     public enum RecipeKind {
@@ -450,6 +483,11 @@ public class cBuildIR {
             recipe.conditional = conditional;
             return recipe;
         }
+
+
+        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
+            return expansionEngine.expand(this);
+        }
     }
 
     public static class DefineIR extends BaseIR implements IR {
@@ -470,6 +508,11 @@ public class cBuildIR {
             this.name = name;
             this.assignmentType = assignmentType;
             this.value = value;
+        }
+
+
+        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
+            return expansionEngine.expand(this);
         }
     }
 
@@ -502,6 +545,11 @@ public class cBuildIR {
         public static VpathIR setPattern(ValueIR pattern, List<ValueIR> directories) {
             return new VpathIR(Type.SET_PATTERN, pattern, directories);
         }
+
+
+        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
+            return expansionEngine.expand(this);
+        }
     }
 
     public static class YsharpHookIR extends BaseIR {
@@ -511,6 +559,10 @@ public class cBuildIR {
 
         public YsharpHookIR(String program) {
             this.program = program;
+        }
+
+        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
+            return expansionEngine.expand(this);
         }
     }
 

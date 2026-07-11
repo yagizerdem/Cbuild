@@ -1,5 +1,7 @@
 package io.Cbuild.ySharpBackend;
 
+import io.Cbuild.Expansion.BaseExpansionEngine;
+import io.Cbuild.Expansion;
 import io.Cbuild.cBuildIR;
 import io.Cbuild.cbuildException;
 import org.stringtemplate.v4.ST;
@@ -172,35 +174,70 @@ public class ySharpBackend {
         );
     }
 
+    public static class ySharpExpansionEngineFirstPass extends Expansion.BaseExpansionEngine {
 
-    public String expand(cBuildIR.ValueIR ir) {
-        StringBuilder builder = new StringBuilder();
-        for(cBuildIR.ValuePart part : ir.parts) {
-            if(part instanceof cBuildIR.VarRefPart refPart) {
-                builder.append(expand(refPart));
-            }
-            if(part instanceof cBuildIR.TextPart textPart) {
-                builder.append(expand(textPart));
-            }
+        public Void expand(cBuildIR.AssignmentIR ir) {
+
+            return null;
         }
-        return builder.toString();
-    }
 
-    public String expand(cBuildIR.VarRefPart varRef) {
-        StringBuilder builder = new StringBuilder();
-        for(cBuildIR.ValuePart part : varRef.nameExpr.parts) {
-            if(part instanceof cBuildIR.VarRefPart refPart) {
-                builder.append(expand(refPart));
-            }
-            if(part instanceof cBuildIR.TextPart textPart) {
-                builder.append(expand(textPart));
-            }
+        public Void expand(cBuildIR.NormalRuleIR ir) {
+
+            return null;
         }
-        return symbolTable.getOrDefault(builder.toString(), SymbolTableVariable.rawVariable("")).getRawValue();
+
+
+        public Void expand(cBuildIR.YsharpHookIR ir) {
+
+            return null;
+        }
+
+        public Void expand(cBuildIR.RecipeIR ir) {
+
+            return null;
+        }
+
     }
 
-    public String expand(cBuildIR.TextPart part) {
-        return part.lexeme;
+    public static class ySharpValueExpansionEngine extends Expansion.BaseExpansionEngine {
+
+        public String expand(cBuildIR.ValueIR ir) {
+            StringBuilder builder = new StringBuilder();
+            for(cBuildIR.ValuePart part : ir.parts) {
+                if(part instanceof cBuildIR.VarRefPart refPart) {
+                    builder.append(expand(refPart));
+                }
+                if(part instanceof cBuildIR.TextPart textPart) {
+                    builder.append(expand(textPart));
+                }
+            }
+            return builder.toString();
+        }
+
+        public String expand(cBuildIR.VarRefPart varRef) {
+            StringBuilder builder = new StringBuilder();
+            for(cBuildIR.ValuePart part : varRef.nameExpr.parts) {
+                if(part instanceof cBuildIR.VarRefPart refPart) {
+                    builder.append(expand(refPart));
+                }
+                if(part instanceof cBuildIR.TextPart textPart) {
+                    builder.append(expand(textPart));
+                }
+            }
+            return symbolTable.getOrDefault(builder.toString(), SymbolTableVariable.rawVariable("")).getRawValue();
+        }
+
+        public String expand(cBuildIR.TextPart part) {
+            return part.lexeme;
+        }
     }
+
+    public <T> T expandValue(cBuildIR.ValueIR ir) {
+        ySharpValueExpansionEngine engine = new ySharpValueExpansionEngine();
+        return ir.expansion(engine);
+    }
+
+
+
 
 }
