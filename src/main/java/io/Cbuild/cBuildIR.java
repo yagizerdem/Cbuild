@@ -7,7 +7,26 @@ import java.util.List;
 
 public class cBuildIR {
 
-    public interface IR {}
+    public interface IR {
+        public int getRow();
+        public int getCol();
+    }
+
+    public static abstract class BaseIR implements IR {
+        public int row;
+        public int col;
+
+        @Override
+        public int getRow() {
+            return this.row;
+        }
+
+        @Override
+        public int getCol() {
+            return this.col;
+        }
+
+    }
 
     public interface ValuePart {}
 
@@ -35,7 +54,7 @@ public class cBuildIR {
         }
     }
 
-    public static class ValueIR implements IR {
+    public static class ValueIR extends BaseIR{
         public final List<ValuePart> parts = new ArrayList<>();
 
         public ValueIR() {}
@@ -45,7 +64,7 @@ public class cBuildIR {
         }
     }
 
-    public static class FunctionIR implements IR {
+    public static class FunctionIR extends BaseIR {
         public String name;
         public final List<ValueIR> args = new ArrayList<>();
 
@@ -128,7 +147,7 @@ public class cBuildIR {
         }
     }
 
-    public static final class AssignmentIR implements IR {
+    public static final class AssignmentIR extends BaseIR {
         public ValueIR left;
         public ValueIR right;
         public AssignmentType type;
@@ -194,7 +213,7 @@ public class cBuildIR {
         }
     }
 
-    public static class ConditionalIR implements IR {
+    public static class ConditionalIR extends BaseIR {
         public ConditionKind kind;
         public Condition condition;
         public List<IR> thenBranch = new ArrayList<>();
@@ -245,7 +264,7 @@ public class cBuildIR {
         }
     }
 
-    public static class NormalRuleIR implements Rule {
+    public static class NormalRuleIR extends BaseIR implements Rule {
         public final List<ValueIR> targets = new ArrayList<>();
         public RuleSeparator separator = RuleSeparator.SINGLE_COLON;
         public final List<ValueIR> prerequisites = new ArrayList<>();
@@ -295,7 +314,7 @@ public class cBuildIR {
         }
     }
 
-    public static class TargetRuleIR implements Rule {
+    public static class TargetRuleIR extends BaseIR implements Rule {
         public final List<ValueIR> targets = new ArrayList<>();
         public AssignmentIR assignment;
         public RuleSeparator separator; // not important for target rule
@@ -330,7 +349,7 @@ public class cBuildIR {
         }
     }
 
-    public static class StaticPatternRuleIR implements Rule {
+    public static class StaticPatternRuleIR extends BaseIR implements Rule {
         public final List<ValueIR> targets = new ArrayList<>();
         public ValueIR targetPattern;
         public final List<ValueIR> prerequisites = new ArrayList<>();
@@ -399,7 +418,7 @@ public class cBuildIR {
         CONDITIONAL
     }
 
-    public static class RecipeIR implements IR {
+    public static class RecipeIR extends BaseIR implements IR {
         public RecipeKind kind;
         public ValueIR command;
         public String comment;
@@ -433,7 +452,7 @@ public class cBuildIR {
         }
     }
 
-    public static class DefineIR implements IR {
+    public static class DefineIR extends BaseIR implements IR {
         public AssignmentPrefix specifiers;
         public ValueIR name;
         public AssignmentType assignmentType;
@@ -454,7 +473,7 @@ public class cBuildIR {
         }
     }
 
-    public static class VpathIR implements IR {
+    public static class VpathIR extends BaseIR implements IR {
 
         public enum Type {
             CLEAR_ALL,

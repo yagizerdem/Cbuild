@@ -1,68 +1,133 @@
 package io.Cbuild.ySharpBackend;
 
 import io.Cbuild.cBuildIR;
+import io.Cbuild.cbuildException;
 
-import javax.imageio.event.IIOReadProgressListener;
 import java.util.List;
 
 public class ySharpBackend {
 
-    public boolean isCompatible(List<cBuildIR.IR> instructions) {
-        return true;
+    public void validateCompatibility(List<cBuildIR.IR> instructions) {
+        for (cBuildIR.IR ir : instructions) {
+            validateIR(ir);
+        }
     }
 
-    private boolean isCompatibleRecursive(List<cBuildIR.IR> instructions) {
-        for(cBuildIR.IR ir : instructions) {
-            if(!allowedIR(ir)) return false;
+    public boolean isCompatible(List<cBuildIR.IR> instructions) {
+        try {
+            validateCompatibility(instructions);
+            return true;
+        } catch (cbuildException exception) {
+            return false;
+        }
+    }
 
-            if(ir instanceof cBuildIR.AssignmentIR assignmentIR) {
-                if(!allowedParts(assignmentIR.left.parts)) return false;
-                if(!allowedParts(assignmentIR.right.parts)) return false;
-                if(!(assignmentIR.prefix.getPrefix() == null || assignmentIR.prefix.getPrefix().isBlank())) {
-                    return false;
-                }
-            }
-
-            if(ir instanceof cBuildIR.NormalRuleIR normalRuleIR) {
-                if (!normalRuleIR.orderonlyprerequisites.isEmpty()) {
-                    return false;
-                }
-
-                for (var value : normalRuleIR.targets) {
-                    if (!allowedParts(value.parts)) {
-                        return false;
-                    }
-                }
-
-                for (var value : normalRuleIR.prerequisites) {
-                    if (!allowedParts(value.parts)) {
-                        return false;
-                    }
-                }
-
-                for (var recipe : normalRuleIR.recipes) {
-                    if (recipe.conditional != null) {
-                        return false;
-                    }
-                }
-
-            }
+    private void validateIR(cBuildIR.IR ir) {
+        if (!allowedIR(ir)) {
+            throw incompatible(
+                    ir,
+                    "Unsupported IR type for ySharp backend: "
+                            + ir.getClass().getSimpleName()
+            );
         }
 
-        return true;
+        if (ir instanceof cBuildIR.AssignmentIR assignmentIR) {
+            validateAssignment(assignmentIR);
+            return;
+        }
+
+        if (ir instanceof cBuildIR.NormalRuleIR normalRuleIR) {
+            validateNormalRule(normalRuleIR);
+        }
+    }
+
+    private void validateAssignment(cBuildIR.AssignmentIR assignmentIR) {
+        validateParts(
+                assignmentIR.left.parts,
+                assignmentIR,
+                "Assignment left-hand side"
+        );
+
+        validateParts(
+                assignmentIR.right.parts,
+                assignmentIR,
+                "Assignment right-hand side"
+        );
+
+        String prefix = assignmentIR.prefix.getPrefix();
+
+        if (prefix != null && !prefix.isBlank()) {
+            throw incompatible(
+                    assignmentIR,
+                    "Assignment prefixes are not supported by the ySharp backend: "
+                            + prefix
+            );
+        }
+    }
+
+    private void validateNormalRule(cBuildIR.NormalRuleIR normalRuleIR) {
+        if (!normalRuleIR.orderonlyprerequisites.isEmpty()) {
+            throw incompatible(
+                    normalRuleIR,
+                    "Order-only prerequisites are not supported by the ySharp backend"
+            );
+        }
+
+        for (var target : normalRuleIR.targets) {
+            validateParts(
+                    target.parts,
+                    normalRuleIR,
+                    "Rule target"
+            );
+        }
+
+        for (var prerequisite : normalRuleIR.prerequisites) {
+            validateParts(
+                    prerequisite.parts,
+                    normalRuleIR,
+                    "Rule prerequisite"
+            );
+        }
+
+        for (var recipe : normalRuleIR.recipes) {
+            if (recipe.conditional != null) {
+                throw incompatible(
+                        normalRuleIR,
+                        "Conditional recipes are not supported by the ySharp backend"
+                );
+            }
+        }
+    }
+
+    private void validateParts(
+            List<cBuildIR.ValuePart> parts,
+            cBuildIR.IR owner,
+            String context
+    ) {
+        for (cBuildIR.ValuePart part : parts) {
+            if (part instanceof cBuildIR.FunctionCallPart functionCallPart) {
+                throw incompatible(
+                        owner,
+                        context + " contains an unsupported function call: "
+                                + functionCallPart
+                );
+            }
+        }
     }
 
     private boolean allowedIR(cBuildIR.IR ir) {
         return ir instanceof cBuildIR.AssignmentIR
                 || ir instanceof cBuildIR.YsharpHookIR
-                || ir instanceof  cBuildIR.NormalRuleIR;
+                || ir instanceof cBuildIR.NormalRuleIR;
     }
 
-    private boolean allowedParts(List<cBuildIR.ValuePart> parts) {
-        for(cBuildIR.ValuePart part : parts) {
-            if(part instanceof cBuildIR.FunctionCallPart) return false;
-        }
-        return true;
-    }
+    private cbuildException incompatible(cBuildIR.IR ir, String message) {
 
+        return new cbuildException(
+                cbuildException.ErrorType.SEMANTIC,
+                message,
+                ir.getRow(),
+                ir.getCol()
+        );
+    }
 }
