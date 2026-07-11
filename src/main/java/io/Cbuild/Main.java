@@ -21,15 +21,13 @@ public class Main {
 
         try {
             String cBuildProgram = """
-b = 20\
-# aljflajf laj
-a = 10
-
-
+                             
+test: 
+\t echo hit test case
 """;
-            cBuildProgram += Cursor.END;
+//            cBuildProgram += Cursor.END;
+//            List<Cursor.Pchar> processed = Preprocessor.mergeContinuation(cBuildProgram);
 
-            List<Cursor.Pchar> processed = Preprocessor.mergeContinuation(cBuildProgram);
 
             CharStream charStream = CharStreams.fromString(cBuildProgram);
             cbuildLexer lexer = new cbuildLexer(charStream);
@@ -41,7 +39,9 @@ a = 10
 
             cBuildCompiler cBuildCompiler = new cBuildCompiler();
             List<cBuildIR.IR> ir = cBuildCompiler.compile(context);
-            int a = 10;
+
+            var a = 10;
+
 
         }catch (Exception ex) {
             System.out.println(ex.getMessage());

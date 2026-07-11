@@ -1,20 +1,9 @@
-import io.Cbuild.ThrowingErrorListener;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
+package ysharpBackend;
+
 import org.junit.jupiter.api.Test;
 
 public class YsharpParseableTest {
 
-    public void runBuildFile(String buildFile) {
-        CharStream charStream = CharStreams.fromString(buildFile);
-        cbuildLexer lexer = new cbuildLexer(charStream);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        cbuildParser parser = new cbuildParser(tokens);
-        parser.removeErrorListeners();
-        parser.addErrorListener(ThrowingErrorListener.INSTANCE);
-        parser.cbuildfile();
-    }
 
 
     @Test
@@ -94,7 +83,9 @@ clean:
 # errors to show up.
 -include $(DEPS)
 """;
-        runBuildFile(buildFile);
+
+
+        util.utils.runBuildFile(buildFile);
     }
 
 }

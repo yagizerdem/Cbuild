@@ -1,11 +1,50 @@
 package io.Cbuild.ySharpBackend;
 
+import io.Cbuild.Expansion.BaseExpansionEngine;
+import io.Cbuild.Expansion;
 import io.Cbuild.cBuildIR;
 import io.Cbuild.cbuildException;
+import org.stringtemplate.v4.ST;
 
+import java.util.Hashtable;
 import java.util.List;
 
 public class ySharpBackend {
+
+    public static final class SymbolTableVariable {
+
+        private final String rawValue;
+        private final cBuildIR.ValueIR deferredValue;
+        private final boolean requiresSecondaryExpansion;
+
+        public SymbolTableVariable(
+                String rawValue,
+                cBuildIR.ValueIR deferredValue,
+                boolean requiresSecondaryExpansion
+        ) {
+            this.rawValue = rawValue;
+            this.deferredValue = deferredValue;
+            this.requiresSecondaryExpansion = requiresSecondaryExpansion;
+        }
+
+        public String getRawValue() {
+            return rawValue;
+        }
+
+        public cBuildIR.ValueIR getDeferredValue() {
+            return deferredValue;
+        }
+
+        public boolean requiresSecondaryExpansion() {
+            return requiresSecondaryExpansion;
+        }
+
+        public static SymbolTableVariable rawVariable(String rawValue) {
+            return new SymbolTableVariable(rawValue, null, false);
+        }
+    }
+
+    public static Hashtable<String, SymbolTableVariable> symbolTable = new Hashtable<>();
 
     public void validateCompatibility(List<cBuildIR.IR> instructions) {
         for (cBuildIR.IR ir : instructions) {
@@ -115,6 +154,10 @@ public class ySharpBackend {
         }
     }
 
+    private boolean validateAssignmentFlavor(cBuildIR.AssignmentType type) {
+        return (type == cBuildIR.AssignmentType.RECURSIVE || type == cBuildIR.AssignmentType.SIMPLE);
+    }
+
     private boolean allowedIR(cBuildIR.IR ir) {
         return ir instanceof cBuildIR.AssignmentIR
                 || ir instanceof cBuildIR.YsharpHookIR
@@ -130,4 +173,71 @@ public class ySharpBackend {
                 ir.getCol()
         );
     }
+
+    public static class ySharpExpansionEngineFirstPass extends Expansion.BaseExpansionEngine {
+
+        public Void expand(cBuildIR.AssignmentIR ir) {
+
+            return null;
+        }
+
+        public Void expand(cBuildIR.NormalRuleIR ir) {
+
+            return null;
+        }
+
+
+        public Void expand(cBuildIR.YsharpHookIR ir) {
+
+            return null;
+        }
+
+        public Void expand(cBuildIR.RecipeIR ir) {
+
+            return null;
+        }
+
+    }
+
+    public static class ySharpValueExpansionEngine extends Expansion.BaseExpansionEngine {
+
+        public String expand(cBuildIR.ValueIR ir) {
+            StringBuilder builder = new StringBuilder();
+            for(cBuildIR.ValuePart part : ir.parts) {
+                if(part instanceof cBuildIR.VarRefPart refPart) {
+                    builder.append(expand(refPart));
+                }
+                if(part instanceof cBuildIR.TextPart textPart) {
+                    builder.append(expand(textPart));
+                }
+            }
+            return builder.toString();
+        }
+
+        public String expand(cBuildIR.VarRefPart varRef) {
+            StringBuilder builder = new StringBuilder();
+            for(cBuildIR.ValuePart part : varRef.nameExpr.parts) {
+                if(part instanceof cBuildIR.VarRefPart refPart) {
+                    builder.append(expand(refPart));
+                }
+                if(part instanceof cBuildIR.TextPart textPart) {
+                    builder.append(expand(textPart));
+                }
+            }
+            return symbolTable.getOrDefault(builder.toString(), SymbolTableVariable.rawVariable("")).getRawValue();
+        }
+
+        public String expand(cBuildIR.TextPart part) {
+            return part.lexeme;
+        }
+    }
+
+    public <T> T expandValue(cBuildIR.ValueIR ir) {
+        ySharpValueExpansionEngine engine = new ySharpValueExpansionEngine();
+        return ir.expansion(engine);
+    }
+
+
+
+
 }

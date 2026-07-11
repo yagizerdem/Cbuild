@@ -461,7 +461,7 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         cBuildIR.RuleSeparator ruleSeparator =
                 cBuildIR.RuleSeparator.fromSymbol(ctx.colon().getText().trim());
 
-        if(ctx.prerequisites() != null) {
+        if(ctx.prerequisites() != null && !ctx.prerequisites().isEmpty()) {
             List<cBuildIR.ValueIR> prerequisitesIR = (List<cBuildIR.ValueIR>) ctx.prerequisites().accept(this);
             List<cBuildIR.RecipeIR> recipeIRS = new ArrayList<>();
             List<cBuildIR.ValueIR> orderonlyprerequisitesIR = new ArrayList<>();
@@ -508,7 +508,10 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
 
     @Override
     public Object visitPrerequisites(cbuildParser.PrerequisitesContext ctx) {
-        return ctx.targets().accept(this);
+        if(ctx.targets() != null) {
+            return ctx.targets().accept(this);
+        }
+        return new ArrayList<cBuildIR.ValueIR>();
     }
 
     @Override
