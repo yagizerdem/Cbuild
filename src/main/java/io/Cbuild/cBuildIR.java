@@ -87,13 +87,13 @@ public class cBuildIR {
 
 
     public static enum AssignmentType {
-        RECURSIVE("recursive"),          // =
-        SIMPLE("simple"),             // :=
-        POSIX_SIMPLE("posix simple"),       // ::=
-        IMMEDIATE_ESCAPED("immediate escaped"),  // :::=
-        CONDITIONAL("conditional"),        // ?=
-        APPEND("append"),             // +=
-        SHELL("shell");               // !=
+        RECURSIVE("="),
+        SIMPLE(":="),
+        POSIX_SIMPLE("::="),
+        IMMEDIATE_ESCAPED(":::="),
+        CONDITIONAL("?="),
+        APPEND("+="),
+        SHELL("!=");
 
         private final String type;
 

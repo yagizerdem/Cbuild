@@ -88,6 +88,8 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
     public Object visitAssignment(cbuildParser.AssignmentContext ctx) {
         cBuildIR.AssignmentIR assignmentIR = new cBuildIR.AssignmentIR();
 
+        assignmentIR.type = cBuildIR.AssignmentType.fromSymbol(ctx.ASSIGN_OP().getText().trim());
+
         if(ctx.pattern() != null && !ctx.pattern().isEmpty()) {
             // left value
             List<cBuildIR.ValuePart> left_parts = (List<cBuildIR.ValuePart>) ctx.pattern().accept(this);

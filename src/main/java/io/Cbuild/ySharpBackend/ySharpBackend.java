@@ -53,9 +53,33 @@ public class ySharpBackend {
         public static SymbolTableVariable secondaryExpansionVariable(cBuildIR.ValueIR deferredValue) {
             return new SymbolTableVariable(null, deferredValue, true);
         }
+
+        @Override
+        public String toString() {
+            return "SymbolTableVariable{" +
+                    "rawValue='" + rawValue + '\'' +
+                    ", deferredValue=" + deferredValue +
+                    ", requiresSecondaryExpansion=" + requiresSecondaryExpansion +
+                    '}';
+        }
     }
 
-    public static final Hashtable<String, SymbolTableVariable> symbolTable = new Hashtable<>();
+    public final Hashtable<String, SymbolTableVariable> symbolTable = new Hashtable<>();
+
+    public void printSymbolTable() {
+        System.out.println("=== Symbol Table ===");
+
+        if (symbolTable.isEmpty()) {
+            System.out.println("(empty)");
+            return;
+        }
+
+        symbolTable.forEach((name, variable) ->
+                System.out.println(name + " -> " + variable)
+        );
+
+        System.out.println("====================");
+    }
 
     public boolean hasVariable(String name) {
         return symbolTable.containsKey(name);
@@ -161,17 +185,26 @@ public class ySharpBackend {
         putRawVariable(name, rawValue);
     }
 
-    public void assign(String name, cBuildIR.AssignmentType type, cBuildIR.ValueIR value) {
-        cBuildIR.AssignmentType assignmentType = type == null
-                ? cBuildIR.AssignmentType.RECURSIVE
-                : type;
+    public void assign(
+            String name,
+            cBuildIR.AssignmentType type,
+            cBuildIR.ValueIR value
+    ) {
 
-        switch (assignmentType) {
-            case RECURSIVE -> putDeferredVariable(name, value);
-            case SIMPLE, POSIX_SIMPLE, IMMEDIATE_ESCAPED -> putRawVariable(name, expandValue(value));
-            case CONDITIONAL -> defineIfAbsent(name, SymbolTableVariable.deferredVariable(value));
-            case APPEND -> appendRawVariable(name, expandValue(value));
-            case SHELL -> throw new UnsupportedOperationException("Shell assignment is not supported yet: " + name);
+        switch (type) {
+            case RECURSIVE ->
+                    putDeferredVariable(name, value);
+
+            case SIMPLE ->
+                    putRawVariable(name, expandValue(value));
+
+            default ->
+                    throw new UnsupportedOperationException(
+                            "YSharp backend does not support assignment type "
+                                    + type
+                                    + " for variable: "
+                                    + name
+                    );
         }
     }
 
@@ -312,7 +345,7 @@ public class ySharpBackend {
         private final ySharpBackend backend;
 
         public ySharpExpansionEngineFirstPass(ySharpBackend backend) {
-            this.valueExpansionEngine = new ySharpValueExpansionEngine();
+            this.valueExpansionEngine = new ySharpValueExpansionEngine(backend);
             this.backend = backend;
         }
 
@@ -325,6 +358,12 @@ public class ySharpBackend {
     }
 
     public static class ySharpValueExpansionEngine extends Expansion.BaseExpansionEngine {
+
+        private final ySharpBackend backend;
+
+        public ySharpValueExpansionEngine(ySharpBackend backend) {
+            this.backend = backend;
+        }
 
         @Override
         @SuppressWarnings("unchecked")
@@ -367,12 +406,20 @@ public class ySharpBackend {
                     builder.append(textPart.lexeme);
                 }
             }
-            return symbolTable.getOrDefault(builder.toString(), SymbolTableVariable.rawVariable("")).getRawValue();
+            return backend.symbolTable.getOrDefault(builder.toString(), SymbolTableVariable.rawVariable("")).getRawValue();
         }
     }
 
     public String expandValue(cBuildIR.ValueIR ir) {
-        ySharpValueExpansionEngine engine = new ySharpValueExpansionEngine();
+        ySharpValueExpansionEngine engine = new ySharpValueExpansionEngine(this);
         return ir.expansion(engine);
     }
+
+    public void expand(List<cBuildIR.IR> instructions) {
+        ySharpExpansionEngineFirstPass expansionEngine = new ySharpExpansionEngineFirstPass(this);
+        for(cBuildIR.IR ir : instructions) {
+            ir.expansion(expansionEngine);
+        }
+    }
+
 }
