@@ -24,11 +24,8 @@ public class Main {
 b = 20\
 # aljflajf laj
 a = 10
-
-
 """;
             cBuildProgram += Cursor.END;
-
             List<Cursor.Pchar> processed = Preprocessor.mergeContinuation(cBuildProgram);
 
             CharStream charStream = CharStreams.fromString(cBuildProgram);
@@ -41,7 +38,9 @@ a = 10
 
             cBuildCompiler cBuildCompiler = new cBuildCompiler();
             List<cBuildIR.IR> ir = cBuildCompiler.compile(context);
-            int a = 10;
+
+
+
 
         }catch (Exception ex) {
             System.out.println(ex.getMessage());

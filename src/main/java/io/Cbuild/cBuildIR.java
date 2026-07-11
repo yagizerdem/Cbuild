@@ -504,7 +504,7 @@ public class cBuildIR {
         }
     }
 
-    public static class YsharpHookIR implements IR {
+    public static class YsharpHookIR extends BaseIR {
         public String program;
 
         public YsharpHookIR() {}

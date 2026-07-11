@@ -1,20 +1,7 @@
-import io.Cbuild.ThrowingErrorListener;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.junit.jupiter.api.Test;
 
 public class ParserTest {
 
-    public void runBuildFile(String buildFile) {
-        CharStream charStream = CharStreams.fromString(buildFile);
-        cbuildLexer lexer = new cbuildLexer(charStream);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        cbuildParser parser = new cbuildParser(tokens);
-        parser.removeErrorListeners();
-        parser.addErrorListener(ThrowingErrorListener.INSTANCE);
-        parser.cbuildfile();
-    }
 
     @Test
     public void SimpleHelloWorld() {
@@ -24,7 +11,7 @@ public class ParserTest {
                         	echo "Hello, World"
                         """;
 
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
 
     }
 
@@ -39,7 +26,7 @@ public class ParserTest {
                         \t command
                         """;
 
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
 
     }
 
@@ -58,7 +45,7 @@ public class ParserTest {
                         	echo "int main() { return 0; }" > blah.c # Runs first
                         """;
 
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
 
     }
 
@@ -125,7 +112,7 @@ public class ParserTest {
                         \tcp edit /usr/local/bin/edit
                         """;
 
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -142,7 +129,7 @@ public class ParserTest {
                         	$(CC) main.o util.o -o app
                         """;
 
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -157,7 +144,7 @@ public class ParserTest {
                         up:
                         	docker-compose up
                         """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -207,7 +194,7 @@ public class ParserTest {
                         	@# example: make "a MACHINE=i.MX6 CC=arm-linux-gnueabihf-gcc"
                         	export $@ && $(MAKE) app -j4
                         """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -225,7 +212,7 @@ public class ParserTest {
                 clean:
                 	rm -f one two three
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -248,7 +235,7 @@ public class ParserTest {
                 # Same as rule three
                 four: $(wildcard *.o)
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -278,7 +265,7 @@ public class ParserTest {
                 clean:
                 	rm -f hey one two
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -297,7 +284,7 @@ public class ParserTest {
                 clean:
                 	rm -f blah*
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -326,7 +313,7 @@ public class ParserTest {
                 clean:
                 	rm -f *.c *.o all
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -352,7 +339,7 @@ public class ParserTest {
                 clean:
                 	rm -f *.c *.o all
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -379,7 +366,7 @@ public class ParserTest {
                 clean:
                 	rm -f $(src_files)
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -389,7 +376,7 @@ public class ParserTest {
                 %.o : %.c
                 		$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -400,7 +387,7 @@ public class ParserTest {
                 %.c:
                 \t touch $@
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -414,7 +401,7 @@ public class ParserTest {
                 blah::
                 	echo "hello again"
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -425,7 +412,7 @@ public class ParserTest {
                 cool:
                 	echo "Hello from bash"
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -439,7 +426,7 @@ public class ParserTest {
                 	# Same as running "echo I am a make variable" in the shell
                 	echo $(make_var)
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -450,7 +437,7 @@ public class ParserTest {
                 \t-false
                 \ttouch one
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -480,7 +467,7 @@ public class ParserTest {
                 \t# Print out the Make variable
                 \techo $(shell_env_var)
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -493,7 +480,7 @@ public class ParserTest {
                 \techo $(shell_env_var)
                 \techo $$shell_env_var
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -517,7 +504,7 @@ public class ParserTest {
                 clean:
                 \trm -rf subdir
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -532,7 +519,7 @@ public class ParserTest {
                 \t@echo $(two)
                 \t@echo $$two
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -555,7 +542,7 @@ public class ParserTest {
                 clean:
                 \trm -rf subdir
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -570,7 +557,7 @@ public class ParserTest {
                 \techo $(one)
                 \techo $(two)
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -582,7 +569,7 @@ public class ParserTest {
                 all:
                 \techo $(one)
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -596,7 +583,7 @@ public class ParserTest {
                 \techo $(one)
                 \techo $(two)
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -612,7 +599,7 @@ public class ParserTest {
                 \techo "$(after)"
                 \techo start"$(space)"end
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -622,7 +609,7 @@ public class ParserTest {
                 \t# Undefined variables expand to an empty string
                 \techo $(nowhere)
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -634,7 +621,7 @@ public class ParserTest {
                 all:
                 \techo $(foo)
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -649,7 +636,7 @@ public class ParserTest {
                 \techo $(option_one)
                 \techo $(option_two)
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -668,7 +655,7 @@ public class ParserTest {
                 \t@echo "This does not print 'I was set!' because each command runs in a separate shell"
                 \t@$(two)
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -682,7 +669,7 @@ public class ParserTest {
                 other:
                 \techo one is nothing: $(one)
                 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -696,7 +683,7 @@ blah.c:
 other:
 \techo one is nothing: $(one)
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -711,7 +698,7 @@ else
 \techo "nope"
 endif
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -728,7 +715,7 @@ ifeq ($(nullstring),)
 \techo "nullstring doesn't even have spaces"
 endif
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -745,7 +732,7 @@ ifndef bar
 \techo "but bar is not"
 endif
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -757,7 +744,7 @@ ifneq (,$(findstring i, $(MAKEFLAGS)))
 \techo "i was passed to MAKEFLAGS"
 endif
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -768,7 +755,7 @@ bar := ${subst not,"totally", "I am not superman"}
 all:
 \t@echo $(bar)
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -783,7 +770,7 @@ bar := $(subst $(space),$(comma),$(foo))
 all:
 \t@echo $(bar)
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -799,7 +786,7 @@ all:
 \t# Output is ", a , b , c". Notice the spaces introduced
 \t@echo $(bar)
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -817,7 +804,7 @@ all:
 \techo $(two)
 \techo $(three)
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -831,7 +818,7 @@ all:
 \t# Output is "who! are! you!"
 \t@echo $(bar)
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -845,7 +832,7 @@ all:
 \t@echo $(foo)
 \t@echo $(bar)
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -857,7 +844,7 @@ all:
 \t# Outputs "Variable Name: sweet_new_fn First: go Second: tigers Empty Variable:"
 \t@echo $(call sweet_new_fn, go, tigers)
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -866,7 +853,7 @@ all:
 all:
 \t@echo $(shell ls -la) # Very ugly because the newlines are gone!
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
 
@@ -879,7 +866,7 @@ filtered_files = $(filter %.o,$(obj_files))
 all:
 \t@echo $(filtered_files)
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -891,7 +878,7 @@ filtered_files = $(filter %.c %.h,$(files))
 all:
 \t@echo $(filtered_files)
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -903,7 +890,7 @@ filtered_files = $(filter-out %.h,$(files))
 all:
 \t@echo $(filtered_files)
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -915,7 +902,7 @@ filtered_objects = $(filter %.o,$(filter-out test%,$(objects)))
 all:
 \t@echo $(filtered_objects)
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -926,7 +913,7 @@ include generated.mk
 all:
 \t@echo included
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -950,7 +937,7 @@ clean:
 \trm -rf ../headers
 \trm -f some_binary
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -960,7 +947,7 @@ some_file:
 \techo This line is too long, so \\
 \t\tit is broken up into multiple lines
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -975,7 +962,7 @@ clean:
 \trm -f some_file
 \trm -f clean
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -992,7 +979,7 @@ two:
 \ttouch two
 \tfalse
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
     @Test
@@ -1049,7 +1036,7 @@ clean:
 # errors to show up.
 -include $(DEPS)
 """;
-        runBuildFile(buildFile);
+        utils.runBuildFile(buildFile);
     }
 
 }
