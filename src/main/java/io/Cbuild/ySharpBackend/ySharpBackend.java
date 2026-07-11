@@ -9,7 +9,40 @@ import java.util.List;
 
 public class ySharpBackend {
 
-    public static Hashtable<String, String> symbolTable = new Hashtable<>();
+    public static final class SymbolTableVariable {
+
+        private final String rawValue;
+        private final cBuildIR.ValueIR deferredValue;
+        private final boolean requiresSecondaryExpansion;
+
+        public SymbolTableVariable(
+                String rawValue,
+                cBuildIR.ValueIR deferredValue,
+                boolean requiresSecondaryExpansion
+        ) {
+            this.rawValue = rawValue;
+            this.deferredValue = deferredValue;
+            this.requiresSecondaryExpansion = requiresSecondaryExpansion;
+        }
+
+        public String getRawValue() {
+            return rawValue;
+        }
+
+        public cBuildIR.ValueIR getDeferredValue() {
+            return deferredValue;
+        }
+
+        public boolean requiresSecondaryExpansion() {
+            return requiresSecondaryExpansion;
+        }
+
+        public static SymbolTableVariable rawVariable(String rawValue) {
+            return new SymbolTableVariable(rawValue, null, false);
+        }
+    }
+
+    public static Hashtable<String, SymbolTableVariable> symbolTable = new Hashtable<>();
 
     public void validateCompatibility(List<cBuildIR.IR> instructions) {
         for (cBuildIR.IR ir : instructions) {
@@ -119,6 +152,10 @@ public class ySharpBackend {
         }
     }
 
+    private boolean validateAssignmentFlavor(cBuildIR.AssignmentType type) {
+        return (type == cBuildIR.AssignmentType.RECURSIVE || type == cBuildIR.AssignmentType.SIMPLE);
+    }
+
     private boolean allowedIR(cBuildIR.IR ir) {
         return ir instanceof cBuildIR.AssignmentIR
                 || ir instanceof cBuildIR.YsharpHookIR
@@ -159,7 +196,7 @@ public class ySharpBackend {
                 builder.append(expand(textPart));
             }
         }
-        return symbolTable.getOrDefault(builder.toString(), "");
+        return symbolTable.getOrDefault(builder.toString(), SymbolTableVariable.rawVariable("")).getRawValue();
     }
 
     public String expand(cBuildIR.TextPart part) {
