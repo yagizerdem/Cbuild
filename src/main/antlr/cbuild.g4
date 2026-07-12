@@ -413,6 +413,8 @@ SLIT
     | '\'' ( '\\' . | ~['\\\r\n] )* '\''
     ;
 
+YSHARP: 'ysharp';
+
 CHARS
     : ~[ \t\r\n$(){}:,=#|]+
     ;
@@ -432,5 +434,3 @@ TAB
     ;
 
 COMMENT: '#' ~[\r\n]* ;
-
-YSHARP: 'ysharp';
