@@ -22,10 +22,8 @@ public class Main {
 
         try {
             String cBuildProgram = """
-a = $(b)
-b = $(a)
-
-k := $(b)
+value = $(value)
+result := $(value)
 """;
 //            cBuildProgram += Cursor.END;
 //            List<Cursor.Pchar> processed = Preprocessor.mergeContinuation(cBuildProgram);

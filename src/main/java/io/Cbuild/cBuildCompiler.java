@@ -144,13 +144,7 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
 
         for(ParseTree ast_node : ctx.children) {
             Object part = ast_node.accept(this);
-            if(part instanceof cBuildIR.FunctionCallPart callee) {
-                parts.add(callee);
-            }
-            else if(part instanceof cBuildIR.TextPart textPart) {
-                parts.add(textPart);
-            }
-
+            collectValueParts(parts, part);
         }
 
         return parts;
