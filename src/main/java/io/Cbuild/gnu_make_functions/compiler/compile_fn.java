@@ -20,7 +20,7 @@ public class compile_fn extends cbuildBaseVisitor<cBuildIR.ValueIR > implements 
 
     @Override
     public cBuildIR.FunctionIR compile(cbuildParser.FunctionContext ctx, type.MakeFunction function) {
-        int given = ctx.arguments().argument().size();
+        int given =  ctx.arguments() == null ? 0 : ctx.arguments().argument().size();
         int expected = function.arity();
 
         if (given != expected) {

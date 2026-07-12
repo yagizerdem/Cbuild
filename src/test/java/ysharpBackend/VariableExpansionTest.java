@@ -260,12 +260,12 @@ result := $(final_var)
     @Test
     public void recursiveAssignmentObservesValueDefinedAfterAssignment() {
         ySharpBackend backend = expand("""
-value = $(later)
+value_ = $(later)
 later := resolved
-result := $(value)
+result := $(value_)
 """);
 
-        assertRawValue(backend, "value", "resolved");
+        assertRawValue(backend, "value_", "resolved");
         assertRawValue(backend, "result", "resolved");
     }
 
@@ -315,8 +315,8 @@ result := $(a)
     @Test
     public void multipleReferencesToSameRecursiveVariableResolveConsistently() {
         ySharpBackend backend = expand("""
-value = content
-result := $(value)-$(value)-$(value)
+value_ = content
+result := $(value_)-$(value_)-$(value_)
 """);
 
         assertRawValue(backend, "result", "content-content-content");
@@ -498,8 +498,8 @@ result := $(host.$(cluster.$(region.$(stage))))
     @Test
     public void dynamicAssignmentNameCanBeReferencedLater() {
         ySharpBackend backend = expand("""
-suffix := debug
-build.$(suffix) := enabled
+suffix_ := debug
+build.$(suffix_) := enabled
 result := $(build.debug)
 """);
 
@@ -567,13 +567,13 @@ value := third
     public void recursiveAssignmentCanBeReplacedBySimpleAssignment() {
         ySharpBackend backend = expand("""
 dependency := old
-value = $(dependency)
-value := fixed
+value_ = $(dependency)
+value_:= fixed
 dependency := new
-result := $(value)
+result := $(value_)
 """);
 
-        assertRawValue(backend, "value", "fixed");
+        assertRawValue(backend, "value_", "fixed");
         assertRawValue(backend, "result", "fixed");
     }
 

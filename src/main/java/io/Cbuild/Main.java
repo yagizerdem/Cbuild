@@ -22,8 +22,7 @@ public class Main {
 
         try {
             String cBuildProgram = """
-value = $(value)
-result := $(value)
+message := $$test
 """;
 //            cBuildProgram += Cursor.END;
 //            List<Cursor.Pchar> processed = Preprocessor.mergeContinuation(cBuildProgram);

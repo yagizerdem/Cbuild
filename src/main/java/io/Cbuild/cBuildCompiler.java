@@ -177,14 +177,25 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
                 }
             }
             else if(atom_ctx.text_in_assign() != null && !atom_ctx.text_in_assign().isEmpty()) {
-                String lexeme = atom_ctx.text_in_assign().getText();
-                cBuildIR.TextPart text_part = new cBuildIR.TextPart(lexeme);
+                StringBuilder lexeme = new StringBuilder();
+                for(cbuildParser.Char_in_assignContext char_ctx : atom_ctx.text_in_assign().char_in_assign()) {
+                    lexeme.append((String) char_ctx.accept(this));
+                }
+                cBuildIR.TextPart text_part = new cBuildIR.TextPart(lexeme.toString());
                 parts.add(text_part);
             }
         }
         return parts;
     }
 
+        @Override
+        public Object visitChar_in_assign(cbuildParser.Char_in_assignContext ctx) {
+            if ("$$".equals(ctx.getText())) {
+                return "$";
+            }
+
+            return ctx.getText();
+        }
 
     @Override
     public Object visitFunction(cbuildParser.FunctionContext ctx) {
@@ -859,6 +870,7 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
     public Object visitChar_in_def(cbuildParser.Char_in_defContext ctx) {
         return new cBuildIR.TextPart(ctx.getText());
     }
+
 
     @Override
     public Object visitVpath(cbuildParser.VpathContext ctx) {
