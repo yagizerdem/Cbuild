@@ -22,9 +22,7 @@ public class Main {
 
         try {
             String cBuildProgram = """
-                             
-a := 10
-b = 20
+c := $(b$(k))
 """;
 //            cBuildProgram += Cursor.END;
 //            List<Cursor.Pchar> processed = Preprocessor.mergeContinuation(cBuildProgram);
@@ -42,6 +40,9 @@ b = 20
             List<cBuildIR.IR> ir = cBuildCompiler.compile(context);
 
             ySharpBackend backend = new ySharpBackend();
+            backend.putRawVariable("k", "10");
+            backend.putRawVariable("b10", "300");
+
             backend.expand(ir);
 
             var a = 10;

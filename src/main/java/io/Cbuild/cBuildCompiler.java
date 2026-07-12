@@ -95,7 +95,7 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
             List<cBuildIR.ValuePart> left_parts = (List<cBuildIR.ValuePart>) ctx.pattern().accept(this);
             cBuildIR.ValueIR left_valueIR = new cBuildIR.ValueIR(left_parts);
 
-            cBuildIR.ValueIR right_valueIR = new cBuildIR.ValueIR(List.of(new cBuildIR.TextPart("")));
+            cBuildIR.ValueIR right_valueIR = new cBuildIR.ValueIR(List.of());
             if(ctx.exprs_in_assign() != null) {
                 List<cBuildIR.ValuePart> right_parts = (List<cBuildIR.ValuePart>) ctx.exprs_in_assign().accept(this);
                 right_valueIR = new cBuildIR.ValueIR(right_parts);
@@ -212,10 +212,60 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
             return callee;
         }
 
-        cBuildIR.ValueIR value = new cBuildIR.ValueIR();
-        value.parts.add(new cBuildIR.TextPart(ctx.function_name().getText()));
-        cBuildIR.VarRefPart ref = new cBuildIR.VarRefPart(value);
-        return ref;
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+
+        for (int i = 0; i < ctx.getChildCount(); i++) {
+            ParseTree child = ctx.getChild(i);
+            Object result = child.accept(this);
+            collectValueParts(parts, result);
+
+        }
+
+
+        return new cBuildIR.VarRefPart(
+                new cBuildIR.ValueIR(parts)
+        );
+    }
+
+    @Override
+    public Object visitFunction_name(cbuildParser.Function_nameContext ctx) {
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+        for(cbuildParser.Function_name_atomContext atom_ctx : ctx.function_name_atom()) {
+            Object result = atom_ctx.accept(this);
+            collectValueParts(parts, result);
+        }
+
+        return parts;
+    }
+
+    @Override
+    public Object visitFunction_name_atom(cbuildParser.Function_name_atomContext ctx) {
+        if(ctx.CHARS() != null) {
+            return new cBuildIR.TextPart(ctx.CHARS().getText());
+        }
+        if(ctx.function() != null) {
+            return ctx.function().accept(this);
+        }
+        return new cBuildIR.TextPart("");
+    }
+
+    @Override
+    public Object visitArguments(cbuildParser.ArgumentsContext ctx) {
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+        for(cbuildParser.ArgumentContext args_ctx : ctx.argument()) {
+            Object result = args_ctx.accept(this);
+            collectValueParts(parts, result);
+        }
+
+        return parts;
+    }
+
+    @Override
+    public Object visitArgument(cbuildParser.ArgumentContext ctx) {
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+        Object result = ctx.expressions().accept(this);
+        collectValueParts(parts, result);
+        return parts;
     }
 
     private cBuildIR.VarRefPart compileVarRef(cbuildParser.FunctionContext ctx) {
@@ -861,6 +911,27 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         return ir;
     }
 
+    // utility
+
+    private static void collectValueParts(
+            List<cBuildIR.ValuePart> destination,
+            Object result
+    ) {
+        if (result == null) {
+            return;
+        }
+
+        if (result instanceof cBuildIR.ValuePart valuePart) {
+            destination.add(valuePart);
+            return;
+        }
+
+        if (result instanceof List<?> list) {
+            for (Object item : list) {
+                collectValueParts(destination, item);
+            }
+        }
+    }
 }
 
 

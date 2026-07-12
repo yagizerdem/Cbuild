@@ -339,12 +339,12 @@ public class ySharpBackend {
         );
     }
 
-    public static class ySharpExpansionEngineFirstPass extends Expansion.BaseExpansionEngine {
+    public static class ySharpExpansionEngine extends Expansion.BaseExpansionEngine {
 
         private final ySharpValueExpansionEngine valueExpansionEngine;
         private final ySharpBackend backend;
 
-        public ySharpExpansionEngineFirstPass(ySharpBackend backend) {
+        public ySharpExpansionEngine(ySharpBackend backend) {
             this.valueExpansionEngine = new ySharpValueExpansionEngine(backend);
             this.backend = backend;
         }
@@ -352,7 +352,14 @@ public class ySharpBackend {
         @Override
         public <T> T expand(cBuildIR.AssignmentIR ir) {
             String identifier = ir.left.expansion(this.valueExpansionEngine);
-            backend.assign(identifier, ir.type, ir.right);
+            if(ir.type == cBuildIR.AssignmentType.SIMPLE) {
+                String value = ir.right.expansion(this.valueExpansionEngine);
+                backend.putRawVariable(identifier, value);
+            }
+            if(ir.type == cBuildIR.AssignmentType.RECURSIVE) {
+                backend.putDeferredVariable(identifier, ir.right);
+            }
+
             return null;
         }
     }
@@ -406,7 +413,10 @@ public class ySharpBackend {
                     builder.append(textPart.lexeme);
                 }
             }
-            return backend.symbolTable.getOrDefault(builder.toString(), SymbolTableVariable.rawVariable("")).getRawValue();
+            if(backend.symbolTable.containsKey(builder.toString())) {
+                return backend.symbolTable.get(builder.toString()).getRawValue();
+            }
+            return "";
         }
     }
 
@@ -416,10 +426,16 @@ public class ySharpBackend {
     }
 
     public void expand(List<cBuildIR.IR> instructions) {
-        ySharpExpansionEngineFirstPass expansionEngine = new ySharpExpansionEngineFirstPass(this);
+        ySharpExpansionEngine expansionEngine = new ySharpExpansionEngine(this);
         for(cBuildIR.IR ir : instructions) {
             ir.expansion(expansionEngine);
         }
     }
+
+    public void expand(cBuildIR.IR instruction) {
+        ySharpExpansionEngine expansionEngine = new ySharpExpansionEngine(this);
+        instruction.expansion(expansionEngine);
+    }
+
 
 }
