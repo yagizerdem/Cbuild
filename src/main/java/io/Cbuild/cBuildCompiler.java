@@ -159,19 +159,13 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
     @Override
     public Object visitExprs_in_assign(cbuildParser.Exprs_in_assignContext ctx) {
         List<cBuildIR.ValuePart> parts = new ArrayList<>();
-        for(ParseTree ast_node : ctx.children) {
+        for(int i = 0; i < ctx.children.size(); i++) {
+            org.antlr.v4.runtime.tree.ParseTree ast_node = ctx.children.get(i);
+            if(i == 0 && ast_node.getText().isBlank()) continue; // skip first WS
             Object part_s = ast_node.accept(this);
-            if (part_s instanceof List<?> list) {
-                for (Object obj : list) {
-                    if (obj instanceof cBuildIR.ValuePart valuePart) {
-                        parts.add(valuePart);
-                    }
-                }
-            }
-            else if(part_s instanceof cBuildIR.ValuePart part) {
-                parts.add(part);
-            }
+            collectValueParts(parts, part_s);
         }
+
         return parts;
     }
 

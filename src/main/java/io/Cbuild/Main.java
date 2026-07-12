@@ -22,7 +22,15 @@ public class Main {
 
         try {
             String cBuildProgram = """
-c := $(b$(k))
+env := prod
+arch := arm64
+profile.prod := release
+tool.arm64 := clang
+flags.release.clang := -O3 -DNDEBUG
+
+selected_profile := $(profile.$(env))
+selected_tool := $(tool.$(arch))
+result := $(flags.$(selected_profile).$(selected_tool))
 """;
 //            cBuildProgram += Cursor.END;
 //            List<Cursor.Pchar> processed = Preprocessor.mergeContinuation(cBuildProgram);
@@ -40,12 +48,12 @@ c := $(b$(k))
             List<cBuildIR.IR> ir = cBuildCompiler.compile(context);
 
             ySharpBackend backend = new ySharpBackend();
-            backend.putRawVariable("k", "10");
-            backend.putRawVariable("b10", "300");
 
             backend.expand(ir);
 
             var a = 10;
+
+            backend.printSymbolTable();
 
 
         }catch (Exception ex) {

@@ -413,8 +413,17 @@ public class ySharpBackend {
                     builder.append(textPart.lexeme);
                 }
             }
-            if(backend.symbolTable.containsKey(builder.toString())) {
-                return backend.symbolTable.get(builder.toString()).getRawValue();
+            String identifier = builder.toString();
+            if(backend.symbolTable.containsKey(identifier)) {
+                SymbolTableVariable var = backend.symbolTable.get(identifier);
+                if(var.isDeferred()) {
+                    cBuildIR.ValueIR valueIR =  var.getDeferredValue();
+                    String rawValue = expand(valueIR);
+                    backend.overrideVariable(identifier, SymbolTableVariable.rawVariable(rawValue));
+                    return rawValue;
+                }
+
+                return backend.symbolTable.get(identifier).getRawValue();
             }
             return "";
         }
