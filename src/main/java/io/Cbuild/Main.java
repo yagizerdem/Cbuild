@@ -4,6 +4,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import ysharp.treewalk.evaluator.Interpreter;
+import io.Cbuild.ySharpBackend.ySharpBackend;
 
 import java.util.List;
 
@@ -21,9 +22,7 @@ public class Main {
 
         try {
             String cBuildProgram = """
-                             
-test: 
-\t echo hit test case
+message := $$test
 """;
 //            cBuildProgram += Cursor.END;
 //            List<Cursor.Pchar> processed = Preprocessor.mergeContinuation(cBuildProgram);
@@ -40,7 +39,13 @@ test:
             cBuildCompiler cBuildCompiler = new cBuildCompiler();
             List<cBuildIR.IR> ir = cBuildCompiler.compile(context);
 
+            ySharpBackend backend = new ySharpBackend();
+
+            backend.expand(ir);
+
             var a = 10;
+
+            backend.printSymbolTable();
 
 
         }catch (Exception ex) {

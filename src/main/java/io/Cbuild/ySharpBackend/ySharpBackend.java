@@ -1,13 +1,10 @@
 package io.Cbuild.ySharpBackend;
 
-import io.Cbuild.Expansion.BaseExpansionEngine;
 import io.Cbuild.Expansion;
 import io.Cbuild.cBuildIR;
 import io.Cbuild.cbuildException;
-import org.stringtemplate.v4.ST;
 
-import java.util.Hashtable;
-import java.util.List;
+import java.util.*;
 
 public class ySharpBackend {
 
@@ -39,12 +36,175 @@ public class ySharpBackend {
             return requiresSecondaryExpansion;
         }
 
+        public boolean isDeferred() {
+            return deferredValue != null;
+        }
+
         public static SymbolTableVariable rawVariable(String rawValue) {
             return new SymbolTableVariable(rawValue, null, false);
         }
+
+        public static SymbolTableVariable deferredVariable(cBuildIR.ValueIR deferredValue) {
+            return new SymbolTableVariable(null, deferredValue, false);
+        }
+
+        public static SymbolTableVariable secondaryExpansionVariable(cBuildIR.ValueIR deferredValue) {
+            return new SymbolTableVariable(null, deferredValue, true);
+        }
+
+        @Override
+        public String toString() {
+            return "SymbolTableVariable{" +
+                    "rawValue='" + rawValue + '\'' +
+                    ", deferredValue=" + deferredValue +
+                    ", requiresSecondaryExpansion=" + requiresSecondaryExpansion +
+                    '}';
+        }
     }
 
-    public static Hashtable<String, SymbolTableVariable> symbolTable = new Hashtable<>();
+    public final Hashtable<String, SymbolTableVariable> symbolTable = new Hashtable<>();
+
+    public void printSymbolTable() {
+        System.out.println("=== Symbol Table ===");
+
+        if (symbolTable.isEmpty()) {
+            System.out.println("(empty)");
+            return;
+        }
+
+        symbolTable.forEach((name, variable) ->
+                System.out.println(name + " -> " + variable)
+        );
+
+        System.out.println("====================");
+    }
+
+    public boolean hasVariable(String name) {
+        return symbolTable.containsKey(name);
+    }
+
+    public SymbolTableVariable getVariable(String name) {
+        return symbolTable.get(name);
+    }
+
+    public SymbolTableVariable requireVariable(String name) {
+        SymbolTableVariable variable = symbolTable.get(name);
+        if (variable == null) {
+            throw new NoSuchElementException("Undefined variable: " + name);
+        }
+        return variable;
+    }
+
+    public String getRawVariable(String name) {
+        return requireVariable(name).getRawValue();
+    }
+
+    public String getRawVariableOrDefault(String name, String defaultValue) {
+        SymbolTableVariable variable = symbolTable.get(name);
+        if (variable == null || variable.getRawValue() == null) {
+            return defaultValue;
+        }
+        return variable.getRawValue();
+    }
+
+    public SymbolTableVariable putVariable(String name, SymbolTableVariable variable) {
+        return symbolTable.put(name, variable);
+    }
+
+    public SymbolTableVariable putRawVariable(String name, String rawValue) {
+        return putVariable(name, SymbolTableVariable.rawVariable(rawValue));
+    }
+
+    public SymbolTableVariable putDeferredVariable(String name, cBuildIR.ValueIR deferredValue) {
+        return putVariable(name, SymbolTableVariable.deferredVariable(deferredValue));
+    }
+
+    public SymbolTableVariable putSecondaryExpansionVariable(String name, cBuildIR.ValueIR deferredValue) {
+        return putVariable(name, SymbolTableVariable.secondaryExpansionVariable(deferredValue));
+    }
+
+    public void defineVariable(String name, SymbolTableVariable variable) {
+        if (hasVariable(name)) {
+            throw new IllegalStateException("Variable already exists: " + name);
+        }
+        putVariable(name, variable);
+    }
+
+    public void defineRawVariable(String name, String rawValue) {
+        defineVariable(name, SymbolTableVariable.rawVariable(rawValue));
+    }
+
+    public void defineDeferredVariable(String name, cBuildIR.ValueIR deferredValue) {
+        defineVariable(name, SymbolTableVariable.deferredVariable(deferredValue));
+    }
+
+    public void defineIfAbsent(String name, SymbolTableVariable variable) {
+        symbolTable.putIfAbsent(name, variable);
+    }
+
+    public void overrideVariable(String name, SymbolTableVariable variable) {
+        putVariable(name, variable);
+    }
+
+    public void overrideRawVariable(String name, String rawValue) {
+        overrideVariable(name, SymbolTableVariable.rawVariable(rawValue));
+    }
+
+    public SymbolTableVariable deleteVariable(String name) {
+        SymbolTableVariable removed = symbolTable.remove(name);
+        if (removed == null) {
+            throw new NoSuchElementException("Cannot delete undefined variable: " + name);
+        }
+        return removed;
+    }
+
+    public boolean deleteVariableIfExists(String name) {
+        return symbolTable.remove(name) != null;
+    }
+
+    public void clearVariables() {
+        symbolTable.clear();
+    }
+
+    public void appendRawVariable(String name, String rawValue) {
+        String current = getRawVariableOrDefault(name, "");
+        if (current.isEmpty()) {
+            putRawVariable(name, rawValue);
+            return;
+        }
+        putRawVariable(name, current + " " + rawValue);
+    }
+
+    public void assign(String name, SymbolTableVariable variable) {
+        putVariable(name, variable);
+    }
+
+    public void assignRaw(String name, String rawValue) {
+        putRawVariable(name, rawValue);
+    }
+
+    public void assign(
+            String name,
+            cBuildIR.AssignmentType type,
+            cBuildIR.ValueIR value
+    ) {
+
+        switch (type) {
+            case RECURSIVE ->
+                    putDeferredVariable(name, value);
+
+            case SIMPLE ->
+                    putRawVariable(name, expandValue(value));
+
+            default ->
+                    throw new UnsupportedOperationException(
+                            "YSharp backend does not support assignment type "
+                                    + type
+                                    + " for variable: "
+                                    + name
+                    );
+        }
+    }
 
     public void validateCompatibility(List<cBuildIR.IR> instructions) {
         for (cBuildIR.IR ir : instructions) {
@@ -93,14 +253,16 @@ public class ySharpBackend {
                 "Assignment right-hand side"
         );
 
-        String prefix = assignmentIR.prefix.getPrefix();
+        if (assignmentIR.prefix != null) {
+            String prefix = assignmentIR.prefix.getPrefix();
 
-        if (prefix != null && !prefix.isBlank()) {
-            throw incompatible(
-                    assignmentIR,
-                    "Assignment prefixes are not supported by the ySharp backend: "
-                            + prefix
-            );
+            if (prefix != null && !prefix.isBlank()) {
+                throw incompatible(
+                        assignmentIR,
+                        "Assignment prefixes are not supported by the ySharp backend: "
+                                + prefix
+                );
+            }
         }
     }
 
@@ -155,7 +317,8 @@ public class ySharpBackend {
     }
 
     private boolean validateAssignmentFlavor(cBuildIR.AssignmentType type) {
-        return (type == cBuildIR.AssignmentType.RECURSIVE || type == cBuildIR.AssignmentType.SIMPLE);
+        return type == cBuildIR.AssignmentType.RECURSIVE
+                || type == cBuildIR.AssignmentType.SIMPLE;
     }
 
     private boolean allowedIR(cBuildIR.IR ir) {
@@ -174,70 +337,130 @@ public class ySharpBackend {
         );
     }
 
-    public static class ySharpExpansionEngineFirstPass extends Expansion.BaseExpansionEngine {
+    public static class ySharpExpansionEngine extends Expansion.BaseExpansionEngine {
 
-        public Void expand(cBuildIR.AssignmentIR ir) {
+        private final ySharpValueExpansionEngine valueExpansionEngine;
+        private final ySharpBackend backend;
+
+        public ySharpExpansionEngine(ySharpBackend backend) {
+            this.valueExpansionEngine = new ySharpValueExpansionEngine(backend);
+            this.backend = backend;
+        }
+
+        @Override
+        public <T> T expand(cBuildIR.AssignmentIR ir) {
+            String identifier = ir.left.expansion(this.valueExpansionEngine);
+            if(ir.type == cBuildIR.AssignmentType.SIMPLE) {
+                String value = ir.right.expansion(this.valueExpansionEngine);
+                backend.putRawVariable(identifier, value);
+            }
+            if(ir.type == cBuildIR.AssignmentType.RECURSIVE) {
+                backend.putDeferredVariable(identifier, ir.right);
+            }
 
             return null;
         }
-
-        public Void expand(cBuildIR.NormalRuleIR ir) {
-
-            return null;
-        }
-
-
-        public Void expand(cBuildIR.YsharpHookIR ir) {
-
-            return null;
-        }
-
-        public Void expand(cBuildIR.RecipeIR ir) {
-
-            return null;
-        }
-
     }
 
     public static class ySharpValueExpansionEngine extends Expansion.BaseExpansionEngine {
 
-        public String expand(cBuildIR.ValueIR ir) {
+        private final ySharpBackend backend;
+
+        private final Set<String> activeLookups;
+
+        public ySharpValueExpansionEngine(ySharpBackend backend) {
+            this.backend = backend;
+            this.activeLookups = new HashSet<>();
+        }
+
+        public void clearActiveLookups() {
+            this.activeLookups.clear();
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T expand(cBuildIR.ValueIR ir) {
+            return (T) expandValueToString(ir, activeLookups);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T expand(cBuildIR.VarRefPart varRef) {
+            return (T) expandVarRefToString(varRef, activeLookups);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> T expand(cBuildIR.TextPart part) {
+            return (T) part.lexeme;
+        }
+
+        private String expandValueToString(cBuildIR.ValueIR ir, Set<String> activeLookups) {
             StringBuilder builder = new StringBuilder();
             for(cBuildIR.ValuePart part : ir.parts) {
                 if(part instanceof cBuildIR.VarRefPart refPart) {
-                    builder.append(expand(refPart));
+                    builder.append(expandVarRefToString(refPart, activeLookups));
                 }
                 if(part instanceof cBuildIR.TextPart textPart) {
-                    builder.append(expand(textPart));
+                    builder.append(textPart.lexeme);
                 }
             }
             return builder.toString();
         }
 
-        public String expand(cBuildIR.VarRefPart varRef) {
+        private String expandVarRefToString(cBuildIR.VarRefPart varRef, Set<String> activeLookups) {
             StringBuilder builder = new StringBuilder();
             for(cBuildIR.ValuePart part : varRef.nameExpr.parts) {
                 if(part instanceof cBuildIR.VarRefPart refPart) {
-                    builder.append(expand(refPart));
+                    builder.append(expandVarRefToString(refPart, activeLookups));
                 }
                 if(part instanceof cBuildIR.TextPart textPart) {
-                    builder.append(expand(textPart));
+                    builder.append(textPart.lexeme);
                 }
             }
-            return symbolTable.getOrDefault(builder.toString(), SymbolTableVariable.rawVariable("")).getRawValue();
-        }
+            String identifier = builder.toString();
 
-        public String expand(cBuildIR.TextPart part) {
-            return part.lexeme;
+            if (activeLookups.contains(identifier)) {
+                throw new cbuildException(
+                        cbuildException.ErrorType.SEMANTIC,
+                        "Recursive variable '" + identifier
+                                + "' references itself (eventually)."
+                );
+            }
+
+            if(backend.symbolTable.containsKey(identifier)) {
+                SymbolTableVariable var = backend.symbolTable.get(identifier);
+                if(var.isDeferred()) {
+                    cBuildIR.ValueIR valueIR =  var.getDeferredValue();
+                    activeLookups.add(identifier);
+                    String rawValue = expand(valueIR);
+                    activeLookups.remove(identifier);
+                    backend.overrideVariable(identifier, SymbolTableVariable.rawVariable(rawValue));
+                    return rawValue;
+                }
+
+                return backend.symbolTable.get(identifier).getRawValue();
+            }
+            return "";
         }
     }
 
-    public <T> T expandValue(cBuildIR.ValueIR ir) {
-        ySharpValueExpansionEngine engine = new ySharpValueExpansionEngine();
+    public String expandValue(cBuildIR.ValueIR ir) {
+        ySharpValueExpansionEngine engine = new ySharpValueExpansionEngine(this);
         return ir.expansion(engine);
     }
 
+    public void expand(List<cBuildIR.IR> instructions) {
+        ySharpExpansionEngine expansionEngine = new ySharpExpansionEngine(this);
+        for(cBuildIR.IR ir : instructions) {
+            ir.expansion(expansionEngine);
+        }
+    }
 
+    public void expand(cBuildIR.IR instruction) {
+        ySharpExpansionEngine expansionEngine = new ySharpExpansionEngine(this);
+        instruction.expansion(expansionEngine);
+    }
 
 
 }

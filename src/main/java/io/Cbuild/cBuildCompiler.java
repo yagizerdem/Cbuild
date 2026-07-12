@@ -88,12 +88,14 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
     public Object visitAssignment(cbuildParser.AssignmentContext ctx) {
         cBuildIR.AssignmentIR assignmentIR = new cBuildIR.AssignmentIR();
 
+        assignmentIR.type = cBuildIR.AssignmentType.fromSymbol(ctx.ASSIGN_OP().getText().trim());
+
         if(ctx.pattern() != null && !ctx.pattern().isEmpty()) {
             // left value
             List<cBuildIR.ValuePart> left_parts = (List<cBuildIR.ValuePart>) ctx.pattern().accept(this);
             cBuildIR.ValueIR left_valueIR = new cBuildIR.ValueIR(left_parts);
 
-            cBuildIR.ValueIR right_valueIR = new cBuildIR.ValueIR(List.of(new cBuildIR.TextPart("")));
+            cBuildIR.ValueIR right_valueIR = new cBuildIR.ValueIR(List.of());
             if(ctx.exprs_in_assign() != null) {
                 List<cBuildIR.ValuePart> right_parts = (List<cBuildIR.ValuePart>) ctx.exprs_in_assign().accept(this);
                 right_valueIR = new cBuildIR.ValueIR(right_parts);
@@ -142,13 +144,7 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
 
         for(ParseTree ast_node : ctx.children) {
             Object part = ast_node.accept(this);
-            if(part instanceof cBuildIR.FunctionCallPart callee) {
-                parts.add(callee);
-            }
-            else if(part instanceof cBuildIR.TextPart textPart) {
-                parts.add(textPart);
-            }
-
+            collectValueParts(parts, part);
         }
 
         return parts;
@@ -157,19 +153,13 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
     @Override
     public Object visitExprs_in_assign(cbuildParser.Exprs_in_assignContext ctx) {
         List<cBuildIR.ValuePart> parts = new ArrayList<>();
-        for(ParseTree ast_node : ctx.children) {
+        for(int i = 0; i < ctx.children.size(); i++) {
+            org.antlr.v4.runtime.tree.ParseTree ast_node = ctx.children.get(i);
+            if(i == 0 && ast_node.getText().isBlank()) continue; // skip first WS
             Object part_s = ast_node.accept(this);
-            if (part_s instanceof List<?> list) {
-                for (Object obj : list) {
-                    if (obj instanceof cBuildIR.ValuePart valuePart) {
-                        parts.add(valuePart);
-                    }
-                }
-            }
-            else if(part_s instanceof cBuildIR.ValuePart part) {
-                parts.add(part);
-            }
+            collectValueParts(parts, part_s);
         }
+
         return parts;
     }
 
@@ -187,14 +177,25 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
                 }
             }
             else if(atom_ctx.text_in_assign() != null && !atom_ctx.text_in_assign().isEmpty()) {
-                String lexeme = atom_ctx.text_in_assign().getText();
-                cBuildIR.TextPart text_part = new cBuildIR.TextPart(lexeme);
+                StringBuilder lexeme = new StringBuilder();
+                for(cbuildParser.Char_in_assignContext char_ctx : atom_ctx.text_in_assign().char_in_assign()) {
+                    lexeme.append((String) char_ctx.accept(this));
+                }
+                cBuildIR.TextPart text_part = new cBuildIR.TextPart(lexeme.toString());
                 parts.add(text_part);
             }
         }
         return parts;
     }
 
+        @Override
+        public Object visitChar_in_assign(cbuildParser.Char_in_assignContext ctx) {
+            if ("$$".equals(ctx.getText())) {
+                return "$";
+            }
+
+            return ctx.getText();
+        }
 
     @Override
     public Object visitFunction(cbuildParser.FunctionContext ctx) {
@@ -210,10 +211,60 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
             return callee;
         }
 
-        cBuildIR.ValueIR value = new cBuildIR.ValueIR();
-        value.parts.add(new cBuildIR.TextPart(ctx.function_name().getText()));
-        cBuildIR.VarRefPart ref = new cBuildIR.VarRefPart(value);
-        return ref;
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+
+        for (int i = 0; i < ctx.getChildCount(); i++) {
+            ParseTree child = ctx.getChild(i);
+            Object result = child.accept(this);
+            collectValueParts(parts, result);
+
+        }
+
+
+        return new cBuildIR.VarRefPart(
+                new cBuildIR.ValueIR(parts)
+        );
+    }
+
+    @Override
+    public Object visitFunction_name(cbuildParser.Function_nameContext ctx) {
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+        for(cbuildParser.Function_name_atomContext atom_ctx : ctx.function_name_atom()) {
+            Object result = atom_ctx.accept(this);
+            collectValueParts(parts, result);
+        }
+
+        return parts;
+    }
+
+    @Override
+    public Object visitFunction_name_atom(cbuildParser.Function_name_atomContext ctx) {
+        if(ctx.CHARS() != null) {
+            return new cBuildIR.TextPart(ctx.CHARS().getText());
+        }
+        if(ctx.function() != null) {
+            return ctx.function().accept(this);
+        }
+        return new cBuildIR.TextPart("");
+    }
+
+    @Override
+    public Object visitArguments(cbuildParser.ArgumentsContext ctx) {
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+        for(cbuildParser.ArgumentContext args_ctx : ctx.argument()) {
+            Object result = args_ctx.accept(this);
+            collectValueParts(parts, result);
+        }
+
+        return parts;
+    }
+
+    @Override
+    public Object visitArgument(cbuildParser.ArgumentContext ctx) {
+        List<cBuildIR.ValuePart> parts = new ArrayList<>();
+        Object result = ctx.expressions().accept(this);
+        collectValueParts(parts, result);
+        return parts;
     }
 
     private cBuildIR.VarRefPart compileVarRef(cbuildParser.FunctionContext ctx) {
@@ -820,6 +871,7 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         return new cBuildIR.TextPart(ctx.getText());
     }
 
+
     @Override
     public Object visitVpath(cbuildParser.VpathContext ctx) {
         if (ctx.vpath_args() == null) {
@@ -859,6 +911,27 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
         return ir;
     }
 
+    // utility
+
+    private static void collectValueParts(
+            List<cBuildIR.ValuePart> destination,
+            Object result
+    ) {
+        if (result == null) {
+            return;
+        }
+
+        if (result instanceof cBuildIR.ValuePart valuePart) {
+            destination.add(valuePart);
+            return;
+        }
+
+        if (result instanceof List<?> list) {
+            for (Object item : list) {
+                collectValueParts(destination, item);
+            }
+        }
+    }
 }
 
 

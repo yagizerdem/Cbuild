@@ -1,13 +1,12 @@
 package util;
 
-import io.Cbuild.ThrowingErrorListener;
-import io.Cbuild.cBuildIR;
-import io.Cbuild.cbuildLexer;
-import io.Cbuild.cbuildParser;
+import io.Cbuild.*;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.stringtemplate.v4.ST;
 
+import javax.imageio.event.IIOReadProgressListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,6 +23,20 @@ public class utils {
         parser.cbuildfile();
     }
 
+    public static List<cBuildIR.IR> generateIR(String buildFile) {
+        CharStream charStream = CharStreams.fromString(buildFile);
+        cbuildLexer lexer = new cbuildLexer(charStream);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        cbuildParser parser = new cbuildParser(tokens);
+        parser.removeErrorListeners();
+        parser.addErrorListener(ThrowingErrorListener.INSTANCE);
+        cbuildParser.CbuildfileContext context = parser.cbuildfile();
+
+        cBuildCompiler cBuildCompiler = new cBuildCompiler();
+        List<cBuildIR.IR> ir = cBuildCompiler.compile(context);
+
+        return ir;
+    }
 
     public static cBuildIR.VarRefPart createVarRefPart(cBuildIR.TextPart... parts) {
         cBuildIR.ValueIR nameExpr = new cBuildIR.ValueIR(Arrays.stream(parts).map(x -> (cBuildIR.ValuePart) x).toList());

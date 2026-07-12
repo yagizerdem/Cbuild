@@ -279,6 +279,7 @@ char_nested: char | ',' ;
 
 
 char_in_assign: char_nested
+    | DOUBLE_DOLLAR
     | LPAREN
     | RPAREN
     | keywords
@@ -337,6 +338,7 @@ keywords
     | ENDEF
     | UNDEFINE
     | VPATH
+    | YSHARP
     ;
 
 colon
@@ -353,7 +355,7 @@ ws
     | TAB
     ;
 
-ysharp_hook : 'ysharp' ws? '{' ysharp_program '}' ws? ;
+ysharp_hook : YSHARP ws? '{' ysharp_program '}' ws? ;
 
 ysharp_program : .*? ;
 
@@ -431,4 +433,4 @@ TAB
 
 COMMENT: '#' ~[\r\n]* ;
 
-
+YSHARP: 'ysharp';
