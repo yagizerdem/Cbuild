@@ -172,6 +172,19 @@ result := $(compiler)
     }
 
 
+    @Test
+    public void circular() {
+
+        try {
+            ySharpBackend backend = expand("""
+a = $(b)
+b = $(a)
+""");
+        }catch (Exception ex) {
+            var a = 10;
+        }
+    }
+
 
     private ySharpBackend expand(String cBuildProgram) {
         List<cBuildIR.IR> ir = utils.generateIR(cBuildProgram);

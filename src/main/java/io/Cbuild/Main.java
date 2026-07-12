@@ -22,15 +22,10 @@ public class Main {
 
         try {
             String cBuildProgram = """
-env := prod
-arch := arm64
-profile.prod := release
-tool.arm64 := clang
-flags.release.clang := -O3 -DNDEBUG
+a = $(b)
+b = $(a)
 
-selected_profile := $(profile.$(env))
-selected_tool := $(tool.$(arch))
-result := $(flags.$(selected_profile).$(selected_tool))
+k := $(b)
 """;
 //            cBuildProgram += Cursor.END;
 //            List<Cursor.Pchar> processed = Preprocessor.mergeContinuation(cBuildProgram);

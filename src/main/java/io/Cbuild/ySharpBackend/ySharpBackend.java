@@ -4,9 +4,7 @@ import io.Cbuild.Expansion;
 import io.Cbuild.cBuildIR;
 import io.Cbuild.cbuildException;
 
-import java.util.Hashtable;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 public class ySharpBackend {
 
@@ -368,20 +366,27 @@ public class ySharpBackend {
 
         private final ySharpBackend backend;
 
+        private final Set<String> activeLookups;
+
         public ySharpValueExpansionEngine(ySharpBackend backend) {
             this.backend = backend;
+            this.activeLookups = new HashSet<>();
+        }
+
+        public void clearActiveLookups() {
+            this.activeLookups.clear();
         }
 
         @Override
         @SuppressWarnings("unchecked")
         public <T> T expand(cBuildIR.ValueIR ir) {
-            return (T) expandValueToString(ir);
+            return (T) expandValueToString(ir, activeLookups);
         }
 
         @Override
         @SuppressWarnings("unchecked")
         public <T> T expand(cBuildIR.VarRefPart varRef) {
-            return (T) expandVarRefToString(varRef);
+            return (T) expandVarRefToString(varRef, activeLookups);
         }
 
         @Override
@@ -390,11 +395,11 @@ public class ySharpBackend {
             return (T) part.lexeme;
         }
 
-        private String expandValueToString(cBuildIR.ValueIR ir) {
+        private String expandValueToString(cBuildIR.ValueIR ir, Set<String> activeLookups) {
             StringBuilder builder = new StringBuilder();
             for(cBuildIR.ValuePart part : ir.parts) {
                 if(part instanceof cBuildIR.VarRefPart refPart) {
-                    builder.append(expandVarRefToString(refPart));
+                    builder.append(expandVarRefToString(refPart, activeLookups));
                 }
                 if(part instanceof cBuildIR.TextPart textPart) {
                     builder.append(textPart.lexeme);
@@ -403,22 +408,33 @@ public class ySharpBackend {
             return builder.toString();
         }
 
-        private String expandVarRefToString(cBuildIR.VarRefPart varRef) {
+        private String expandVarRefToString(cBuildIR.VarRefPart varRef, Set<String> activeLookups) {
             StringBuilder builder = new StringBuilder();
             for(cBuildIR.ValuePart part : varRef.nameExpr.parts) {
                 if(part instanceof cBuildIR.VarRefPart refPart) {
-                    builder.append(expandVarRefToString(refPart));
+                    builder.append(expandVarRefToString(refPart, activeLookups));
                 }
                 if(part instanceof cBuildIR.TextPart textPart) {
                     builder.append(textPart.lexeme);
                 }
             }
             String identifier = builder.toString();
+
+            if (activeLookups.contains(identifier)) {
+                throw new cbuildException(
+                        cbuildException.ErrorType.SEMANTIC,
+                        "Recursive variable '" + identifier
+                                + "' references itself (eventually)."
+                );
+            }
+
             if(backend.symbolTable.containsKey(identifier)) {
                 SymbolTableVariable var = backend.symbolTable.get(identifier);
                 if(var.isDeferred()) {
                     cBuildIR.ValueIR valueIR =  var.getDeferredValue();
+                    activeLookups.add(identifier);
                     String rawValue = expand(valueIR);
+                    activeLookups.remove(identifier);
                     backend.overrideVariable(identifier, SymbolTableVariable.rawVariable(rawValue));
                     return rawValue;
                 }
