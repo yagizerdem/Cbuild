@@ -1,5 +1,7 @@
 package ysharpBackend;
 
+import io.Cbuild.Env;
+import io.Cbuild.Expansion;
 import io.Cbuild.cBuildIR;
 import io.Cbuild.cbuildException;
 import io.Cbuild.ySharpBackend.ySharpBackend;
@@ -13,50 +15,50 @@ public class VariableExpansionTest {
 
     @Test
     public void simpleAssignmentStoresLiteralAndExpandedValues() {
-        ySharpBackend backend = expand("""
+        Env context = expand("""
 base := core
 literal := plain text
 combined := prefix-$(base)-suffix
 repeated := $(base)/$(base)/$(base)
 """);
 
-        assertRawValue(backend, "base", "core");
-        assertRawValue(backend, "literal", "plain text");
-        assertRawValue(backend, "combined", "prefix-core-suffix");
-        assertRawValue(backend, "repeated", "core/core/core");
+        assertRawValue(context, "base", "core");
+        assertRawValue(context, "literal", "plain text");
+        assertRawValue(context, "combined", "prefix-core-suffix");
+        assertRawValue(context, "repeated", "core/core/core");
     }
 
     @Test
     public void recursiveAssignmentResolvesBasicReferencesWhenUsed() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 name = world
 greeting = hello $(name)
 punctuation = !
 result := $(greeting)$(punctuation)
 """);
 
-        assertRawValue(backend, "name", "world");
-        assertRawValue(backend, "greeting", "hello world");
-        assertRawValue(backend, "punctuation", "!");
-        assertRawValue(backend, "result", "hello world!");
+        assertRawValue(context, "name", "world");
+        assertRawValue(context, "greeting", "hello world");
+        assertRawValue(context, "punctuation", "!");
+        assertRawValue(context, "result", "hello world!");
     }
 
     @Test
     public void undefinedReferencesExpandToEmptyStringForBothAssignmentTypes() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 simple := before$(missing)after
 recursive = left$(unknown)right
 resolved := $(recursive)
 """);
 
-        assertRawValue(backend, "simple", "beforeafter");
-        assertRawValue(backend, "recursive", "leftright");
-        assertRawValue(backend, "resolved", "leftright");
+        assertRawValue(context, "simple", "beforeafter");
+        assertRawValue(context, "recursive", "leftright");
+        assertRawValue(context, "resolved", "leftright");
     }
 
     @Test
     public void simpleAssignmentCapturesValueWhileRecursiveAssignmentUsesLatestValue() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 mode := debug
 simple_snapshot := $(mode)
 recursive_value = $(mode)
@@ -64,15 +66,15 @@ mode := release
 recursive_result := $(recursive_value)
 """);
 
-        assertRawValue(backend, "mode", "release");
-        assertRawValue(backend, "simple_snapshot", "debug");
-        assertRawValue(backend, "recursive_value", "release");
-        assertRawValue(backend, "recursive_result", "release");
+        assertRawValue(context, "mode", "release");
+        assertRawValue(context, "simple_snapshot", "debug");
+        assertRawValue(context, "recursive_value", "release");
+        assertRawValue(context, "recursive_result", "release");
     }
 
     @Test
     public void recursiveAssignmentSupportsForwardReferences() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 artifact = $(name)-$(version)-$(arch)
 name := compiler
 version := 2.1
@@ -80,13 +82,13 @@ arch := arm64
 result := $(artifact)
 """);
 
-        assertRawValue(backend, "artifact", "compiler-2.1-arm64");
-        assertRawValue(backend, "result", "compiler-2.1-arm64");
+        assertRawValue(context, "artifact", "compiler-2.1-arm64");
+        assertRawValue(context, "result", "compiler-2.1-arm64");
     }
 
     @Test
     public void nestedVariableNamesSelectConfigurationValues() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 env := prod
 arch := arm64
 profile.prod := release
@@ -98,14 +100,14 @@ selected_tool := $(tool.$(arch))
 result := $(flags.$(selected_profile).$(selected_tool))
 """);
 
-        assertRawValue(backend, "selected_profile", "release");
-        assertRawValue(backend, "selected_tool", "clang");
-        assertRawValue(backend, "result", "-O3 -DNDEBUG");
+        assertRawValue(context, "selected_profile", "release");
+        assertRawValue(context, "selected_tool", "clang");
+        assertRawValue(context, "result", "-O3 -DNDEBUG");
     }
 
     @Test
     public void mixedAssignmentsResolveNestedDeferredSelectors() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 environment = prod
 architecture = arm64
 profile.prod = release
@@ -119,17 +121,17 @@ command = $(selected_compiler) $(optimization.$(selected_profile).$(selected_com
 result := $(command)
 """);
 
-        assertRawValue(backend, "environment", "prod");
-        assertRawValue(backend, "architecture", "arm64");
-        assertRawValue(backend, "selected_profile", "release");
-        assertRawValue(backend, "selected_compiler", "clang");
-        assertRawValue(backend, "command", "clang -O3 -DNDEBUG");
-        assertRawValue(backend, "result", "clang -O3 -DNDEBUG");
+        assertRawValue(context, "environment", "prod");
+        assertRawValue(context, "architecture", "arm64");
+        assertRawValue(context, "selected_profile", "release");
+        assertRawValue(context, "selected_compiler", "clang");
+        assertRawValue(context, "command", "clang -O3 -DNDEBUG");
+        assertRawValue(context, "result", "clang -O3 -DNDEBUG");
     }
 
     @Test
     public void deeplyNestedVariableNameCanResolveThroughMultipleLevels() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 stage := production
 region.production := eu
 cluster.eu := primary
@@ -143,16 +145,16 @@ endpoint = https://$(address.$(selected_node))/api
 result := $(endpoint)
 """);
 
-        assertRawValue(backend, "selected_region", "eu");
-        assertRawValue(backend, "selected_cluster", "primary");
-        assertRawValue(backend, "selected_node", "node-07");
-        assertRawValue(backend, "endpoint", "https://10.0.0.7/api");
-        assertRawValue(backend, "result", "https://10.0.0.7/api");
+        assertRawValue(context, "selected_region", "eu");
+        assertRawValue(context, "selected_cluster", "primary");
+        assertRawValue(context, "selected_node", "node-07");
+        assertRawValue(context, "endpoint", "https://10.0.0.7/api");
+        assertRawValue(context, "result", "https://10.0.0.7/api");
     }
 
     @Test
     public void nestedSelectorsCanBuildSeveralPartsOfOneVariableName() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 os := linux
 arch = arm64
 mode := release
@@ -166,10 +168,10 @@ compiler = $(binary.$(selected_prefix).$(selected_toolchain))
 result := $(compiler)
 """);
 
-        assertRawValue(backend, "selected_toolchain", "clang-18");
-        assertRawValue(backend, "selected_prefix", "/opt/llvm");
-        assertRawValue(backend, "compiler", "/opt/llvm/bin/clang");
-        assertRawValue(backend, "result", "/opt/llvm/bin/clang");
+        assertRawValue(context, "selected_toolchain", "clang-18");
+        assertRawValue(context, "selected_prefix", "/opt/llvm");
+        assertRawValue(context, "compiler", "/opt/llvm/bin/clang");
+        assertRawValue(context, "result", "/opt/llvm/bin/clang");
     }
 
 
@@ -234,71 +236,69 @@ k := $(döngü)
 
     @Test
     public void circularDynamicTargetWithLiteralFallback() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 mode = active
 dep_active = $(mode)
 result := $(dep_$(mode))
 """);
-        assertRawValue(backend, "result", "active");
+        assertRawValue(context, "result", "active");
 
     }
 
     @Test
     public void complexNestedDynamicIdentifierResolutionSuccess() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 suf := key
 var_$(suf) := target_value
 final_var = $(var_$(suf))
 result := $(final_var)
 """);
 
-        backend.printSymbolTable();
-
-        assertRawValue(backend, "result", "target_value");
+        assertRawValue(context, "result", "target_value");
     }
 
     @Test
     public void recursiveAssignmentObservesValueDefinedAfterAssignment() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 value_ = $(later)
 later := resolved
 result := $(value_)
 """);
 
-        assertRawValue(backend, "value_", "resolved");
-        assertRawValue(backend, "result", "resolved");
+        assertRawValue(context, "value_", "resolved");
+        assertRawValue(context, "result", "resolved");
     }
 
     @Test
     public void recursiveAssignmentObservesLatestReassignedValue() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 state := first
 recursive = $(state)
 state := second
 result := $(recursive)
 """);
 
-        assertRawValue(backend, "recursive", "second");
-        assertRawValue(backend, "result", "second");
+        assertRawValue(context, "recursive", "second");
+        assertRawValue(context, "result", "second");
     }
 
     @Test
     public void simpleAssignmentDoesNotObserveLaterReassignment() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 state := first
 snapshot := $(state)
 state := second
 result := $(snapshot)
 """);
 
-        assertRawValue(backend, "snapshot", "first");
-        assertRawValue(backend, "result", "first");
+        assertRawValue(context, "snapshot", "first");
+        assertRawValue(context, "result", "first");
     }
 
 
     @Test
     public void recursiveChainResolvesThroughMultipleVariables() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 a = $(b)
 b = $(c)
 c = $(d)
@@ -306,133 +306,133 @@ d := final
 result := $(a)
 """);
 
-        assertRawValue(backend, "a", "final");
-        assertRawValue(backend, "b", "final");
-        assertRawValue(backend, "c", "final");
-        assertRawValue(backend, "result", "final");
+        assertRawValue(context, "a", "final");
+        assertRawValue(context, "b", "final");
+        assertRawValue(context, "c", "final");
+        assertRawValue(context, "result", "final");
     }
 
     @Test
     public void multipleReferencesToSameRecursiveVariableResolveConsistently() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 value_ = content
 result := $(value_)-$(value_)-$(value_)
 """);
 
-        assertRawValue(backend, "result", "content-content-content");
+        assertRawValue(context, "result", "content-content-content");
     }
 
     @Test
     public void undefinedVariableBetweenDefinedVariablesExpandsToEmptyString() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 left := alpha
 right := omega
 result := $(left)$(missing)$(right)
 """);
 
-        assertRawValue(backend, "result", "alphaomega");
+        assertRawValue(context, "result", "alphaomega");
     }
 
     @Test
     public void completelyUndefinedVariableExpandsToEmptyString() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 result := $(does_not_exist)
 """);
 
-        assertRawValue(backend, "result", "");
+        assertRawValue(context, "result", "");
     }
 
     @Test
     public void recursiveEmptyVariableCanBeReferenced() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 empty =
 result := before$(empty)after
 """);
 
-        assertRawValue(backend, "empty", "");
-        assertRawValue(backend, "result", "beforeafter");
+        assertRawValue(context, "empty", "");
+        assertRawValue(context, "result", "beforeafter");
     }
 
     @Test
     public void variableValueContainingSpacesIsPreserved() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 message := hello from ysharp backend
 result := prefix $(message) suffix
 """);
 
-        assertRawValue(backend, "message", "hello from ysharp backend");
-        assertRawValue(backend, "result", "prefix hello from ysharp backend suffix");
+        assertRawValue(context, "message", "hello from ysharp backend");
+        assertRawValue(context, "result", "prefix hello from ysharp backend suffix");
     }
 
     @Test
     public void unicodeVariableNameCanBeResolved() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 şehir := izmir
 sonuç := $(şehir)
 """);
 
-        assertRawValue(backend, "şehir", "izmir");
-        assertRawValue(backend, "sonuç", "izmir");
+        assertRawValue(context, "şehir", "izmir");
+        assertRawValue(context, "sonuç", "izmir");
     }
 
     @Test
     public void unicodeVariableValueIsPreserved() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 message := çığ şükrü ğözü
 result := $(message)
 """);
 
-        assertRawValue(backend, "result", "çığ şükrü ğözü");
+        assertRawValue(context, "result", "çığ şükrü ğözü");
     }
 
     @Test
     public void variableNamesWithDotsResolveNormally() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 config.database.host := localhost
 config.database.port := 5432
 connection := $(config.database.host):$(config.database.port)
 """);
 
-        assertRawValue(backend, "connection", "localhost:5432");
+        assertRawValue(context, "connection", "localhost:5432");
     }
 
     @Test
     public void dynamicVariableIdentifierCanUseTwoSelectors() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 platform := linux
 architecture := x64
 compiler.linux.x64 := gcc
 result := $(compiler.$(platform).$(architecture))
 """);
 
-        assertRawValue(backend, "result", "gcc");
+        assertRawValue(context, "result", "gcc");
     }
 
     @Test
     public void dynamicVariableIdentifierCanContainLiteralPrefixAndSuffix() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 mode := release
 config.release.value := optimized
 result := $(config.$(mode).value)
 """);
 
-        assertRawValue(backend, "result", "optimized");
+        assertRawValue(context, "result", "optimized");
     }
 
     @Test
     public void dynamicVariableIdentifierCanResolveFromRecursiveSelector() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 environment = production
 url.production := https://example.com
 result := $(url.$(environment))
 """);
 
-        assertRawValue(backend, "result", "https://example.com");
+        assertRawValue(context, "result", "https://example.com");
     }
 
     @Test
     public void dynamicVariableIdentifierUsesLatestSelectorValue() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 environment := development
 url.development := localhost
 url.production := example.com
@@ -441,13 +441,13 @@ environment := production
 result := $(selected)
 """);
 
-        assertRawValue(backend, "selected", "example.com");
-        assertRawValue(backend, "result", "example.com");
+        assertRawValue(context, "selected", "example.com");
+        assertRawValue(context, "result", "example.com");
     }
 
     @Test
     public void simpleDynamicVariableIdentifierCapturesCurrentSelectorValue() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 environment := development
 url.development := localhost
 url.production := example.com
@@ -456,35 +456,35 @@ environment := production
 result := $(selected)
 """);
 
-        assertRawValue(backend, "selected", "localhost");
-        assertRawValue(backend, "result", "localhost");
+        assertRawValue(context, "selected", "localhost");
+        assertRawValue(context, "result", "localhost");
     }
 
     @Test
     public void dynamicIdentifierWithUndefinedSelectorResolvesToMatchingLiteralName() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 config. := fallback
 result := $(config.$(missing))
 """);
 
-        assertRawValue(backend, "result", "fallback");
+        assertRawValue(context, "result", "fallback");
     }
 
     @Test
     public void nestedDynamicIdentifierCanResolveSelectorFromAnotherDynamicIdentifier() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 environment := prod
 region.prod := eu
 server.eu := api-01
 result := $(server.$(region.$(environment)))
 """);
 
-        assertRawValue(backend, "result", "api-01");
+        assertRawValue(context, "result", "api-01");
     }
 
     @Test
     public void nestedDynamicIdentifierCanResolveSeveralNestedLevelsInline() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 stage := prod
 region.prod := eu
 cluster.eu := primary
@@ -492,80 +492,80 @@ host.primary := server-01
 result := $(host.$(cluster.$(region.$(stage))))
 """);
 
-        assertRawValue(backend, "result", "server-01");
+        assertRawValue(context, "result", "server-01");
     }
 
     @Test
     public void dynamicAssignmentNameCanBeReferencedLater() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 suffix_ := debug
 build.$(suffix_) := enabled
 result := $(build.debug)
 """);
 
-        assertRawValue(backend, "build.debug", "enabled");
-        assertRawValue(backend, "result", "enabled");
+        assertRawValue(context, "build.debug", "enabled");
+        assertRawValue(context, "result", "enabled");
     }
 
     @Test
     public void dynamicAssignmentNameCanContainMultipleExpandedParts() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 os := linux
 arch := arm64
 tool.$(os).$(arch) := clang
 result := $(tool.linux.arm64)
 """);
 
-        assertRawValue(backend, "tool.linux.arm64", "clang");
-        assertRawValue(backend, "result", "clang");
+        assertRawValue(context, "tool.linux.arm64", "clang");
+        assertRawValue(context, "result", "clang");
     }
 
     @Test
     public void dynamicAssignmentNameCanUseRecursiveSelector() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 selector = active
 state.$(selector) := running
 result := $(state.active)
 """);
 
-        assertRawValue(backend, "state.active", "running");
-        assertRawValue(backend, "result", "running");
+        assertRawValue(context, "state.active", "running");
+        assertRawValue(context, "result", "running");
     }
 
     @Test
     public void valueCanContainDollarCharacterWithoutVariableReference() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 currency := dollar
 result := price-$(currency)
 """);
 
-        assertRawValue(backend, "result", "price-dollar");
+        assertRawValue(context, "result", "price-dollar");
     }
 
     @Test
     public void escapedDollarIsPreservedAsLiteralDollar() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 result := price-$$100
 """);
 
-        assertRawValue(backend, "result", "price-$100");
+        assertRawValue(context, "result", "price-$100");
     }
 
     @Test
     public void reassignmentReplacesPreviousSimpleValue() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 value := first
 value := second
 value := third
 """);
 
-        assertRawValue(backend, "value", "third");
+        assertRawValue(context, "value", "third");
     }
 
 
     @Test
     public void recursiveAssignmentCanBeReplacedBySimpleAssignment() {
-        ySharpBackend backend = expand("""
+        io.Cbuild.Env context = expand("""
 dependency := old
 value_ = $(dependency)
 value_:= fixed
@@ -573,8 +573,8 @@ dependency := new
 result := $(value_)
 """);
 
-        assertRawValue(backend, "value_", "fixed");
-        assertRawValue(backend, "result", "fixed");
+        assertRawValue(context, "value_", "fixed");
+        assertRawValue(context, "result", "fixed");
     }
 
     @Test
@@ -653,7 +653,7 @@ result := $(root)
 
     @Test
     public void unusedCircularVariablesDoNotPreventIndependentExpansion() {
-        ySharpBackend backend = expand("""
+        Env context = expand("""
 a = $(b)
 b = $(a)
 
@@ -661,22 +661,24 @@ safe := valid
 result := $(safe)
 """);
 
-        assertRawValue(backend, "safe", "valid");
-        assertRawValue(backend, "result", "valid");
+        assertRawValue(context, "safe", "valid");
+        assertRawValue(context, "result", "valid");
     }
 
 
-    private ySharpBackend expand(String cBuildProgram) {
+    private Env expand(String cBuildProgram) {
+        Env context = new Env();
         List<cBuildIR.IR> ir = utils.generateIR(cBuildProgram);
         ySharpBackend backend = new ySharpBackend();
-        backend.expand(ir);
-        return backend;
+        Expansion expansion = new Expansion();
+        expansion.expand(ir, context);
+        return context;
     }
 
-    private void assertRawValue(ySharpBackend backend, String variableName, String expectedValue) {
-        Assertions.assertTrue(backend.hasVariable(variableName), "Missing variable: " + variableName);
-        Assertions.assertFalse(backend.getVariable(variableName).isDeferred(),
+    private void assertRawValue(Env context, String variableName, String expectedValue) {
+        Assertions.assertTrue(context.hasVariable(variableName), "Missing variable: " + variableName);
+        Assertions.assertFalse(context.getVariable(variableName).isDeferred(),
                 "Variable was not expanded: " + variableName);
-        Assertions.assertEquals(expectedValue, backend.getVariable(variableName).getRawValue());
+        Assertions.assertEquals(expectedValue, context.getVariable(variableName).getRawValue());
     }
 }
