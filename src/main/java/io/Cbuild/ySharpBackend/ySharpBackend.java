@@ -1,5 +1,6 @@
 package io.Cbuild.ySharpBackend;
 
+import io.Cbuild.ExecIR;
 import io.Cbuild.Expansion;
 import io.Cbuild.cBuildIR;
 import io.Cbuild.cbuildException;
@@ -348,10 +349,10 @@ public class ySharpBackend {
         }
 
         @Override
-        public <T> T expand(cBuildIR.AssignmentIR ir) {
-            String identifier = ir.left.expansion(this.valueExpansionEngine);
+        public <T> T exec(cBuildIR.AssignmentIR ir) {
+            String identifier = ir.left.exec(this.valueExpansionEngine);
             if(ir.type == cBuildIR.AssignmentType.SIMPLE) {
-                String value = ir.right.expansion(this.valueExpansionEngine);
+                String value = ir.right.exec(this.valueExpansionEngine);
                 backend.putRawVariable(identifier, value);
             }
             if(ir.type == cBuildIR.AssignmentType.RECURSIVE) {
@@ -379,19 +380,19 @@ public class ySharpBackend {
 
         @Override
         @SuppressWarnings("unchecked")
-        public <T> T expand(cBuildIR.ValueIR ir) {
+        public <T> T exec(cBuildIR.ValueIR ir) {
             return (T) expandValueToString(ir, activeLookups);
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public <T> T expand(cBuildIR.VarRefPart varRef) {
+        public <T> T exec(cBuildIR.VarRefPart varRef) {
             return (T) expandVarRefToString(varRef, activeLookups);
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public <T> T expand(cBuildIR.TextPart part) {
+        public <T> T exec(cBuildIR.TextPart part) {
             return (T) part.lexeme;
         }
 
@@ -433,7 +434,7 @@ public class ySharpBackend {
                 if(var.isDeferred()) {
                     cBuildIR.ValueIR valueIR =  var.getDeferredValue();
                     activeLookups.add(identifier);
-                    String rawValue = expand(valueIR);
+                    String rawValue = exec(valueIR);
                     activeLookups.remove(identifier);
                     backend.overrideVariable(identifier, SymbolTableVariable.rawVariable(rawValue));
                     return rawValue;
@@ -447,20 +448,26 @@ public class ySharpBackend {
 
     public String expandValue(cBuildIR.ValueIR ir) {
         ySharpValueExpansionEngine engine = new ySharpValueExpansionEngine(this);
-        return ir.expansion(engine);
+        return ir.exec(engine);
     }
 
     public void expand(List<cBuildIR.IR> instructions) {
         ySharpExpansionEngine expansionEngine = new ySharpExpansionEngine(this);
         for(cBuildIR.IR ir : instructions) {
-            ir.expansion(expansionEngine);
+            ir.exec(expansionEngine);
         }
     }
 
     public void expand(cBuildIR.IR instruction) {
         ySharpExpansionEngine expansionEngine = new ySharpExpansionEngine(this);
-        instruction.expansion(expansionEngine);
+        instruction.exec(expansionEngine);
     }
 
-
+//    public static class yGraphBuilder extends ExecIR.BaseExecIR {
+//
+//        @Override
+//        public <T> T exec(cBuildIR ir) {
+//            return super.exec(ir);
+//        }
+//    }
 }

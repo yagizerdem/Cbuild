@@ -13,7 +13,7 @@ public class cBuildIR {
         public int getRow();
         public int getCol();
 
-        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine);
+        public <T> T exec(ExecIR.AbstractExecIR executor);
     }
 
     public static abstract class BaseIR implements IR {
@@ -67,8 +67,8 @@ public class cBuildIR {
             this.parts.addAll(parts);
         }
 
-        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
-            return expansionEngine.expand(this);
+        public <T> T exec(ExecIR.AbstractExecIR executor) {
+            return executor.exec(this);
         }
     }
 
@@ -80,8 +80,8 @@ public class cBuildIR {
             this.name = name;
         }
 
-        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
-            return expansionEngine.expand(this);
+        public <T> T exec(ExecIR.AbstractExecIR executor) {
+            return executor.exec(this);
         }
     }
 
@@ -191,8 +191,8 @@ public class cBuildIR {
             this.type = type;
         }
 
-        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
-            return expansionEngine.expand(this);
+        public <T> T exec(ExecIR.AbstractExecIR executor) {
+            return executor.exec(this);
         }
     }
 
@@ -235,8 +235,8 @@ public class cBuildIR {
         public List<IR> thenBranch = new ArrayList<>();
         public List<IR> elseBranch = new ArrayList<>();
 
-        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
-            return expansionEngine.expand(this);
+        public <T> T exec(ExecIR.AbstractExecIR executor) {
+            return executor.exec(this);
         }
     }
 
@@ -333,8 +333,8 @@ public class cBuildIR {
             return recipes;
         }
 
-        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
-            return expansionEngine.expand(this);
+        public <T> T exec(ExecIR.AbstractExecIR executor) {
+            return executor.exec(this);
         }
     }
 
@@ -373,8 +373,8 @@ public class cBuildIR {
         }
 
 
-        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
-            return expansionEngine.expand(this);
+        public <T> T exec(ExecIR.AbstractExecIR executor) {
+            return executor.exec(this);
         }
     }
 
@@ -439,8 +439,8 @@ public class cBuildIR {
             return recipes;
         }
 
-        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
-            return expansionEngine.expand(this);
+        public <T> T exec(ExecIR.AbstractExecIR executor) {
+            return executor.exec(this);
         }
     }
 
@@ -485,8 +485,8 @@ public class cBuildIR {
         }
 
 
-        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
-            return expansionEngine.expand(this);
+        public <T> T exec(ExecIR.AbstractExecIR executor) {
+            return executor.exec(this);
         }
     }
 
@@ -511,8 +511,8 @@ public class cBuildIR {
         }
 
 
-        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
-            return expansionEngine.expand(this);
+        public <T> T exec(ExecIR.AbstractExecIR executor) {
+            return executor.exec(this);
         }
     }
 
@@ -547,8 +547,8 @@ public class cBuildIR {
         }
 
 
-        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
-            return expansionEngine.expand(this);
+        public <T> T exec(ExecIR.AbstractExecIR executor) {
+            return executor.exec(this);
         }
     }
 
@@ -561,8 +561,8 @@ public class cBuildIR {
             this.program = program;
         }
 
-        public <T> T expansion(Expansion.AbstractBaseExpansionEngine expansionEngine) {
-            return expansionEngine.expand(this);
+        public <T> T exec(ExecIR.AbstractExecIR executor) {
+            return executor.exec(this);
         }
     }
 
