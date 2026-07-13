@@ -27,6 +27,7 @@ message := $$test
 //            cBuildProgram += Cursor.END;
 //            List<Cursor.Pchar> processed = Preprocessor.mergeContinuation(cBuildProgram);
 
+            Env env = new Env();
 
             CharStream charStream = CharStreams.fromString(cBuildProgram);
             cbuildLexer lexer = new cbuildLexer(charStream);
@@ -39,14 +40,10 @@ message := $$test
             cBuildCompiler cBuildCompiler = new cBuildCompiler();
             List<cBuildIR.IR> ir = cBuildCompiler.compile(context);
 
-            ySharpBackend backend = new ySharpBackend();
 
-            backend.expand(ir);
-
-            var a = 10;
-
-            backend.printSymbolTable();
-
+            Expansion expansion = new Expansion();
+            expansion.expand(ir, env);
+            env.printSymbolTable();
 
         }catch (Exception ex) {
             System.out.println(ex.getMessage());

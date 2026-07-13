@@ -1,5 +1,7 @@
 package ysharpBackend;
 
+import io.Cbuild.Env;
+import io.Cbuild.Expansion;
 import util.utils;
 import io.Cbuild.cBuildIR;
 import io.Cbuild.ySharpBackend.*;
@@ -15,9 +17,10 @@ public class YsharpBackendTest {
     @Test
     public void ExpansionBasicTest() {
         cBuildIR.ValueIR identifier = utils.createValueIR(utils.createVarRefPart(utils.createTextPart("name")));
-        ySharpBackend backend = new ySharpBackend();
-        backend.symbolTable.put("name", ySharpBackend.SymbolTableVariable.rawVariable("foo bar"));
-        String expanded = backend.expandValue(identifier);
+        Env context = new Env();
+        Expansion expansion = new Expansion();
+        context.symbolTable.put("name", Env.SymbolTableVariable.rawVariable("foo bar"));
+        String expanded = expansion.expandValue(identifier, context);
         Assertions.assertEquals("foo bar", expanded);
     }
 
@@ -26,10 +29,11 @@ public class YsharpBackendTest {
         cBuildIR.ValueIR identifier = utils.createValueIR(utils.createVarRefPart(
                 utils.createTextPart("full "), utils.createVarRefPart(utils.createTextPart("postfix"))
         ));
-        ySharpBackend backend = new ySharpBackend();
-        backend.symbolTable.put("postfix", ySharpBackend.SymbolTableVariable.rawVariable("name"));
-        backend.symbolTable.put("full name", ySharpBackend.SymbolTableVariable.rawVariable("yagiz erdem"));
-        String expanded = backend.expandValue(identifier);
+        Env context = new Env();
+        Expansion expansion = new Expansion();
+        context.symbolTable.put("postfix", Env.SymbolTableVariable.rawVariable("name"));
+        context.symbolTable.put("full name", Env.SymbolTableVariable.rawVariable("yagiz erdem"));
+        String expanded = expansion.expandValue(identifier, context);
         Assertions.assertEquals("yagiz erdem", expanded);
     }
 
@@ -40,8 +44,9 @@ public class YsharpBackendTest {
                 utils.createTextPart("world")
         );
 
-        ySharpBackend backend = new ySharpBackend();
-        String expanded = backend.expandValue(value);
+        Env context = new Env();
+        Expansion expansion = new Expansion();
+        String expanded = expansion.expandValue(value, context);
 
         Assertions.assertEquals("hello world", expanded);
     }
@@ -54,9 +59,10 @@ public class YsharpBackendTest {
                 utils.createTextPart("!")
         );
 
-        ySharpBackend backend = new ySharpBackend();
-        backend.symbolTable.put("name", ySharpBackend.SymbolTableVariable.rawVariable("yagiz"));
-        String expanded = backend.expandValue(value);
+        Env context = new Env();
+        Expansion expansion = new Expansion();
+        context.symbolTable.put("name", Env.SymbolTableVariable.rawVariable("yagiz"));
+        String expanded = expansion.expandValue(value, context);
 
         Assertions.assertEquals("hello yagiz!", expanded);
     }
@@ -69,8 +75,9 @@ public class YsharpBackendTest {
                 utils.createTextPart("after")
         );
 
-        ySharpBackend backend = new ySharpBackend();
-        String expanded = backend.expandValue(value);
+        Env context = new Env();
+        Expansion expansion = new Expansion();
+        String expanded = expansion.expandValue(value, context);
 
         Assertions.assertEquals("beforeafter", expanded);
     }
@@ -83,9 +90,10 @@ public class YsharpBackendTest {
                 utils.createTextPart("b")
         );
 
-        ySharpBackend backend = new ySharpBackend();
-        backend.symbolTable.put("empty", ySharpBackend.SymbolTableVariable.rawVariable(""));
-        String expanded = backend.expandValue(value);
+        Env context = new Env();
+        Expansion expansion = new Expansion();
+        context.symbolTable.put("empty", Env.SymbolTableVariable.rawVariable(""));
+        String expanded = expansion.expandValue(value, context);
 
         Assertions.assertEquals("ab", expanded);
     }
@@ -100,9 +108,10 @@ public class YsharpBackendTest {
                 )
         );
 
-        ySharpBackend backend = new ySharpBackend();
-        backend.symbolTable.put("compiler_flags", ySharpBackend.SymbolTableVariable.rawVariable("-Wall -O2"));
-        String expanded = backend.expandValue(value);
+        Env context = new Env();
+        Expansion expansion = new Expansion();
+        context.symbolTable.put("compiler_flags", Env.SymbolTableVariable.rawVariable("-Wall -O2"));
+        String expanded = expansion.expandValue(value, context);
 
         Assertions.assertEquals("-Wall -O2", expanded);
     }
@@ -116,10 +125,11 @@ public class YsharpBackendTest {
                 )
         );
 
-        ySharpBackend backend = new ySharpBackend();
-        backend.symbolTable.put("active", ySharpBackend.SymbolTableVariable.rawVariable("cc"));
-        backend.symbolTable.put("tool.cc", ySharpBackend.SymbolTableVariable.rawVariable("clang"));
-        String expanded = backend.expandValue(value);
+        Env context = new Env();
+        Expansion expansion = new Expansion();
+        context.symbolTable.put("active", Env.SymbolTableVariable.rawVariable("cc"));
+        context.symbolTable.put("tool.cc", Env.SymbolTableVariable.rawVariable("clang"));
+        String expanded = expansion.expandValue(value, context);
 
         Assertions.assertEquals("clang", expanded);
     }
@@ -136,11 +146,12 @@ public class YsharpBackendTest {
                 )
         );
 
-        ySharpBackend backend = new ySharpBackend();
-        backend.symbolTable.put("env", ySharpBackend.SymbolTableVariable.rawVariable("dev"));
-        backend.symbolTable.put("profile.dev", ySharpBackend.SymbolTableVariable.rawVariable("debug"));
-        backend.symbolTable.put("selected.debug", ySharpBackend.SymbolTableVariable.rawVariable("build-debug"));
-        String expanded = backend.expandValue(value);
+        Env context = new Env();
+        Expansion expansion = new Expansion();
+        context.symbolTable.put("env", Env.SymbolTableVariable.rawVariable("dev"));
+        context.symbolTable.put("profile.dev", Env.SymbolTableVariable.rawVariable("debug"));
+        context.symbolTable.put("selected.debug", Env.SymbolTableVariable.rawVariable("build-debug"));
+        String expanded = expansion.expandValue(value, context);
 
         Assertions.assertEquals("build-debug", expanded);
     }
@@ -153,9 +164,10 @@ public class YsharpBackendTest {
                 utils.createVarRefPart("word")
         );
 
-        ySharpBackend backend = new ySharpBackend();
-        backend.symbolTable.put("word", ySharpBackend.SymbolTableVariable.rawVariable("echo"));
-        String expanded = backend.expandValue(value);
+        Env context = new Env();
+        Expansion expansion = new Expansion();
+        context.symbolTable.put("word", Env.SymbolTableVariable.rawVariable("echo"));
+        String expanded = expansion.expandValue(value, context);
 
         Assertions.assertEquals("echo-echo", expanded);
     }
@@ -164,10 +176,11 @@ public class YsharpBackendTest {
     public void ExpansionDoesNotRecursivelyExpandVariableValues() {
         cBuildIR.ValueIR value = utils.createValueIR(utils.createVarRefPart("outer"));
 
-        ySharpBackend backend = new ySharpBackend();
-        backend.symbolTable.put("outer", ySharpBackend.SymbolTableVariable.rawVariable("$(inner)"));
-        backend.symbolTable.put("inner", ySharpBackend.SymbolTableVariable.rawVariable("expanded"));
-        String expanded = backend.expandValue(value);
+        Env context = new Env();
+        Expansion expansion = new Expansion();
+        context.symbolTable.put("outer", Env.SymbolTableVariable.rawVariable("$(inner)"));
+        context.symbolTable.put("inner", Env.SymbolTableVariable.rawVariable("expanded"));
+        String expanded = expansion.expandValue(value, context);
 
         Assertions.assertEquals("$(inner)", expanded);
     }
@@ -185,12 +198,13 @@ public class YsharpBackendTest {
                 )
         );
 
-        ySharpBackend backend = new ySharpBackend();
-        backend.symbolTable.put("platform", ySharpBackend.SymbolTableVariable.rawVariable("linux"));
-        backend.symbolTable.put("mode", ySharpBackend.SymbolTableVariable.rawVariable("debug"));
-        backend.symbolTable.put("kind", ySharpBackend.SymbolTableVariable.rawVariable("cflags"));
-        backend.symbolTable.put("config.linux.debug.cflags", ySharpBackend.SymbolTableVariable.rawVariable("-g -Wall"));
-        String expanded = backend.expandValue(value);
+        Env context = new Env();
+        Expansion expansion = new Expansion();
+        context.symbolTable.put("platform", Env.SymbolTableVariable.rawVariable("linux"));
+        context.symbolTable.put("mode", Env.SymbolTableVariable.rawVariable("debug"));
+        context.symbolTable.put("kind", Env.SymbolTableVariable.rawVariable("cflags"));
+        context.symbolTable.put("config.linux.debug.cflags", Env.SymbolTableVariable.rawVariable("-g -Wall"));
+        String expanded = expansion.expandValue(value, context);
 
         Assertions.assertEquals("-g -Wall", expanded);
     }
@@ -212,12 +226,13 @@ public class YsharpBackendTest {
                 )
         );
 
-        ySharpBackend backend = new ySharpBackend();
-        backend.symbolTable.put("platform", ySharpBackend.SymbolTableVariable.rawVariable("linux"));
-        backend.symbolTable.put("profile", ySharpBackend.SymbolTableVariable.rawVariable("release"));
-        backend.symbolTable.put("tool.linux", ySharpBackend.SymbolTableVariable.rawVariable("gcc"));
-        backend.symbolTable.put("flags.linux.release", ySharpBackend.SymbolTableVariable.rawVariable("-O3 -DNDEBUG"));
-        String expanded = backend.expandValue(value);
+        Env context = new Env();
+        Expansion expansion = new Expansion();
+        context.symbolTable.put("platform", Env.SymbolTableVariable.rawVariable("linux"));
+        context.symbolTable.put("profile", Env.SymbolTableVariable.rawVariable("release"));
+        context.symbolTable.put("tool.linux", Env.SymbolTableVariable.rawVariable("gcc"));
+        context.symbolTable.put("flags.linux.release", Env.SymbolTableVariable.rawVariable("-O3 -DNDEBUG"));
+        String expanded = expansion.expandValue(value, context);
 
         Assertions.assertEquals("cc=gcc flags=-O3 -DNDEBUG", expanded);
     }
@@ -233,11 +248,12 @@ public class YsharpBackendTest {
                 )
         );
 
-        ySharpBackend backend = new ySharpBackend();
-        backend.symbolTable.put("selected", ySharpBackend.SymbolTableVariable.rawVariable("compiler"));
-        backend.symbolTable.put("alias.compiler", ySharpBackend.SymbolTableVariable.rawVariable("CC"));
-        backend.symbolTable.put("CC", ySharpBackend.SymbolTableVariable.rawVariable("clang"));
-        String expanded = backend.expandValue(value);
+        Env context = new Env();
+        Expansion expansion = new Expansion();
+        context.symbolTable.put("selected", Env.SymbolTableVariable.rawVariable("compiler"));
+        context.symbolTable.put("alias.compiler", Env.SymbolTableVariable.rawVariable("CC"));
+        context.symbolTable.put("CC", Env.SymbolTableVariable.rawVariable("clang"));
+        String expanded = expansion.expandValue(value, context);
 
         Assertions.assertEquals("clang", expanded);
     }
@@ -252,9 +268,10 @@ public class YsharpBackendTest {
                 )
         );
 
-        ySharpBackend backend = new ySharpBackend();
-        backend.symbolTable.put("prefix.suffix", ySharpBackend.SymbolTableVariable.rawVariable("fallback"));
-        String expanded = backend.expandValue(value);
+        Env context = new Env();
+        Expansion expansion = new Expansion();
+        context.symbolTable.put("prefix.suffix", Env.SymbolTableVariable.rawVariable("fallback"));
+        String expanded = expansion.expandValue(value, context);
 
         Assertions.assertEquals("fallback", expanded);
     }
@@ -278,14 +295,15 @@ public class YsharpBackendTest {
                 )
         );
 
-        ySharpBackend backend = new ySharpBackend();
-        backend.symbolTable.put("host", ySharpBackend.SymbolTableVariable.rawVariable("current"));
-        backend.symbolTable.put("cpu", ySharpBackend.SymbolTableVariable.rawVariable("native"));
-        backend.symbolTable.put("mode", ySharpBackend.SymbolTableVariable.rawVariable("asan"));
-        backend.symbolTable.put("os.current", ySharpBackend.SymbolTableVariable.rawVariable("linux"));
-        backend.symbolTable.put("arch.native", ySharpBackend.SymbolTableVariable.rawVariable("x86_64"));
-        backend.symbolTable.put("matrix.linux.x86_64.asan", ySharpBackend.SymbolTableVariable.rawVariable("build/linux-x86_64-asan"));
-        String expanded = backend.expandValue(value);
+        Env context = new Env();
+        Expansion expansion = new Expansion();
+        context.symbolTable.put("host", Env.SymbolTableVariable.rawVariable("current"));
+        context.symbolTable.put("cpu", Env.SymbolTableVariable.rawVariable("native"));
+        context.symbolTable.put("mode", Env.SymbolTableVariable.rawVariable("asan"));
+        context.symbolTable.put("os.current", Env.SymbolTableVariable.rawVariable("linux"));
+        context.symbolTable.put("arch.native", Env.SymbolTableVariable.rawVariable("x86_64"));
+        context.symbolTable.put("matrix.linux.x86_64.asan", Env.SymbolTableVariable.rawVariable("build/linux-x86_64-asan"));
+        String expanded = expansion.expandValue(value, context);
 
         Assertions.assertEquals("build/linux-x86_64-asan", expanded);
     }
