@@ -22,7 +22,48 @@ public class Main {
 
         try {
             String cBuildProgram = """
-message := $$test
+
+SRC = $(CORE) $(UTILS)
+CORE := main.c main.h
+UTILS = utils.c utils.h
+
+
+ALL = $(SRC) $(EXTRA)
+
+
+SNAPSHOT := $(SRC) $(EXTRA)
+
+EXTRA = config.h
+
+app1 app2 : $(ALL)
+\t	echo build app
+
+main.c : $(UTILS)
+\t	echo build main.c
+
+main.h : common.h
+\t echo build main.h
+
+utils.c : generated.h
+\t echo build utils.c
+
+utils.h : common.h
+\t echo build utils.h
+
+config.h : settings.h
+\t echo build config.h
+
+generated.h : schema.txt
+\t echo generate generated.h
+
+common.h :
+\t echo build common.h
+
+settings.h :
+\t echo build settings.h
+
+schema.txt :
+\t echo build schema.txt
 """;
 //            cBuildProgram += Cursor.END;
 //            List<Cursor.Pchar> processed = Preprocessor.mergeContinuation(cBuildProgram);
@@ -41,10 +82,10 @@ message := $$test
             List<cBuildIR.IR> ir = cBuildCompiler.compile(context);
 
 
-            Expansion expansion = new Expansion();
-            expansion.expand(ir, env);
-            env.printSymbolTable();
-
+            ySharpBackend backend = new ySharpBackend(env);
+            List<ySharpBackend.yModel.yBaseModel> models = backend.build(ir);
+            backend.printModel(models);
+            var a = 10;
         }catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
