@@ -1,14 +1,25 @@
 package io.Cbuild.ySharpBackend;
 
-import io.Cbuild.ExecIR;
-import io.Cbuild.Expansion;
-import io.Cbuild.cBuildIR;
-import io.Cbuild.cbuildException;
+import io.Cbuild.*;
+import org.stringtemplate.v4.ST;
 
 import java.util.*;
 
 public class ySharpBackend {
 
+    private final Env globalContext;
+
+    public ySharpBackend() {
+        this.globalContext = new Env();
+    }
+
+    public ySharpBackend(Env context) {
+        this.globalContext = context;
+    }
+
+    public Env getGlobalContext() {
+        return this.globalContext;
+    }
 
     public void validateCompatibility(List<cBuildIR.IR> instructions) {
         for (cBuildIR.IR ir : instructions) {
@@ -141,13 +152,175 @@ public class ySharpBackend {
         );
     }
 
+    public static class yModel {
+
+        public static abstract class yBaseModel {
+
+            @Override
+            public String toString() {
+                return "<BaseModel>";
+            }
+        }
+
+        public static class NormalRule extends yBaseModel {
+            public String target;
+            public List<String> prerequisites;
+            public List<String> shellCommands;
+            public cBuildIR.NormalRuleIR normalRuleIR;
+
+            public NormalRule() {
+            }
+
+            public NormalRule(String target) {
+                this.target = target;
+            }
+
+            public NormalRule(
+                    String target,
+                    List<String> prerequisites
+            ) {
+                this.target = target;
+                this.prerequisites = prerequisites;
+            }
+
+            public NormalRule(
+                    String target,
+                    List<String> prerequisites,
+                    List<String> shellCommands
+            ) {
+                this.target = target;
+                this.prerequisites = prerequisites;
+                this.shellCommands = shellCommands;
+            }
+
+            public NormalRule(
+                    String target,
+                    List<String> prerequisites,
+                    List<String> shellCommands,
+                    cBuildIR.NormalRuleIR normalRuleIR
+            ) {
+                this.target = target;
+                this.prerequisites = prerequisites;
+                this.shellCommands = shellCommands;
+                this.normalRuleIR = normalRuleIR;
+            }
+
+            @Override
+            public String toString() {
+                return """
+            NormalRule {
+              target='%s',
+              prerequisites=%s,
+              shellCommands=%s,
+              normalRuleIR=%s
+            }
+            """.formatted(
+                        target,
+                        prerequisites,
+                        shellCommands,
+                        normalRuleIR
+                );
+            }
+
+        }
+    }
 
 
-//    public static class yGraphBuilder extends ExecIR.BaseExecIR {
-//
+    public static class yModelBuilder extends ExecIR.BaseExecIR {
+
+        public final List<yModel.yBaseModel> ruleModels;
+        public final Env context;
+
+        public yModelBuilder(Env context) {
+            this.context = context;
+            this.ruleModels = new ArrayList<>();
+        }
+
+        public List<yModel.yBaseModel> build(List<cBuildIR.IR> instructions) {
+            for(int i = 0; i < instructions.size(); i++) {
+                Object response = instructions.get(i).exec(this);
+                collectModels(this.ruleModels, response);
+            }
+            return this.ruleModels;
+        }
+
+        public List<yModel.yBaseModel> collectModels(List<yModel.yBaseModel> target, Object resources) {
+            if(resources instanceof List<?> list) {
+                for(var item : list) {
+                    if(item instanceof yModel.yBaseModel model) {
+                        target.add(model);
+                    }
+                }
+            }
+            if(resources instanceof yModel.yBaseModel model) {
+                target.add(model);
+            }
+            return target;
+        }
+
+        @Override
+        public List<yModel.yBaseModel> exec(cBuildIR.NormalRuleIR ir) {
+            List<yModel.yBaseModel> rules = new ArrayList<>();
+            Expansion expansion = new Expansion();
+            List<String> targets = new ArrayList<>();
+            List<String> preq = new ArrayList<>();
+            for(cBuildIR.ValueIR valueIR : ir.targets) {
+                String expansionResult = expansion.expandValue(valueIR, context);
+                targets.addAll(Arrays.stream(expansionResult.split("\\s+"))
+                        .filter(x ->  !x.trim().isBlank()).toList());
+            }
+
+            for(cBuildIR.ValueIR valueIR : ir.prerequisites) {
+                String expansionResult = expansion.expandValue(valueIR, context);
+                preq.addAll(Arrays.stream(expansionResult.split("\\s+"))
+                        .filter(x ->  !x.trim().isBlank()).toList());
+            }
+
+            for(String target : targets) {
+                yModel.NormalRule rule = new yModel.NormalRule();
+                rule.target = target;
+                rule.prerequisites = new ArrayList<>(preq);
+                rule.normalRuleIR = ir;
+                rules.add(rule);
+            }
+
+            return rules;
+        }
+
+        @Override
+        public Void exec(cBuildIR.AssignmentIR ir) {
+            Expansion.ySharpExpansionEngine expansionEngine =
+                    new Expansion.ySharpExpansionEngine(this.context);
+            ir.exec(expansionEngine);
+            return null;
+        }
+
 //        @Override
-//        public <T> T exec(cBuildIR ir) {
+//        public <T> T exec(cBuildIR.RecipeIR ir) {
 //            return super.exec(ir);
 //        }
-//    }
+    }
+
+    public List<yModel.yBaseModel> build(List<cBuildIR.IR> instructions) {
+        yModelBuilder builder = new yModelBuilder(this.globalContext);
+        List<yModel.yBaseModel> models = builder.build(instructions);
+        return models;
+    }
+
+    public List<yModel.yBaseModel> build(List<cBuildIR.IR> instructions, Env context) {
+        yModelBuilder builder = new yModelBuilder(context);
+        List<yModel.yBaseModel> models = builder.build(instructions);
+        return models;
+    }
+
+    public void printModel(yModel.yBaseModel model) {
+        System.out.println(model.toString());
+    }
+
+    public void printModel(List<yModel.yBaseModel> models) {
+        models.forEach(model -> {
+            System.out.println(model.toString());
+        });
+    }
+
 }
