@@ -1,6 +1,8 @@
 package util;
 
 import io.Cbuild.*;
+import io.Cbuild.ySharpBackend.ySharpBackend.*;
+import io.Cbuild.ySharpBackend.ySharpBackend;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -70,8 +72,21 @@ public class utils {
         return new cBuildIR.TextPart(part);
     }
 
-
     public static cBuildIR.ValueIR createValueIR(cBuildIR.ValuePart... parts) {
         return new cBuildIR.ValueIR(List.of(parts));
     }
+
+
+    public static List<yModel.yBaseModel> generateYsharpGraph(List<cBuildIR.IR> ir, ySharpBackend backend) {
+        List<ySharpBackend.yModel.yBaseModel> models = backend.build(ir);
+        return models;
+    }
+
+    public static List<yModel.yBaseModel> generateYsharpGraph(List<cBuildIR.IR> ir, Env context) {
+        ySharpBackend backend = new ySharpBackend(context);
+        List<ySharpBackend.yModel.yBaseModel> models = backend.build(ir);
+        return models;
+    }
+
+
 }
