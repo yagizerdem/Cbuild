@@ -323,4 +323,69 @@ public class ySharpBackend {
         });
     }
 
+    public boolean hasCircularDependency(List<yModel.NormalRule> rules) {
+        Map<String, List<String>> graph = new HashMap<>();
+
+        for (yModel.NormalRule rule : rules) {
+            graph.computeIfAbsent(
+                    rule.target,
+                    ignored -> new ArrayList<>()
+            ).addAll(rule.prerequisites);
+        }
+
+        Set<String> visited = new HashSet<>();
+        Set<String> activePath = new HashSet<>();
+
+        for (String target : graph.keySet()) {
+            if (hasCircularDependencyRecursive(
+                    target,
+                    graph,
+                    visited,
+                    activePath
+            )) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean hasCircularDependencyRecursive(
+            String target,
+            Map<String, List<String>> graph,
+            Set<String> visited,
+            Set<String> activePath
+    ) {
+        if (activePath.contains(target)) {
+            return true;
+        }
+
+        if (visited.contains(target)) {
+            return false;
+        }
+
+        activePath.add(target);
+
+        for (String prerequisite :
+                graph.getOrDefault(target, List.of())) {
+
+            if (graph.containsKey(prerequisite)
+                    && hasCircularDependencyRecursive(
+                    prerequisite,
+                    graph,
+                    visited,
+                    activePath
+            )) {
+                return true;
+            }
+        }
+
+        activePath.remove(target);
+        visited.add(target);
+
+        return false;
+    }
+
+
+
 }
