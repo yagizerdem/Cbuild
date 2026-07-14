@@ -476,5 +476,81 @@ public class ySharpBackend {
         return subGraphs;
     }
 
+    public List<yModel.NormalRule> topologicalSort(
+            List<yModel.NormalRule> graph,
+            yModel.NormalRule startNode
+    ) {
+        Map<String, List<yModel.NormalRule>> rulesByTarget =
+                new LinkedHashMap<>();
+
+        for (yModel.NormalRule rule : graph) {
+            rulesByTarget
+                    .computeIfAbsent(
+                            rule.target,
+                            ignored -> new ArrayList<>()
+                    )
+                    .add(rule);
+        }
+
+        List<yModel.NormalRule> sorted = new ArrayList<>();
+        Set<String> visitingTargets = new HashSet<>();
+        Set<String> visitedTargets = new HashSet<>();
+
+        topologicalSort(
+                startNode.target,
+                rulesByTarget,
+                visitingTargets,
+                visitedTargets,
+                sorted
+        );
+
+        return sorted;
+    }
+
+    private void topologicalSort(
+            String target,
+            Map<String, List<yModel.NormalRule>> rulesByTarget,
+            Set<String> visitingTargets,
+            Set<String> visitedTargets,
+            List<yModel.NormalRule> sorted
+    ) {
+        if (visitedTargets.contains(target)) {
+            return;
+        }
+
+        if (!visitingTargets.add(target)) {
+            throw new cbuildException(
+                    cbuildException.ErrorType.SEMANTIC,
+                    "Circular dependency detected while sorting target '"
+                            + target
+                            + "'."
+            );
+        }
+
+        List<yModel.NormalRule> targetRules =
+                rulesByTarget.getOrDefault(target, List.of());
+
+        for (yModel.NormalRule rule : targetRules) {
+            for (String prerequisite : rule.prerequisites) {
+                if (rulesByTarget.containsKey(prerequisite)) {
+                    topologicalSort(
+                            prerequisite,
+                            rulesByTarget,
+                            visitingTargets,
+                            visitedTargets,
+                            sorted
+                    );
+                }
+            }
+        }
+
+        visitingTargets.remove(target);
+        visitedTargets.add(target);
+        sorted.addAll(targetRules);
+    }
+
+    public void buildTargets(List<yModel.NormalRule> rules) {
+
+    }
 
 }
