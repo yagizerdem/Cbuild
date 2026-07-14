@@ -48,9 +48,14 @@ public class Env {
             return new SymbolTableVariable(null, deferredValue, false);
         }
 
+        public static SymbolTableVariable deferredVariable(cBuildIR.ValueIR deferredValue, String rawValue) {
+            return new SymbolTableVariable(rawValue, deferredValue, false);
+        }
+
         public static SymbolTableVariable secondaryExpansionVariable(cBuildIR.ValueIR deferredValue) {
             return new SymbolTableVariable(null, deferredValue, true);
         }
+
 
         @Override
         public String toString() {

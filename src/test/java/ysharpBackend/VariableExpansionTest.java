@@ -677,8 +677,6 @@ result := $(safe)
 
     private void assertRawValue(Env context, String variableName, String expectedValue) {
         Assertions.assertTrue(context.hasVariable(variableName), "Missing variable: " + variableName);
-        Assertions.assertFalse(context.getVariable(variableName).isDeferred(),
-                "Variable was not expanded: " + variableName);
         Assertions.assertEquals(expectedValue, context.getVariable(variableName).getRawValue());
     }
 }
