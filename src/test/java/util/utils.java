@@ -12,6 +12,7 @@ import javax.imageio.event.IIOReadProgressListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class utils {
 
@@ -88,5 +89,12 @@ public class utils {
         return models;
     }
 
+    public static List<ySharpBackend.yModel.NormalRule> convertToNormalRule(List<ySharpBackend.yModel.yBaseModel> yBaseModels) {
+        List<ySharpBackend.yModel.NormalRule> rules = yBaseModels.stream().map(x -> {
+            if(x instanceof ySharpBackend.yModel.NormalRule rule) return rule;
+            return null;
+        }).filter(Objects::nonNull).toList();
+        return rules;
+    }
 
 }
