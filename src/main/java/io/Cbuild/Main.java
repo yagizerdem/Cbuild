@@ -24,11 +24,10 @@ public class Main {
         try {
             String cBuildProgram = """
 
-a : b
-\t echo 
-
-b : a
-\t echo
+a : b c
+b : x y 
+c : k l 
+k : b y t
 
 """;
 //            cBuildProgram += Cursor.END;
@@ -50,16 +49,24 @@ b : a
 
             ySharpBackend backend = new ySharpBackend(env);
             List<ySharpBackend.yModel.yBaseModel> models = backend.build(ir);
-            backend.printModel(models);
+            // backend.printModel(models);
 
             List<ySharpBackend.yModel.NormalRule> rules = models.stream().map(x -> {
                 if(x instanceof ySharpBackend.yModel.NormalRule rule) return rule;
                 return null;
             }).filter(Objects::nonNull).toList();
 
-            boolean hasCircularDependency = backend.hasCircularDependency(rules);
-            System.out.println(hasCircularDependency);
-            var a = 10;
+            List<ySharpBackend.yModel.NormalRule> depGraph =  backend.getTargetSubgraph(rules);
+            backend.printModel(depGraph);
+            System.out.println("-".repeat(50));
+//
+//            List<ySharpBackend.yModel.NormalRule> depGraph2 =  backend.getTargetSubgraph(rules, "x");
+//            backend.printModel(depGraph2);
+
+            List<ySharpBackend.yModel.NormalRule> sorted = backend.topologicalSort(depGraph, depGraph.getFirst());
+            backend.printModel(sorted);
+
+
         }catch (Exception ex) {
             System.out.println(ex.getMessage());
         }

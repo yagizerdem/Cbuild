@@ -4,6 +4,7 @@ import io.Cbuild.*;
 import org.stringtemplate.v4.ST;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ySharpBackend {
 
@@ -156,6 +157,12 @@ public class ySharpBackend {
 
         public static abstract class yBaseModel {
 
+            private final String uuid;
+
+            public yBaseModel() {
+                this.uuid = util.uuid();
+            }
+
             @Override
             public String toString() {
                 return "<BaseModel>";
@@ -169,9 +176,11 @@ public class ySharpBackend {
             public cBuildIR.NormalRuleIR normalRuleIR;
 
             public NormalRule() {
+                super();
             }
 
             public NormalRule(String target) {
+                super();
                 this.target = target;
             }
 
@@ -317,11 +326,17 @@ public class ySharpBackend {
         System.out.println(model.toString());
     }
 
-    public void printModel(List<yModel.yBaseModel> models) {
+    public void printModel(List<? extends yModel.yBaseModel> models) {
         models.forEach(model -> {
             System.out.println(model.toString());
         });
     }
+
+    public void printModel(yModel.NormalRule rule) {
+        System.out.println(rule.toString());
+    }
+
+
 
     public boolean hasCircularDependency(List<yModel.NormalRule> rules) {
         Map<String, List<String>> graph = new HashMap<>();
@@ -386,6 +401,156 @@ public class ySharpBackend {
         return false;
     }
 
+    public List<yModel.NormalRule> getTargetSubgraph(
+            List<yModel.NormalRule> rules,
+            String activeTarget
+    ) {
+        List<yModel.NormalRule> subGraph = new ArrayList<>();
+        Stack<String> stack = new Stack<>();
+        Set<String> visitedTargets = new HashSet<>();
 
+        stack.push(activeTarget);
+
+        while (!stack.isEmpty()) {
+            String currentTarget = stack.pop();
+
+            if (!visitedTargets.add(currentTarget)) {
+                continue;
+            }
+
+            for (yModel.NormalRule rule : rules) {
+                if (rule.target.equals(currentTarget)) {
+                    subGraph.add(rule);
+                    stack.addAll(rule.prerequisites);
+                }
+            }
+        }
+
+        if (hasCircularDependency(subGraph)) {
+            throw new cbuildException(
+                    cbuildException.ErrorType.SEMANTIC,
+                    "Circular dependency detected while resolving target '"
+                            + activeTarget
+                            + "'."
+            );
+        }
+
+        return subGraph;
+    }
+
+    public List<yModel.NormalRule> getTargetSubgraph(
+            List<yModel.NormalRule> rules
+    ) {
+        return getTargetSubgraph(rules, findDefaultTarget(rules));
+    }
+
+    public String findDefaultTarget(List<yModel.NormalRule> rules) {
+        if(rules.isEmpty()) return null;
+        return rules.getFirst().target;
+    }
+
+    // preserve order of targets
+    public List<String> findTopLevelTargets(
+            List<yModel.NormalRule> rules
+    ) {
+        Set<String> prerequisiteTargets = rules.stream()
+                .flatMap(rule -> rule.prerequisites.stream())
+                .collect(Collectors.toSet());
+
+        return rules.stream()
+                .map(rule -> rule.target)
+                .distinct()
+                .filter(target -> !prerequisiteTargets.contains(target))
+                .toList();
+    }
+
+
+    public List<List<yModel.NormalRule>> getAllSubgraphs(
+            List<yModel.NormalRule> rules
+    ) {
+        List<List<yModel.NormalRule>> subGraphs = new ArrayList<>();
+        List<String> topLevelTargets = findTopLevelTargets(rules);
+        topLevelTargets.forEach(target -> {
+            subGraphs.add(getTargetSubgraph(rules, target));
+        });
+        return subGraphs;
+    }
+
+    public List<yModel.NormalRule> topologicalSort(
+            List<yModel.NormalRule> graph,
+            yModel.NormalRule startNode
+    ) {
+        Map<String, List<yModel.NormalRule>> rulesByTarget =
+                new LinkedHashMap<>();
+
+        for (yModel.NormalRule rule : graph) {
+            rulesByTarget
+                    .computeIfAbsent(
+                            rule.target,
+                            ignored -> new ArrayList<>()
+                    )
+                    .add(rule);
+        }
+
+        List<yModel.NormalRule> sorted = new ArrayList<>();
+        Set<String> visitingTargets = new HashSet<>();
+        Set<String> visitedTargets = new HashSet<>();
+
+        topologicalSort(
+                startNode.target,
+                rulesByTarget,
+                visitingTargets,
+                visitedTargets,
+                sorted
+        );
+
+        return sorted;
+    }
+
+    private void topologicalSort(
+            String target,
+            Map<String, List<yModel.NormalRule>> rulesByTarget,
+            Set<String> visitingTargets,
+            Set<String> visitedTargets,
+            List<yModel.NormalRule> sorted
+    ) {
+        if (visitedTargets.contains(target)) {
+            return;
+        }
+
+        if (!visitingTargets.add(target)) {
+            throw new cbuildException(
+                    cbuildException.ErrorType.SEMANTIC,
+                    "Circular dependency detected while sorting target '"
+                            + target
+                            + "'."
+            );
+        }
+
+        List<yModel.NormalRule> targetRules =
+                rulesByTarget.getOrDefault(target, List.of());
+
+        for (yModel.NormalRule rule : targetRules) {
+            for (String prerequisite : rule.prerequisites) {
+                if (rulesByTarget.containsKey(prerequisite)) {
+                    topologicalSort(
+                            prerequisite,
+                            rulesByTarget,
+                            visitingTargets,
+                            visitedTargets,
+                            sorted
+                    );
+                }
+            }
+        }
+
+        visitingTargets.remove(target);
+        visitedTargets.add(target);
+        sorted.addAll(targetRules);
+    }
+
+    public void buildTargets(List<yModel.NormalRule> rules) {
+
+    }
 
 }
