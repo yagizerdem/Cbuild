@@ -4,6 +4,7 @@ import io.Cbuild.*;
 import org.stringtemplate.v4.ST;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ySharpBackend {
 
@@ -156,6 +157,12 @@ public class ySharpBackend {
 
         public static abstract class yBaseModel {
 
+            private final String uuid;
+
+            public yBaseModel() {
+                this.uuid = util.uuid();
+            }
+
             @Override
             public String toString() {
                 return "<BaseModel>";
@@ -169,9 +176,11 @@ public class ySharpBackend {
             public cBuildIR.NormalRuleIR normalRuleIR;
 
             public NormalRule() {
+                super();
             }
 
             public NormalRule(String target) {
+                super();
                 this.target = target;
             }
 
@@ -317,11 +326,17 @@ public class ySharpBackend {
         System.out.println(model.toString());
     }
 
-    public void printModel(List<yModel.yBaseModel> models) {
+    public void printModel(List<? extends yModel.yBaseModel> models) {
         models.forEach(model -> {
             System.out.println(model.toString());
         });
     }
+
+    public void printModel(yModel.NormalRule rule) {
+        System.out.println(rule.toString());
+    }
+
+
 
     public boolean hasCircularDependency(List<yModel.NormalRule> rules) {
         Map<String, List<String>> graph = new HashMap<>();
@@ -386,6 +401,40 @@ public class ySharpBackend {
         return false;
     }
 
+    public List<yModel.NormalRule> getTargetSubgraph(
+            List<yModel.NormalRule> rules,
+            String defaultTarget
+    ) {
+        List<yModel.NormalRule> subGraph = new ArrayList<>();
+        Stack<String> stack = new Stack<>();
+        Set<String> visitedTargets = new HashSet<>();
 
+        stack.push(defaultTarget);
 
+        while (!stack.isEmpty()) {
+            String currentTarget = stack.pop();
+
+            if (!visitedTargets.add(currentTarget)) {
+                continue;
+            }
+
+            for (yModel.NormalRule rule : rules) {
+                if (rule.target.equals(currentTarget)) {
+                    subGraph.add(rule);
+                    stack.addAll(rule.prerequisites);
+                }
+            }
+        }
+
+        if (hasCircularDependency(subGraph)) {
+            throw new cbuildException(
+                    cbuildException.ErrorType.SEMANTIC,
+                    "Circular dependency detected while resolving target '"
+                            + defaultTarget
+                            + "'."
+            );
+        }
+
+        return subGraph;
+    }
 }

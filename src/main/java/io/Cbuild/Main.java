@@ -27,8 +27,12 @@ public class Main {
 a : b
 \t echo 
 
-b : a
+b : k
 \t echo
+
+x : y
+
+y : b
 
 """;
 //            cBuildProgram += Cursor.END;
@@ -50,16 +54,17 @@ b : a
 
             ySharpBackend backend = new ySharpBackend(env);
             List<ySharpBackend.yModel.yBaseModel> models = backend.build(ir);
-            backend.printModel(models);
+            // backend.printModel(models);
 
             List<ySharpBackend.yModel.NormalRule> rules = models.stream().map(x -> {
                 if(x instanceof ySharpBackend.yModel.NormalRule rule) return rule;
                 return null;
             }).filter(Objects::nonNull).toList();
 
-            boolean hasCircularDependency = backend.hasCircularDependency(rules);
-            System.out.println(hasCircularDependency);
-            var a = 10;
+            List<ySharpBackend.yModel.NormalRule> depGraph =  backend.getTargetSubgraph(rules, "a");
+
+            backend.printModel(depGraph);
+
         }catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
