@@ -403,13 +403,13 @@ public class ySharpBackend {
 
     public List<yModel.NormalRule> getTargetSubgraph(
             List<yModel.NormalRule> rules,
-            String defaultTarget
+            String activeTarget
     ) {
         List<yModel.NormalRule> subGraph = new ArrayList<>();
         Stack<String> stack = new Stack<>();
         Set<String> visitedTargets = new HashSet<>();
 
-        stack.push(defaultTarget);
+        stack.push(activeTarget);
 
         while (!stack.isEmpty()) {
             String currentTarget = stack.pop();
@@ -430,11 +430,51 @@ public class ySharpBackend {
             throw new cbuildException(
                     cbuildException.ErrorType.SEMANTIC,
                     "Circular dependency detected while resolving target '"
-                            + defaultTarget
+                            + activeTarget
                             + "'."
             );
         }
 
         return subGraph;
     }
+
+    public List<yModel.NormalRule> getTargetSubgraph(
+            List<yModel.NormalRule> rules
+    ) {
+        return getTargetSubgraph(rules, findDefaultTarget(rules));
+    }
+
+    public String findDefaultTarget(List<yModel.NormalRule> rules) {
+        if(rules.isEmpty()) return null;
+        return rules.getFirst().target;
+    }
+
+    // preserve order of targets
+    public List<String> findTopLevelTargets(
+            List<yModel.NormalRule> rules
+    ) {
+        Set<String> prerequisiteTargets = rules.stream()
+                .flatMap(rule -> rule.prerequisites.stream())
+                .collect(Collectors.toSet());
+
+        return rules.stream()
+                .map(rule -> rule.target)
+                .distinct()
+                .filter(target -> !prerequisiteTargets.contains(target))
+                .toList();
+    }
+
+
+    public List<List<yModel.NormalRule>> getAllSubgraphs(
+            List<yModel.NormalRule> rules
+    ) {
+        List<List<yModel.NormalRule>> subGraphs = new ArrayList<>();
+        List<String> topLevelTargets = findTopLevelTargets(rules);
+        topLevelTargets.forEach(target -> {
+            subGraphs.add(getTargetSubgraph(rules, target));
+        });
+        return subGraphs;
+    }
+
+
 }

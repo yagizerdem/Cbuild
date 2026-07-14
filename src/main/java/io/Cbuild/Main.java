@@ -61,9 +61,14 @@ y : b
                 return null;
             }).filter(Objects::nonNull).toList();
 
-            List<ySharpBackend.yModel.NormalRule> depGraph =  backend.getTargetSubgraph(rules, "a");
+//            List<ySharpBackend.yModel.NormalRule> depGraph =  backend.getTargetSubgraph(rules);
+//            backend.printModel(depGraph);
+//            System.out.println("-".repeat(50));
+//
+//            List<ySharpBackend.yModel.NormalRule> depGraph2 =  backend.getTargetSubgraph(rules, "x");
+//            backend.printModel(depGraph2);
 
-            backend.printModel(depGraph);
+            System.out.println(backend.getAllSubgraphs(rules));
 
         }catch (Exception ex) {
             System.out.println(ex.getMessage());
