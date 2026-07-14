@@ -108,7 +108,7 @@ public class Expansion {
                     activeLookups.add(identifier);
                     String rawValue = exec(valueIR);
                     activeLookups.remove(identifier);
-                    context.overrideVariable(identifier, Env.SymbolTableVariable.rawVariable(rawValue));
+                    context.overrideVariable(identifier, Env.SymbolTableVariable.deferredVariable(valueIR));
                     return rawValue;
                 }
 

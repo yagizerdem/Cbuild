@@ -305,6 +305,229 @@ schema.txt :
 
     }
 
+
+    @Test
+    public void undefinedPrerequisiteExpansionIsRemovedFromGraph() {
+        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+optional = $(missing)
+app: main.c $(optional) util.c
+""");
+
+        assertRule(rules, "app", "main.c", "util.c");
+    }
+
+    @Test
+    public void targetWithoutPrerequisitesProducesEmptyList() {
+        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+clean:
+""");
+
+        Assertions.assertEquals(1, rules.size());
+        Assertions.assertEquals("clean", rules.getFirst().target);
+        Assertions.assertNotNull(rules.getFirst().prerequisites);
+        Assertions.assertTrue(rules.getFirst().prerequisites.isEmpty());
+    }
+
+    @Test
+    public void whitespaceInExpandedPrerequisitesIsNormalized() {
+        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+sources := main.c     util.c       platform.c
+app: $(sources)
+""");
+
+        assertRule(
+                rules,
+                "app",
+                "main.c",
+                "util.c",
+                "platform.c"
+        );
+    }
+
+    @Test
+    public void duplicatePrerequisitesRemainInOriginalOrder() {
+        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+common := common.h
+app: $(common) main.c $(common) main.c
+""");
+
+        assertRule(
+                rules,
+                "app",
+                "common.h",
+                "main.c",
+                "common.h",
+                "main.c"
+        );
+    }
+
+    @Test
+    public void nestedVariableReferencesSelectTargetAndPrerequisites() {
+        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+profile := debug
+selected_target := target.$(profile)
+selected_dependencies := dependencies.$(profile)
+
+target.debug := app-debug
+dependencies.debug := main-debug.c debug.h
+
+$($(selected_target)): $($(selected_dependencies))
+""");
+
+        assertRule(
+                rules,
+                "app-debug",
+                "main-debug.c",
+                "debug.h"
+        );
+    }
+
+    @Test
+    public void recursiveTargetListCreatesOneModelPerExpandedTarget() {
+        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+target_names = $(primary) $(secondary)
+primary := app
+secondary := app-tests
+dependencies = main.c common.h
+
+$(target_names): $(dependencies)
+""");
+
+        Assertions.assertEquals(2, rules.size());
+
+        Assertions.assertEquals(
+                List.of("app", "app-tests"),
+                rules.stream().map(rule -> rule.target).toList()
+        );
+
+        assertRule(rules, "app", "main.c", "common.h");
+        assertRule(rules, "app-tests", "main.c", "common.h");
+    }
+
+    @Test
+    public void simpleAssignmentWithUndefinedForwardReferenceCapturesEmptyValue() {
+        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+sources := $(later_sources)
+later_sources := main.c util.c
+app: before.h $(sources) after.h
+""");
+
+        assertRule(
+                rules,
+                "app",
+                "before.h",
+                "after.h"
+        );
+    }
+
+    @Test
+    public void recursiveAssignmentResolvesMultiLevelForwardReferences() {
+        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+all_sources = $(core_sources) $(platform_sources)
+core_sources = $(main_source) common.c
+platform_sources = linux.c posix.c
+
+main_source := main.c
+app: $(all_sources)
+""");
+
+        assertRule(
+                rules,
+                "app",
+                "main.c",
+                "common.c",
+                "linux.c",
+                "posix.c"
+        );
+    }
+
+    @Test
+    public void ruleKeepsExpansionResultFromTimeItWasBuilt() {
+        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+source := old.c
+first: $(source)
+
+source := new.c
+second: $(source)
+""");
+
+        Assertions.assertEquals(2, rules.size());
+
+        assertRule(rules, "first", "old.c");
+        assertRule(rules, "second", "new.c");
+    }
+
+    @Test
+    public void sameTargetInSeparateRulesCreatesSeparateModels() {
+        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+app: main.c
+app: util.c
+""");
+
+        Assertions.assertEquals(2, rules.size());
+
+        Assertions.assertEquals("app", rules.get(0).target);
+        Assertions.assertEquals(List.of("main.c"), rules.get(0).prerequisites);
+
+        Assertions.assertEquals("app", rules.get(1).target);
+        Assertions.assertEquals(List.of("util.c"), rules.get(1).prerequisites);
+    }
+
+    @Test
+    public void emptyExpandedTargetDoesNotCreateModel() {
+        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+missing_target = $(undefined_target)
+$(missing_target): main.c
+""");
+
+        Assertions.assertTrue(rules.isEmpty());
+    }
+
+    @Test
+    public void indirectCircularDependencyInPrerequisitesIsRejected() {
+        Assertions.assertThrows(
+                io.Cbuild.cbuildException.class,
+                () -> buildRules("""
+first = $(second)
+second = $(third)
+third = $(first)
+
+app: $(first)
+""")
+        );
+    }
+
+    @Test
+    public void computedVariableNameCanIntroduceCircularDependency() {
+        Assertions.assertThrows(
+                io.Cbuild.cbuildException.class,
+                () -> buildRules("""
+selector := dependency
+dependency = $($(selector))
+
+app: $(dependency)
+""")
+        );
+    }
+
+    @Test
+    public void recursiveVariableIsReevaluatedForEachLaterRule() {
+        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+extension := c
+source = main.$(extension)
+
+first: $(source)
+
+extension := cpp
+second: $(source)
+""");
+
+        assertRule(rules, "first", "main.c");
+        assertRule(rules, "second", "main.cpp");
+    }
+
+
+
     private void assertRule(
             List<ySharpBackend.yModel.NormalRule> rules,
             String target,
