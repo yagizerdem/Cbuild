@@ -550,7 +550,7 @@ public class ySharpBackend {
         sorted.addAll(targetRules);
     }
 
-    public boolean isOutOfDate(List<yModel.NormalRule> graph, yModel.NormalRule rule) {
+    public boolean isOutOfDate(yModel.NormalRule rule) {
         if(!util.fileExist(rule.target)) return true;
 
         String targetEntryPath = util.getAbsolutePath(rule.target);
