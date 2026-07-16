@@ -26,8 +26,15 @@ public class Main {
         try {
             String cBuildProgram = """
 
-app: main.c main.h
-\t echo hit
+a: b c t
+
+b : k l t
+
+c : d e t b
+
+e : f t
+
+
 
 """;
 //            cBuildProgram += Cursor.END;
@@ -63,14 +70,16 @@ app: main.c main.h
 //            List<ySharpBackend.yModel.NormalRule> depGraph2 =  backend.getTargetSubgraph(rules, "x");
 //            backend.printModel(depGraph2);
 
-            List<ySharpBackend.yModel.NormalRule> sorted = backend.topologicalSort(depGraph, depGraph.getFirst());
-            backend.printModel(sorted);
+//            List<ySharpBackend.yModel.NormalRule> sorted = backend.topologicalSort(depGraph, depGraph.getFirst());
+//            backend.printModel(sorted);
 
 
-            shell shell = new shell();
-            shell.ExecutionResult resul =  shell.runCommandCaptured("echo hit");
+//            shell shell = new shell();
+//            shell.ExecutionResult resul =  shell.runCommandCaptured("echo hit");
 
-            System.out.println(resul);
+
+            backend.buildTargets(depGraph);
+
 
         }catch (Exception ex) {
             System.out.println(ex.getMessage());

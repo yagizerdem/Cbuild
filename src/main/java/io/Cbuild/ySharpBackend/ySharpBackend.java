@@ -571,6 +571,69 @@ public class ySharpBackend {
 
 
     public void buildTargets(List<yModel.NormalRule> rules) {
+        int parallelism = Math.max(1, Runtime.getRuntime().availableProcessors());
+        buildTargets(rules, parallelism);
+    }
+
+    private Map<String, List<String>> buildTargetDependencyGraph(
+            List<yModel.NormalRule> rules
+    ) {
+        Map<String, List<String>> targetGraph = new LinkedHashMap<>();
+
+        rules.forEach(rule -> targetGraph
+                .computeIfAbsent(rule.target, ignored -> new ArrayList<>())
+                .addAll(rule.prerequisites)
+        );
+
+        return targetGraph;
+    }
+
+    private Map<String, List<String>> buildTargetDependencyReverseGraph(
+            List<yModel.NormalRule> rules
+    ) {
+        Set<String> preq = rules.stream()
+                .map(r -> r.prerequisites)
+                .flatMap(List::stream)
+                .collect(Collectors.toSet());
+
+
+        Map<String, List<String>> reverseTargetGraph = new LinkedHashMap<>();
+
+        preq.forEach(p -> {
+                reverseTargetGraph
+                        .computeIfAbsent(p, ignored -> new ArrayList<>())
+                        .addAll(rules.stream()
+                                .filter(rule -> rule.prerequisites.contains(p))
+                                .map(r -> r.target)
+                                .collect(Collectors.toSet())
+                                .stream()
+                                .toList());
+
+            }
+        );
+
+        return reverseTargetGraph;
+    }
+
+    public void printGraph(Map<String, List<String>> graph) {
+        StringBuilder builder = new StringBuilder();
+        for(String key : graph.keySet()) {
+            builder.append(String.format("%s -> : [ ", key));
+            for(int i = 0; i < graph.get(key).size(); i++) {
+                builder.append(String.format( i == 0 ?  "%s" :  ", %s", graph.get(key).get(i)));
+            }
+            builder.append(" ]");
+            builder.append("\n");
+        }
+        System.out.println(builder.toString());
+    }
+
+    public void buildTargets(List<yModel.NormalRule> rules, int parallelism) {
+        // create hash table based graph this makes easier to
+        Map<String, List<String>> targetGraph = this.buildTargetDependencyGraph(rules);
+        Map<String, List<String>> reverseTargetGraph = this.buildTargetDependencyReverseGraph(rules);
+        printGraph(targetGraph);
+        printGraph(reverseTargetGraph);
 
     }
 
