@@ -3,8 +3,12 @@ package io.Cbuild.ySharpBackend;
 import io.Cbuild.*;
 import org.stringtemplate.v4.ST;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 public class ySharpBackend {
@@ -158,7 +162,7 @@ public class ySharpBackend {
 
         public static abstract class yBaseModel {
 
-            private final String uuid;
+            public final String uuid;
 
             public yBaseModel() {
                 this.uuid = util.uuid();
@@ -486,6 +490,22 @@ public class ySharpBackend {
         throw new cbuildException(cbuildException.ErrorType.PROCESS, "Target not found: " + target);
     }
 
+    public List<yModel.NormalRule> findTargetList(List<yModel.NormalRule> rules, String target) {
+        List<yModel.NormalRule> targetRules =
+                rules.stream().filter(r -> r.target.equals(target))
+                .toList();
+
+        if(targetRules.isEmpty())  throw new cbuildException(cbuildException.ErrorType.PROCESS, "Target not found: " + target);
+        return targetRules;
+    }
+
+    public yModel.NormalRule findRuleByUUID(List<yModel.NormalRule> rules, String uuid) {
+        for(yModel.NormalRule rule : rules) {
+            if(rule.uuid.equals(uuid)) return rule;
+        }
+        throw new RuntimeException(String.format("rule with uuid %s not found", uuid));
+    }
+
     // preserve order of targets
     public List<String> findTopLevelTargets(
             List<yModel.NormalRule> rules
@@ -607,9 +627,9 @@ public class ySharpBackend {
     }
 
 
-    public void buildTargets(List<yModel.NormalRule> rules) {
+    public void buildTargetsParallel(List<yModel.NormalRule> rules) {
         int parallelism = Math.max(1, Runtime.getRuntime().availableProcessors());
-        buildTargets(rules, parallelism);
+        buildTargetsParallel(rules, parallelism);
     }
 
     private Map<String, List<String>> buildTargetDependencyGraph(
@@ -665,26 +685,52 @@ public class ySharpBackend {
         System.out.println(builder.toString());
     }
 
-    public void buildTargets(List<yModel.NormalRule> rules, int parallelism) {
-        // create hash table based graph this makes easier to
-        Map<String, List<String>> targetGraph = this.buildTargetDependencyGraph(rules);
-        Map<String, List<String>> reverseTargetGraph = this.buildTargetDependencyReverseGraph(rules);
+    public void buildTargetsParallel(List<yModel.NormalRule> rules, int parallelism) {
+        try {
+            // create hash table based graph this makes easier to
+            Map<String, List<String>> targetGraph = this.buildTargetDependencyGraph(rules);
+            Map<String, List<String>> reverseTargetGraph = this.buildTargetDependencyReverseGraph(rules);
 
-        // holds how many unfinished preq's to build
-        Map<String, Integer> depqCounter = new LinkedHashMap<>();
-        for(String key : targetGraph.keySet()) {
-            depqCounter.put(key, targetGraph.get(key).size());
-        }
+            // holds how many unfinished preq's to build
+            Map<String, Integer> depqCounter = new LinkedHashMap<>();
+            for(String key : targetGraph.keySet()) {
+                depqCounter.put(key, targetGraph.get(key).size());
+            }
 
-        int activeThreadCount = 0;
+            int activeThreadCount = 0;
+            int buildCount = 0;
+            /** get targets with all depq compiled, in initial phase
+             * this means targets with no depq in graph
+             */
 
-        while (true) {
+            Stack<String> activeTargets = targetGraph.keySet().stream().filter(
+                    k -> depqCounter.get(k) == 0
+            ).collect(Collectors.toSet())
+                    .stream().collect(Collectors.toCollection(Stack::new));
+
+            while (buildCount < targetGraph.keySet().size()) {
+                int threadDiff = Math.max(0, parallelism - activeThreadCount);
+                if(threadDiff <= 0) {
+                    Thread.sleep(200);
+                    continue;
+                }
+                for(int i = 0; i < threadDiff; i++) {
+                    CompletableFuture<String> future = buildTargetAsync();
+
+                }
+
+
+
+                Thread.sleep(200);
+            }
+        } catch (InterruptedException ex) {
 
         }
 
     }
 
 
+    // sync build
     public void buildTargetsSequential(List<yModel.NormalRule> rules) {
         buildTargetsSequential(rules, findDefaultTarget(rules));
     }
@@ -721,4 +767,42 @@ public class ySharpBackend {
 
         }
     }
+
+
+    // async build
+
+    public Future<String> buildTargetAsync(yModel.NormalRule rule) {
+        CompletableFuture<String> completableFuture = new CompletableFuture<>();
+        if(!isOutOfDate(rule)) {
+            completableFuture.complete(rule.uuid);
+            return completableFuture;
+        }
+
+
+        Expansion.ySharpRecipeExpansionEngine recipeExpansionEngine =
+                new Expansion.ySharpRecipeExpansionEngine(this.globalContext);
+
+        shell sh = new shell();
+
+        Executors.newCachedThreadPool().submit(() -> {
+            for(cBuildIR.RecipeIR recipeIR : rule.recipeIRS) {
+                // expand recipe before executing
+                String expandedRecipe = recipeIR.exec(recipeExpansionEngine);
+                shell.ExecutionResult result = sh.runCommandCaptured(expandedRecipe);
+                if(result.isSuccess) {
+                    System.out.println(expandedRecipe);
+                    String normalizedStdout = result.stdOut.trim();
+                    if(normalizedStdout.endsWith("\n")) normalizedStdout = normalizedStdout.substring(0, normalizedStdout.length() -1);
+                    System.out.println(normalizedStdout);
+                }
+
+                completableFuture.complete(rule.uuid);
+            }
+
+
+        });
+
+        return completableFuture;
+    }
+
 }
