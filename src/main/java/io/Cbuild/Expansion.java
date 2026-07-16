@@ -1,6 +1,7 @@
 package io.Cbuild;
 
 import io.Cbuild.ySharpBackend.ySharpBackend;
+import org.stringtemplate.v4.ST;
 
 import java.util.HashSet;
 import java.util.List;
@@ -115,6 +116,22 @@ public class Expansion {
                 return context.symbolTable.get(identifier).getRawValue();
             }
             return "";
+        }
+    }
+
+    public static class ySharpRecipeExpansionEngine extends Expansion.BaseExpansionEngine {
+
+        private final Env context;
+        public ySharpRecipeExpansionEngine(Env context) {
+            this.context = context;
+        }
+
+        @Override
+        public String exec(cBuildIR.RecipeIR ir) {
+            ySharpValueExpansionEngine valueExpansionEngine
+                    = new ySharpValueExpansionEngine(this.context);
+            String expandedShellCommand = valueExpansionEngine.exec( ir.command);
+            return expandedShellCommand;
         }
     }
 

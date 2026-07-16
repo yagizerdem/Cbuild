@@ -26,14 +26,14 @@ public class Main {
         try {
             String cBuildProgram = """
 
-a: b c t
+a : b c
+\t echo hit a
 
-b : k l t
+b : k
+\t echo hit b
 
-c : d e t b
-
-e : f t
-
+c : x y
+\t echo hit c
 
 
 """;
@@ -78,7 +78,7 @@ e : f t
 //            shell.ExecutionResult resul =  shell.runCommandCaptured("echo hit");
 
 
-            backend.buildTargets(depGraph);
+            backend.buildTargetsSequential(depGraph);
 
 
         }catch (Exception ex) {

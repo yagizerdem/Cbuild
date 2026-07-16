@@ -174,6 +174,7 @@ public class ySharpBackend {
             public String target;
             public List<String> prerequisites;
             public List<String> shellCommands;
+            public List<cBuildIR.RecipeIR> recipeIRS;
             public cBuildIR.NormalRuleIR normalRuleIR;
 
             public NormalRule() {
@@ -207,6 +208,18 @@ public class ySharpBackend {
                     String target,
                     List<String> prerequisites,
                     List<String> shellCommands,
+                    List<cBuildIR.RecipeIR> recipeIRS
+            ) {
+                this.target = target;
+                this.prerequisites = prerequisites;
+                this.shellCommands = shellCommands;
+                this.recipeIRS = recipeIRS;
+            }
+
+            public NormalRule(
+                    String target,
+                    List<String> prerequisites,
+                    List<String> shellCommands,
                     cBuildIR.NormalRuleIR normalRuleIR
             ) {
                 this.target = target;
@@ -215,23 +228,38 @@ public class ySharpBackend {
                 this.normalRuleIR = normalRuleIR;
             }
 
+            public NormalRule(
+                    String target,
+                    List<String> prerequisites,
+                    List<String> shellCommands,
+                    List<cBuildIR.RecipeIR> recipeIRS,
+                    cBuildIR.NormalRuleIR normalRuleIR
+            ) {
+                this.target = target;
+                this.prerequisites = prerequisites;
+                this.shellCommands = shellCommands;
+                this.recipeIRS = recipeIRS;
+                this.normalRuleIR = normalRuleIR;
+            }
+
             @Override
             public String toString() {
                 return """
-            NormalRule {
-              target='%s',
-              prerequisites=%s,
-              shellCommands=%s,
-              normalRuleIR=%s
-            }
-            """.formatted(
+                NormalRule {
+                  target='%s',
+                  prerequisites=%s,
+                  shellCommands=%s,
+                  recipeIRS=%s,
+                  normalRuleIR=%s
+                }
+                """.formatted(
                         target,
                         prerequisites,
                         shellCommands,
+                        recipeIRS,
                         normalRuleIR
                 );
             }
-
         }
     }
 
@@ -291,6 +319,7 @@ public class ySharpBackend {
                 rule.target = target;
                 rule.prerequisites = new ArrayList<>(preq);
                 rule.normalRuleIR = ir;
+                rule.recipeIRS = new ArrayList<>(ir.recipes);
                 rules.add(rule);
             }
 
@@ -450,6 +479,13 @@ public class ySharpBackend {
         return rules.getFirst().target;
     }
 
+    public yModel.NormalRule findTarget(List<yModel.NormalRule> rules, String target) {
+        for(yModel.NormalRule rule : rules) {
+            if(rule.target.equals(target)) return rule;
+        }
+        throw new cbuildException(cbuildException.ErrorType.PROCESS, "Target not found: " + target);
+    }
+
     // preserve order of targets
     public List<String> findTopLevelTargets(
             List<yModel.NormalRule> rules
@@ -505,6 +541,7 @@ public class ySharpBackend {
                 sorted
         );
 
+        sorted = sorted.reversed();
         return sorted;
     }
 
@@ -632,9 +669,56 @@ public class ySharpBackend {
         // create hash table based graph this makes easier to
         Map<String, List<String>> targetGraph = this.buildTargetDependencyGraph(rules);
         Map<String, List<String>> reverseTargetGraph = this.buildTargetDependencyReverseGraph(rules);
-        printGraph(targetGraph);
-        printGraph(reverseTargetGraph);
+
+        // holds how many unfinished preq's to build
+        Map<String, Integer> depqCounter = new LinkedHashMap<>();
+        for(String key : targetGraph.keySet()) {
+            depqCounter.put(key, targetGraph.get(key).size());
+        }
+
+        int activeThreadCount = 0;
+
+        while (true) {
+
+        }
 
     }
 
+
+    public void buildTargetsSequential(List<yModel.NormalRule> rules) {
+        buildTargetsSequential(rules, findDefaultTarget(rules));
+    }
+
+    public void buildTargetsSequential(List<yModel.NormalRule> rules, String startNode) {
+        buildTargetsSequential(rules, findTarget(rules, startNode));
+    }
+
+    public void buildTargetsSequential(List<yModel.NormalRule> rules, yModel.NormalRule startNode) {
+        // hasCircularDependency(rules)
+        rules = topologicalSort(rules, startNode);
+
+        Expansion.ySharpRecipeExpansionEngine recipeExpansionEngine =
+                new Expansion.ySharpRecipeExpansionEngine(this.globalContext);
+
+        shell sh = new shell();
+
+        for(int i = 0; i < rules.size(); i++) {
+            yModel.NormalRule current = rules.get(i);
+
+            if(!isOutOfDate(current)) continue;
+
+            for(cBuildIR.RecipeIR recipeIR : current.recipeIRS) {
+                // expand recipe before executing
+                String expandedRecipe = recipeIR.exec(recipeExpansionEngine);
+                shell.ExecutionResult result = sh.runCommandCaptured(expandedRecipe);
+                if(result.isSuccess) {
+                    System.out.println(expandedRecipe);
+                    String normalizedStdout = result.stdOut.trim();
+                    if(normalizedStdout.endsWith("\n")) normalizedStdout = normalizedStdout.substring(0, normalizedStdout.length() -1);
+                    System.out.println(normalizedStdout);
+                }
+            }
+
+        }
+    }
 }
