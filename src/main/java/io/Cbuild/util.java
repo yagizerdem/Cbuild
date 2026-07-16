@@ -22,17 +22,28 @@ public class util {
         return result;
     }
 
-    public boolean fileExist(String pathSegment, String rootDir) {
-        Path fileSystemEntryPath = Path.of(rootDir).resolve(pathSegment);
+    public static String getAbsolutePath(String pathSegment, String rootDir) {
+        String absolutePath = Path.of(rootDir).resolve(pathSegment).toString();
+        return absolutePath;
+    }
+
+    public static String getAbsolutePath(String pathSegment) {
+        String cwd = System.getProperty("user.dir");
+        return getAbsolutePath(pathSegment, cwd);
+    }
+
+
+    public static boolean fileExist(String pathSegment, String rootDir) {
+        Path fileSystemEntryPath = Path.of(getAbsolutePath(pathSegment, rootDir));
         return Files.exists(fileSystemEntryPath);
     }
 
-    public boolean fileExist(String pathSegment) {
+    public static boolean fileExist(String pathSegment) {
         String cwd = System.getProperty("user.dir");
         return fileExist(pathSegment, cwd);
     }
 
-    public Instant getLastModifiedDate(String path) {
+    public static Instant getLastModifiedDate(String path) {
         try {
             return Files.getLastModifiedTime(Path.of(path)).toInstant();
         } catch (IOException ex) {

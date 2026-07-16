@@ -3,6 +3,7 @@ package io.Cbuild.ySharpBackend;
 import io.Cbuild.*;
 import org.stringtemplate.v4.ST;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -548,6 +549,26 @@ public class ySharpBackend {
         visitedTargets.add(target);
         sorted.addAll(targetRules);
     }
+
+    public boolean isOutOfDate(yModel.NormalRule rule) {
+        if(!util.fileExist(rule.target)) return true;
+
+        String targetEntryPath = util.getAbsolutePath(rule.target);
+        Instant lastModifiedDateOfTarget = util.getLastModifiedDate(targetEntryPath);
+
+        for(String preq : rule.prerequisites) {
+            boolean exist = util.fileExist(preq);
+            if(!exist) return true;
+
+            String fileSystemEntryPath = util.getAbsolutePath(preq);
+            Instant lastModifiedDateOfPreq = util.getLastModifiedDate(fileSystemEntryPath);
+
+            if(lastModifiedDateOfPreq.isAfter(lastModifiedDateOfTarget)) return true;
+        }
+
+        return false;
+    }
+
 
     public void buildTargets(List<yModel.NormalRule> rules) {
 

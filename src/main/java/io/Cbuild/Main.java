@@ -3,9 +3,11 @@ package io.Cbuild;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import picocli.CommandLine;
 import ysharp.treewalk.evaluator.Interpreter;
 import io.Cbuild.ySharpBackend.ySharpBackend;
 
+import java.io.File;
 import java.util.List;
 import java.util.Objects;
 
@@ -24,10 +26,8 @@ public class Main {
         try {
             String cBuildProgram = """
 
-a : b c
-b : x y 
-c : k l 
-k : b y t
+app: main.c main.h
+\t echo hit
 
 """;
 //            cBuildProgram += Cursor.END;
@@ -67,10 +67,33 @@ k : b y t
             backend.printModel(sorted);
 
 
+            shell shell = new shell();
+            shell.ExecutionResult resul =  shell.runCommandCaptured("echo hit");
+
+            System.out.println(resul);
+
         }catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
 
+    }
+
+    public static class CLI_OPTIONS {
+
+        @CommandLine.Command(name = "--", description = "Prints a greeting")
+        public static class ySharpBackend {
+            @CommandLine.Option(names = "-c", description = "create a new archive")
+            boolean create;
+
+            @CommandLine.Option(names = { "-f", "--file" }, paramLabel = "ARCHIVE", description = "the archive file")
+            File archive;
+
+            @CommandLine.Parameters(paramLabel = "FILE",  description = "one or more files to archive")
+            File[] files;
+
+            @CommandLine.Option(names = { "-h", "--help" }, usageHelp = true, description = "display a help message")
+            private boolean helpRequested = false;
+        }
     }
 
 
