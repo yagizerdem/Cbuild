@@ -29,11 +29,17 @@ public class Main {
 a : b c
 \t echo hit a
 
-b : k
+b : x
 \t echo hit b
 
-c : x y
+c : x y b
 \t echo hit c
+
+x : 
+\t echo hit x
+
+y : 
+\t echo hit y
 
 
 """;
@@ -78,8 +84,9 @@ c : x y
 //            shell.ExecutionResult resul =  shell.runCommandCaptured("echo hit");
 
 
-            backend.buildTargetsSequential(depGraph);
+          //  backend.buildTargetsSequential(depGraph);
 
+            backend.buildTargetsParallel(rules);
 
         }catch (Exception ex) {
             System.out.println(ex.getMessage());

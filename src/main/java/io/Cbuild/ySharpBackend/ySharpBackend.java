@@ -1,14 +1,11 @@
 package io.Cbuild.ySharpBackend;
 
 import io.Cbuild.*;
-import org.stringtemplate.v4.ST;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class ySharpBackend {
@@ -649,8 +646,7 @@ public class ySharpBackend {
             List<yModel.NormalRule> rules
     ) {
         Set<String> preq = rules.stream()
-                .map(r -> r.prerequisites)
-                .flatMap(List::stream)
+                .map(r -> r.target)
                 .collect(Collectors.toSet());
 
 
@@ -694,38 +690,92 @@ public class ySharpBackend {
             // holds how many unfinished preq's to build
             Map<String, Integer> depqCounter = new LinkedHashMap<>();
             for(String key : targetGraph.keySet()) {
-                depqCounter.put(key, targetGraph.get(key).size());
+                depqCounter.put(key, targetGraph.get(key).stream().filter(targetGraph::containsKey).toList().size());
             }
 
-            int activeThreadCount = 0;
-            int buildCount = 0;
+            ExecutorService executorService = Executors.newCachedThreadPool();
+
+            AtomicInteger buildCount = new AtomicInteger(0);
+            AtomicInteger activeThreadCount = new AtomicInteger(0);
             /** get targets with all depq compiled, in initial phase
              * this means targets with no depq in graph
              */
+
 
             Stack<String> activeTargets = targetGraph.keySet().stream().filter(
                     k -> depqCounter.get(k) == 0
             ).collect(Collectors.toSet())
                     .stream().collect(Collectors.toCollection(Stack::new));
+            List<Future<String>> activeThreadsPool = new ArrayList<>();
 
-            while (buildCount < targetGraph.keySet().size()) {
-                int threadDiff = Math.max(0, parallelism - activeThreadCount);
-                if(threadDiff <= 0) {
-                    Thread.sleep(200);
-                    continue;
+
+            Thread schedulerThread = new Thread(() -> {
+                try {
+                    while (buildCount.get() < targetGraph.size()) {
+                        int threadDiff = Math.max(0, parallelism - activeThreadCount.get());
+                        if(threadDiff <= 0) {
+                            Thread.sleep(200);
+                            continue;
+                        }
+                        for(int i = 0; i < threadDiff; i++) {
+                            if(!activeTargets.isEmpty()) {
+                                String activeTarget = activeTargets.pop();
+                                Future<String> future = buildTargetAsync(executorService, findTarget(rules, activeTarget));
+                                activeThreadsPool.add(future);
+                                activeThreadCount.getAndIncrement();
+                            }
+                        }
+
+                        Thread.sleep(200);
+                    }
+                } catch (InterruptedException ex) {
+
                 }
-                for(int i = 0; i < threadDiff; i++) {
-                    CompletableFuture<String> future = buildTargetAsync();
+            });
+
+            Thread completionThread = new Thread(() -> {
+                try {
+                    while (buildCount.get() < targetGraph.size()) {
+                        if(!activeThreadsPool.isEmpty())  {
+                            Future<String> future = activeThreadsPool.removeFirst();
+                            String uuid = future.get();
+                            activeThreadCount.getAndDecrement();
+                            buildCount.getAndIncrement();
+
+                            yModel.NormalRule rule = findRuleByUUID(rules, uuid);
+                            String target = rule.target;
+                            List<String> targetsThatAffectedByBuild = reverseTargetGraph.get(target);
+                            for(String t : targetsThatAffectedByBuild) {
+                                depqCounter.put(t, depqCounter.get(t) - 1);
+
+                                // check all preqs of target had been built, means 0 depq after decement
+                                if(depqCounter.get(t) == 0) {
+                                    activeTargets.push(t);
+                                }
+                            }
+                        }
+                    }
+                } catch (InterruptedException ex) {
+
+                }
+                catch (ExecutionException ex) {
 
                 }
 
+            });
 
+            schedulerThread.start();
+            completionThread.start();
 
-                Thread.sleep(200);
-            }
-        } catch (InterruptedException ex) {
+            schedulerThread.join();
+            completionThread.join();
+
+            executorService.close();
+
+        } catch (Exception ex) {
 
         }
+
 
     }
 
@@ -771,7 +821,7 @@ public class ySharpBackend {
 
     // async build
 
-    public Future<String> buildTargetAsync(yModel.NormalRule rule) {
+    public Future<String> buildTargetAsync(ExecutorService executorService, yModel.NormalRule rule) {
         CompletableFuture<String> completableFuture = new CompletableFuture<>();
         if(!isOutOfDate(rule)) {
             completableFuture.complete(rule.uuid);
@@ -784,7 +834,7 @@ public class ySharpBackend {
 
         shell sh = new shell();
 
-        Executors.newCachedThreadPool().submit(() -> {
+        executorService.submit(() -> {
             for(cBuildIR.RecipeIR recipeIR : rule.recipeIRS) {
                 // expand recipe before executing
                 String expandedRecipe = recipeIR.exec(recipeExpansionEngine);
@@ -795,12 +845,10 @@ public class ySharpBackend {
                     if(normalizedStdout.endsWith("\n")) normalizedStdout = normalizedStdout.substring(0, normalizedStdout.length() -1);
                     System.out.println(normalizedStdout);
                 }
-
-                completableFuture.complete(rule.uuid);
             }
-
-
+            completableFuture.complete(rule.uuid);
         });
+
 
         return completableFuture;
     }
