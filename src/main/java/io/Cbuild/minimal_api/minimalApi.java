@@ -1,21 +1,22 @@
-package io.Cbuild.ySharpBackend;
+package io.Cbuild.minimal_api;
 
 import io.Cbuild.*;
-import org.stringtemplate.v4.ST;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class ySharpBackend {
+public class minimalApi {
 
     private final Env globalContext;
 
-    public ySharpBackend() {
+    public minimalApi() {
         this.globalContext = new Env();
     }
 
-    public ySharpBackend(Env context) {
+    public minimalApi(Env context) {
         this.globalContext = context;
     }
 
@@ -158,7 +159,7 @@ public class ySharpBackend {
 
         public static abstract class yBaseModel {
 
-            private final String uuid;
+            public final String uuid;
 
             public yBaseModel() {
                 this.uuid = util.uuid();
@@ -174,6 +175,7 @@ public class ySharpBackend {
             public String target;
             public List<String> prerequisites;
             public List<String> shellCommands;
+            public List<cBuildIR.RecipeIR> recipeIRS;
             public cBuildIR.NormalRuleIR normalRuleIR;
 
             public NormalRule() {
@@ -207,6 +209,18 @@ public class ySharpBackend {
                     String target,
                     List<String> prerequisites,
                     List<String> shellCommands,
+                    List<cBuildIR.RecipeIR> recipeIRS
+            ) {
+                this.target = target;
+                this.prerequisites = prerequisites;
+                this.shellCommands = shellCommands;
+                this.recipeIRS = recipeIRS;
+            }
+
+            public NormalRule(
+                    String target,
+                    List<String> prerequisites,
+                    List<String> shellCommands,
                     cBuildIR.NormalRuleIR normalRuleIR
             ) {
                 this.target = target;
@@ -215,23 +229,38 @@ public class ySharpBackend {
                 this.normalRuleIR = normalRuleIR;
             }
 
+            public NormalRule(
+                    String target,
+                    List<String> prerequisites,
+                    List<String> shellCommands,
+                    List<cBuildIR.RecipeIR> recipeIRS,
+                    cBuildIR.NormalRuleIR normalRuleIR
+            ) {
+                this.target = target;
+                this.prerequisites = prerequisites;
+                this.shellCommands = shellCommands;
+                this.recipeIRS = recipeIRS;
+                this.normalRuleIR = normalRuleIR;
+            }
+
             @Override
             public String toString() {
                 return """
-            NormalRule {
-              target='%s',
-              prerequisites=%s,
-              shellCommands=%s,
-              normalRuleIR=%s
-            }
-            """.formatted(
+                NormalRule {
+                  target='%s',
+                  prerequisites=%s,
+                  shellCommands=%s,
+                  recipeIRS=%s,
+                  normalRuleIR=%s
+                }
+                """.formatted(
                         target,
                         prerequisites,
                         shellCommands,
+                        recipeIRS,
                         normalRuleIR
                 );
             }
-
         }
     }
 
@@ -291,6 +320,7 @@ public class ySharpBackend {
                 rule.target = target;
                 rule.prerequisites = new ArrayList<>(preq);
                 rule.normalRuleIR = ir;
+                rule.recipeIRS = new ArrayList<>(ir.recipes);
                 rules.add(rule);
             }
 
@@ -299,8 +329,8 @@ public class ySharpBackend {
 
         @Override
         public Void exec(cBuildIR.AssignmentIR ir) {
-            Expansion.ySharpExpansionEngine expansionEngine =
-                    new Expansion.ySharpExpansionEngine(this.context);
+            Expansion.minimalApiExpansionEngine expansionEngine =
+                    new Expansion.minimalApiExpansionEngine(this.context);
             ir.exec(expansionEngine);
             return null;
         }
@@ -450,6 +480,29 @@ public class ySharpBackend {
         return rules.getFirst().target;
     }
 
+    public yModel.NormalRule findTarget(List<yModel.NormalRule> rules, String target) {
+        for(yModel.NormalRule rule : rules) {
+            if(rule.target.equals(target)) return rule;
+        }
+        throw new cbuildException(cbuildException.ErrorType.PROCESS, "Target not found: " + target);
+    }
+
+    public List<yModel.NormalRule> findTargetList(List<yModel.NormalRule> rules, String target) {
+        List<yModel.NormalRule> targetRules =
+                rules.stream().filter(r -> r.target.equals(target))
+                .toList();
+
+        if(targetRules.isEmpty())  throw new cbuildException(cbuildException.ErrorType.PROCESS, "Target not found: " + target);
+        return targetRules;
+    }
+
+    public yModel.NormalRule findRuleByUUID(List<yModel.NormalRule> rules, String uuid) {
+        for(yModel.NormalRule rule : rules) {
+            if(rule.uuid.equals(uuid)) return rule;
+        }
+        throw new RuntimeException(String.format("rule with uuid %s not found", uuid));
+    }
+
     // preserve order of targets
     public List<String> findTopLevelTargets(
             List<yModel.NormalRule> rules
@@ -505,6 +558,7 @@ public class ySharpBackend {
                 sorted
         );
 
+        sorted = sorted.reversed();
         return sorted;
     }
 
@@ -570,8 +624,233 @@ public class ySharpBackend {
     }
 
 
-    public void buildTargets(List<yModel.NormalRule> rules) {
+    public void buildTargetsParallel(List<yModel.NormalRule> rules) {
+        int parallelism = Math.max(1, Runtime.getRuntime().availableProcessors());
+        buildTargetsParallel(rules, parallelism);
+    }
 
+    private Map<String, List<String>> buildTargetDependencyGraph(
+            List<yModel.NormalRule> rules
+    ) {
+        Map<String, List<String>> targetGraph = new LinkedHashMap<>();
+
+        rules.forEach(rule -> targetGraph
+                .computeIfAbsent(rule.target, ignored -> new ArrayList<>())
+                .addAll(rule.prerequisites)
+        );
+
+        return targetGraph;
+    }
+
+    private Map<String, List<String>> buildTargetDependencyReverseGraph(
+            List<yModel.NormalRule> rules
+    ) {
+        Set<String> preq = rules.stream()
+                .map(r -> r.target)
+                .collect(Collectors.toSet());
+
+
+        Map<String, List<String>> reverseTargetGraph = new LinkedHashMap<>();
+
+        preq.forEach(p -> {
+                reverseTargetGraph
+                        .computeIfAbsent(p, ignored -> new ArrayList<>())
+                        .addAll(rules.stream()
+                                .filter(rule -> rule.prerequisites.contains(p))
+                                .map(r -> r.target)
+                                .collect(Collectors.toSet())
+                                .stream()
+                                .toList());
+
+            }
+        );
+
+        return reverseTargetGraph;
+    }
+
+    public void printGraph(Map<String, List<String>> graph) {
+        StringBuilder builder = new StringBuilder();
+        for(String key : graph.keySet()) {
+            builder.append(String.format("%s -> : [ ", key));
+            for(int i = 0; i < graph.get(key).size(); i++) {
+                builder.append(String.format( i == 0 ?  "%s" :  ", %s", graph.get(key).get(i)));
+            }
+            builder.append(" ]");
+            builder.append("\n");
+        }
+        System.out.println(builder.toString());
+    }
+
+    public void buildTargetsParallel(List<yModel.NormalRule> rules, int parallelism) {
+        try {
+            // create hash table based graph this makes easier to
+            Map<String, List<String>> targetGraph = this.buildTargetDependencyGraph(rules);
+            Map<String, List<String>> reverseTargetGraph = this.buildTargetDependencyReverseGraph(rules);
+
+            // holds how many unfinished preq's to build
+            Map<String, Integer> depqCounter = new LinkedHashMap<>();
+            for(String key : targetGraph.keySet()) {
+                depqCounter.put(key, targetGraph.get(key).stream().filter(targetGraph::containsKey).toList().size());
+            }
+
+            ExecutorService executorService = Executors.newCachedThreadPool();
+
+            AtomicInteger buildCount = new AtomicInteger(0);
+            AtomicInteger activeThreadCount = new AtomicInteger(0);
+            /** get targets with all depq compiled, in initial phase
+             * this means targets with no depq in graph
+             */
+
+
+            Stack<String> activeTargets = targetGraph.keySet().stream().filter(
+                    k -> depqCounter.get(k) == 0
+            ).collect(Collectors.toSet())
+                    .stream().collect(Collectors.toCollection(Stack::new));
+            List<Future<String>> activeThreadsPool = new ArrayList<>();
+
+
+            Thread schedulerThread = new Thread(() -> {
+                try {
+                    while (buildCount.get() < targetGraph.size()) {
+                        int threadDiff = Math.max(0, parallelism - activeThreadCount.get());
+                        if(threadDiff <= 0) {
+                            Thread.sleep(200);
+                            continue;
+                        }
+                        for(int i = 0; i < threadDiff; i++) {
+                            if(!activeTargets.isEmpty()) {
+                                String activeTarget = activeTargets.pop();
+                                Future<String> future = buildTargetAsync(executorService, findTarget(rules, activeTarget));
+                                activeThreadsPool.add(future);
+                                activeThreadCount.getAndIncrement();
+                            }
+                        }
+
+                        Thread.sleep(200);
+                    }
+                } catch (InterruptedException ex) {
+
+                }
+            });
+
+            Thread completionThread = new Thread(() -> {
+                try {
+                    while (buildCount.get() < targetGraph.size()) {
+                        if(!activeThreadsPool.isEmpty())  {
+                            Future<String> future = activeThreadsPool.removeFirst();
+                            String uuid = future.get();
+                            activeThreadCount.getAndDecrement();
+                            buildCount.getAndIncrement();
+
+                            yModel.NormalRule rule = findRuleByUUID(rules, uuid);
+                            String target = rule.target;
+                            List<String> targetsThatAffectedByBuild = reverseTargetGraph.get(target);
+                            for(String t : targetsThatAffectedByBuild) {
+                                depqCounter.put(t, depqCounter.get(t) - 1);
+
+                                // check all preqs of target had been built, means 0 depq after decement
+                                if(depqCounter.get(t) == 0) {
+                                    activeTargets.push(t);
+                                }
+                            }
+                        }
+                    }
+                } catch (InterruptedException ex) {
+
+                }
+                catch (ExecutionException ex) {
+
+                }
+
+            });
+
+            schedulerThread.start();
+            completionThread.start();
+
+            schedulerThread.join();
+            completionThread.join();
+
+            executorService.close();
+
+        } catch (Exception ex) {
+
+        }
+
+
+    }
+
+
+    // sync build
+    public void buildTargetsSequential(List<yModel.NormalRule> rules) {
+        buildTargetsSequential(rules, findDefaultTarget(rules));
+    }
+
+    public void buildTargetsSequential(List<yModel.NormalRule> rules, String startNode) {
+        buildTargetsSequential(rules, findTarget(rules, startNode));
+    }
+
+    public void buildTargetsSequential(List<yModel.NormalRule> rules, yModel.NormalRule startNode) {
+        // hasCircularDependency(rules)
+        rules = topologicalSort(rules, startNode);
+
+        Expansion.minimalApiRecipeExpansionEngine recipeExpansionEngine =
+                new Expansion.minimalApiRecipeExpansionEngine(this.globalContext);
+
+        shell sh = new shell();
+
+        for(int i = 0; i < rules.size(); i++) {
+            yModel.NormalRule current = rules.get(i);
+
+            if(!isOutOfDate(current)) continue;
+
+            for(cBuildIR.RecipeIR recipeIR : current.recipeIRS) {
+                // expand recipe before executing
+                String expandedRecipe = recipeIR.exec(recipeExpansionEngine);
+                shell.ExecutionResult result = sh.runCommandCaptured(expandedRecipe);
+                if(result.isSuccess) {
+                    System.out.println(expandedRecipe);
+                    String normalizedStdout = result.stdOut.trim();
+                    if(normalizedStdout.endsWith("\n")) normalizedStdout = normalizedStdout.substring(0, normalizedStdout.length() -1);
+                    System.out.println(normalizedStdout);
+                }
+            }
+
+        }
+    }
+
+
+    // async build
+
+    public Future<String> buildTargetAsync(ExecutorService executorService, yModel.NormalRule rule) {
+        CompletableFuture<String> completableFuture = new CompletableFuture<>();
+        if(!isOutOfDate(rule)) {
+            completableFuture.complete(rule.uuid);
+            return completableFuture;
+        }
+
+
+        Expansion.minimalApiRecipeExpansionEngine recipeExpansionEngine =
+                new Expansion.minimalApiRecipeExpansionEngine(this.globalContext);
+
+        shell sh = new shell();
+
+        executorService.submit(() -> {
+            for(cBuildIR.RecipeIR recipeIR : rule.recipeIRS) {
+                // expand recipe before executing
+                String expandedRecipe = recipeIR.exec(recipeExpansionEngine);
+                shell.ExecutionResult result = sh.runCommandCaptured(expandedRecipe);
+                if(result.isSuccess) {
+                    System.out.println(expandedRecipe);
+                    String normalizedStdout = result.stdOut.trim();
+                    if(normalizedStdout.endsWith("\n")) normalizedStdout = normalizedStdout.substring(0, normalizedStdout.length() -1);
+                    System.out.println(normalizedStdout);
+                }
+            }
+            completableFuture.complete(rule.uuid);
+        });
+
+
+        return completableFuture;
     }
 
 }

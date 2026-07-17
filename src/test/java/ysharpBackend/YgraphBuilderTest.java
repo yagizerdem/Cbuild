@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import util.utils;
 import io.Cbuild.cBuildIR;
-import io.Cbuild.ySharpBackend.*;
+import io.Cbuild.minimal_api.*;
 
 import java.util.List;
 
@@ -19,17 +19,17 @@ app : main.c main.h
 \t echo build app > app
 """);
 
-        ySharpBackend backend = new ySharpBackend(new Env());
-        List<ySharpBackend.yModel.yBaseModel> modelGraph = utils.generateYsharpGraph(instructions, backend);
+        minimalApi backend = new minimalApi(new Env());
+        List<minimalApi.yModel.yBaseModel> modelGraph = utils.generateYsharpGraph(instructions, backend);
 
         Assertions.assertTrue(
                 modelGraph.stream()
-                        .allMatch(ySharpBackend.yModel.NormalRule.class::isInstance),
+                        .allMatch(minimalApi.yModel.NormalRule.class::isInstance),
                 "Every model in modelGraph should be an instance of NormalRule"
         );
 
-        List<ySharpBackend.yModel.NormalRule> normalRules = modelGraph.stream()
-                .map(ySharpBackend.yModel.NormalRule.class::cast)
+        List<minimalApi.yModel.NormalRule> normalRules = modelGraph.stream()
+                .map(minimalApi.yModel.NormalRule.class::cast)
                 .toList();
 
         Assertions.assertEquals("app", normalRules.getFirst().target);
@@ -40,7 +40,7 @@ app : main.c main.h
 
     @Test
     public void assignmentsDoNotCreateGraphModels() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 target := app
 source = main.c
 $(target): $(source)
@@ -53,7 +53,7 @@ $(target): $(source)
 
     @Test
     public void simpleAssignmentsExpandTargetAndPrerequisiteLists() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 targets := app app-tests
 sources := main.c app.c
 headers := main.h app.h
@@ -74,7 +74,7 @@ $(targets): $(sources) $(headers)
 
     @Test
     public void simpleAssignmentCapturesValueImmediately() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 extension := c
 source := main.$(extension)
 extension := cpp
@@ -89,7 +89,7 @@ app: $(source)
 
     @Test
     public void recursiveAssignmentUsesLatestValue() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 extension := c
 source = main.$(extension)
 extension := cpp
@@ -104,7 +104,7 @@ app: $(source)
 
     @Test
     public void recursiveAssignmentSupportsForwardReference() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 objects = $(sources)
 sources := main.o util.o platform.o
 app: $(objects)
@@ -118,7 +118,7 @@ app: $(objects)
 
     @Test
     public void variablesExpandInsideTargetAndPrerequisiteNames() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 build_dir := build
 mode = debug
 source_dir := src
@@ -138,7 +138,7 @@ $(build_dir)/app-$(mode): $(source_dir)/$(mode)/main.c $(source_dir)/common.h
 
     @Test
     public void nestedVariableNameSelectsPrerequisiteList() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 platform := linux
 sources.linux := linux_main.c epoll.c
 sources.windows := windows_main.c iocp.c
@@ -153,7 +153,7 @@ app: $(sources.$(platform))
 
     @Test
     public void expandedTargetsHaveIndependentPrerequisiteLists() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 targets := app test-app
 common = common.h config.h
 $(targets): $(common)
@@ -175,7 +175,7 @@ $(targets): $(common)
 
     @Test
     public void graphPreservesRuleOrder() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 first_target := prepare
 $(first_target): config.h
 second_target = app
@@ -198,18 +198,18 @@ $(second_target): main.c $(first_target)
         );
     }
 
-    private List<ySharpBackend.yModel.NormalRule> buildRules(
+    private List<minimalApi.yModel.NormalRule> buildRules(
             String cBuildProgram
     ) {
         List<cBuildIR.IR> instructions =
                 utils.generateIR(cBuildProgram);
 
-        ySharpBackend backend =
-                new ySharpBackend(new Env());
+        minimalApi backend =
+                new minimalApi(new Env());
 
         return utils.generateYsharpGraph(instructions, backend)
                 .stream()
-                .map(ySharpBackend.yModel.NormalRule.class::cast)
+                .map(minimalApi.yModel.NormalRule.class::cast)
                 .toList();
     }
 
@@ -255,18 +255,18 @@ schema.txt :
 \techo build schema.txt
 """);
 
-        ySharpBackend backend = new ySharpBackend(new Env());
+        minimalApi backend = new minimalApi(new Env());
 
-        List<ySharpBackend.yModel.yBaseModel> modelGraph =
+        List<minimalApi.yModel.yBaseModel> modelGraph =
                 utils.generateYsharpGraph(instructions, backend);
 
         Assertions.assertTrue(
                 modelGraph.stream()
-                        .allMatch(ySharpBackend.yModel.NormalRule.class::isInstance)
+                        .allMatch(minimalApi.yModel.NormalRule.class::isInstance)
         );
 
-        List<ySharpBackend.yModel.NormalRule> rules = modelGraph.stream()
-                .map(ySharpBackend.yModel.NormalRule.class::cast)
+        List<minimalApi.yModel.NormalRule> rules = modelGraph.stream()
+                .map(minimalApi.yModel.NormalRule.class::cast)
                 .toList();
 
         // app1 ve app2 ayrı graph node üretir.
@@ -308,7 +308,7 @@ schema.txt :
 
     @Test
     public void undefinedPrerequisiteExpansionIsRemovedFromGraph() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 optional = $(missing)
 app: main.c $(optional) util.c
 """);
@@ -318,7 +318,7 @@ app: main.c $(optional) util.c
 
     @Test
     public void targetWithoutPrerequisitesProducesEmptyList() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 clean:
 """);
 
@@ -330,7 +330,7 @@ clean:
 
     @Test
     public void whitespaceInExpandedPrerequisitesIsNormalized() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 sources := main.c     util.c       platform.c
 app: $(sources)
 """);
@@ -346,7 +346,7 @@ app: $(sources)
 
     @Test
     public void duplicatePrerequisitesRemainInOriginalOrder() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 common := common.h
 app: $(common) main.c $(common) main.c
 """);
@@ -363,7 +363,7 @@ app: $(common) main.c $(common) main.c
 
     @Test
     public void nestedVariableReferencesSelectTargetAndPrerequisites() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 profile := debug
 selected_target := target.$(profile)
 selected_dependencies := dependencies.$(profile)
@@ -384,7 +384,7 @@ $($(selected_target)): $($(selected_dependencies))
 
     @Test
     public void recursiveTargetListCreatesOneModelPerExpandedTarget() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 target_names = $(primary) $(secondary)
 primary := app
 secondary := app-tests
@@ -406,7 +406,7 @@ $(target_names): $(dependencies)
 
     @Test
     public void simpleAssignmentWithUndefinedForwardReferenceCapturesEmptyValue() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 sources := $(later_sources)
 later_sources := main.c util.c
 app: before.h $(sources) after.h
@@ -422,7 +422,7 @@ app: before.h $(sources) after.h
 
     @Test
     public void recursiveAssignmentResolvesMultiLevelForwardReferences() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 all_sources = $(core_sources) $(platform_sources)
 core_sources = $(main_source) common.c
 platform_sources = linux.c posix.c
@@ -443,7 +443,7 @@ app: $(all_sources)
 
     @Test
     public void ruleKeepsExpansionResultFromTimeItWasBuilt() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 source := old.c
 first: $(source)
 
@@ -459,7 +459,7 @@ second: $(source)
 
     @Test
     public void sameTargetInSeparateRulesCreatesSeparateModels() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 app: main.c
 app: util.c
 """);
@@ -475,7 +475,7 @@ app: util.c
 
     @Test
     public void emptyExpandedTargetDoesNotCreateModel() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 missing_target = $(undefined_target)
 $(missing_target): main.c
 """);
@@ -512,7 +512,7 @@ app: $(dependency)
 
     @Test
     public void recursiveVariableIsReevaluatedForEachLaterRule() {
-        List<ySharpBackend.yModel.NormalRule> rules = buildRules("""
+        List<minimalApi.yModel.NormalRule> rules = buildRules("""
 extension := c
 source = main.$(extension)
 
@@ -529,11 +529,11 @@ second: $(source)
 
 
     private void assertRule(
-            List<ySharpBackend.yModel.NormalRule> rules,
+            List<minimalApi.yModel.NormalRule> rules,
             String target,
             String... expectedPrerequisites
     ) {
-        ySharpBackend.yModel.NormalRule rule = rules.stream()
+        minimalApi.yModel.NormalRule rule = rules.stream()
                 .filter(candidate -> target.equals(candidate.target))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError(

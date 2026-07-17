@@ -1,14 +1,12 @@
 package util;
 
 import io.Cbuild.*;
-import io.Cbuild.ySharpBackend.ySharpBackend.*;
-import io.Cbuild.ySharpBackend.ySharpBackend;
+import io.Cbuild.minimal_api.minimalApi.*;
+import io.Cbuild.minimal_api.minimalApi;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.stringtemplate.v4.ST;
 
-import javax.imageio.event.IIOReadProgressListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -78,20 +76,20 @@ public class utils {
     }
 
 
-    public static List<yModel.yBaseModel> generateYsharpGraph(List<cBuildIR.IR> ir, ySharpBackend backend) {
-        List<ySharpBackend.yModel.yBaseModel> models = backend.build(ir);
+    public static List<yModel.yBaseModel> generateYsharpGraph(List<cBuildIR.IR> ir, minimalApi backend) {
+        List<minimalApi.yModel.yBaseModel> models = backend.build(ir);
         return models;
     }
 
     public static List<yModel.yBaseModel> generateYsharpGraph(List<cBuildIR.IR> ir, Env context) {
-        ySharpBackend backend = new ySharpBackend(context);
-        List<ySharpBackend.yModel.yBaseModel> models = backend.build(ir);
+        minimalApi backend = new minimalApi(context);
+        List<minimalApi.yModel.yBaseModel> models = backend.build(ir);
         return models;
     }
 
-    public static List<ySharpBackend.yModel.NormalRule> convertToNormalRule(List<ySharpBackend.yModel.yBaseModel> yBaseModels) {
-        List<ySharpBackend.yModel.NormalRule> rules = yBaseModels.stream().map(x -> {
-            if(x instanceof ySharpBackend.yModel.NormalRule rule) return rule;
+    public static List<minimalApi.yModel.NormalRule> convertToNormalRule(List<minimalApi.yModel.yBaseModel> yBaseModels) {
+        List<minimalApi.yModel.NormalRule> rules = yBaseModels.stream().map(x -> {
+            if(x instanceof minimalApi.yModel.NormalRule rule) return rule;
             return null;
         }).filter(Objects::nonNull).toList();
         return rules;

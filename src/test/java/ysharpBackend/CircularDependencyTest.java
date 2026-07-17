@@ -2,7 +2,7 @@ package ysharpBackend;
 
 import io.Cbuild.Env;
 import io.Cbuild.cBuildIR;
-import io.Cbuild.ySharpBackend.ySharpBackend;
+import io.Cbuild.minimal_api.minimalApi;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import util.utils;
@@ -259,13 +259,13 @@ b : y
         List<cBuildIR.IR> instructions =
                 utils.generateIR(cBuildProgram);
 
-        ySharpBackend backend =
-                new ySharpBackend(new Env());
+        minimalApi backend =
+                new minimalApi(new Env());
 
-        List<ySharpBackend.yModel.yBaseModel> models =
+        List<minimalApi.yModel.yBaseModel> models =
                 utils.generateYsharpGraph(instructions, backend);
 
-        List<ySharpBackend.yModel.NormalRule> rules =
+        List<minimalApi.yModel.NormalRule> rules =
                 utils.convertToNormalRule(models);
 
         return backend.hasCircularDependency(rules);

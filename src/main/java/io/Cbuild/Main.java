@@ -4,8 +4,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import picocli.CommandLine;
-import ysharp.treewalk.evaluator.Interpreter;
-import io.Cbuild.ySharpBackend.ySharpBackend;
+import io.Cbuild.minimal_api.minimalApi;
 
 import java.io.File;
 import java.util.List;
@@ -26,8 +25,21 @@ public class Main {
         try {
             String cBuildProgram = """
 
-app: main.c main.h
-\t echo hit
+a : b c
+\t echo hit a
+
+b : x
+\t echo hit b
+
+c : x y b
+\t echo hit c
+
+x : 
+\t echo hit x
+
+y : 
+\t echo hit y
+
 
 """;
 //            cBuildProgram += Cursor.END;
@@ -47,32 +59,34 @@ app: main.c main.h
             List<cBuildIR.IR> ir = cBuildCompiler.compile(context);
 
 
-            ySharpBackend backend = new ySharpBackend(env);
-            List<ySharpBackend.yModel.yBaseModel> models = backend.build(ir);
+            minimalApi backend = new minimalApi(env);
+            List<minimalApi.yModel.yBaseModel> models = backend.build(ir);
             // backend.printModel(models);
 
-            List<ySharpBackend.yModel.NormalRule> rules = models.stream().map(x -> {
-                if(x instanceof ySharpBackend.yModel.NormalRule rule) return rule;
+            List<minimalApi.yModel.NormalRule> rules = models.stream().map(x -> {
+                if(x instanceof minimalApi.yModel.NormalRule rule) return rule;
                 return null;
             }).filter(Objects::nonNull).toList();
 
-            List<ySharpBackend.yModel.NormalRule> depGraph =  backend.getTargetSubgraph(rules);
+            List<minimalApi.yModel.NormalRule> depGraph =  backend.getTargetSubgraph(rules);
             backend.printModel(depGraph);
             System.out.println("-".repeat(50));
-//
+
 //            List<ySharpBackend.yModel.NormalRule> depGraph2 =  backend.getTargetSubgraph(rules, "x");
 //            backend.printModel(depGraph2);
 
-            List<ySharpBackend.yModel.NormalRule> sorted = backend.topologicalSort(depGraph, depGraph.getFirst());
-            backend.printModel(sorted);
+//            List<ySharpBackend.yModel.NormalRule> sorted = backend.topologicalSort(depGraph, depGraph.getFirst());
+//            backend.printModel(sorted);
 
 
-            shell shell = new shell();
-            shell.ExecutionResult resul =  shell.runCommandCaptured("echo hit");
+//            shell shell = new shell();
+//            shell.ExecutionResult resul =  shell.runCommandCaptured("echo hit");
 
-            System.out.println(resul);
+          //  backend.buildTargetsSequential(depGraph);
 
-        }catch (Exception ex) {
+            backend.buildTargetsParallel(rules);
+
+        } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
 
