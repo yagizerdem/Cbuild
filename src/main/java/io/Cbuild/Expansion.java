@@ -1,8 +1,5 @@
 package io.Cbuild;
 
-import io.Cbuild.ySharpBackend.ySharpBackend;
-import org.stringtemplate.v4.ST;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,13 +8,13 @@ public class Expansion {
 
     public static class BaseExpansionEngine extends ExecIR.BaseExecIR { }
 
-    public static class ySharpExpansionEngine extends Expansion.BaseExpansionEngine {
+    public static class minimalApiExpansionEngine extends Expansion.BaseExpansionEngine {
 
-        private final ySharpValueExpansionEngine valueExpansionEngine;
+        private final minimalApiValueExpansionEngine valueExpansionEngine;
         private final Env context;
 
-        public ySharpExpansionEngine(Env context) {
-            this.valueExpansionEngine = new ySharpValueExpansionEngine(context);
+        public minimalApiExpansionEngine(Env context) {
+            this.valueExpansionEngine = new minimalApiValueExpansionEngine(context);
             this.context = context;
         }
 
@@ -36,13 +33,13 @@ public class Expansion {
         }
     }
 
-    public static class ySharpValueExpansionEngine extends Expansion.BaseExpansionEngine {
+    public static class minimalApiValueExpansionEngine extends Expansion.BaseExpansionEngine {
 
         private final Env context;
 
         private final Set<String> activeLookups;
 
-        public ySharpValueExpansionEngine(Env context) {
+        public minimalApiValueExpansionEngine(Env context) {
             this.context = context;
             this.activeLookups = new HashSet<>();
         }
@@ -119,36 +116,36 @@ public class Expansion {
         }
     }
 
-    public static class ySharpRecipeExpansionEngine extends Expansion.BaseExpansionEngine {
+    public static class minimalApiRecipeExpansionEngine extends Expansion.BaseExpansionEngine {
 
         private final Env context;
-        public ySharpRecipeExpansionEngine(Env context) {
+        public minimalApiRecipeExpansionEngine(Env context) {
             this.context = context;
         }
 
         @Override
         public String exec(cBuildIR.RecipeIR ir) {
-            ySharpValueExpansionEngine valueExpansionEngine
-                    = new ySharpValueExpansionEngine(this.context);
+            minimalApiValueExpansionEngine valueExpansionEngine
+                    = new minimalApiValueExpansionEngine(this.context);
             String expandedShellCommand = valueExpansionEngine.exec( ir.command);
             return expandedShellCommand;
         }
     }
 
     public String expandValue(cBuildIR.ValueIR ir, Env context) {
-        ySharpValueExpansionEngine engine = new Expansion.ySharpValueExpansionEngine(context);
+        minimalApiValueExpansionEngine engine = new Expansion.minimalApiValueExpansionEngine(context);
         return ir.exec(engine);
     }
 
     public void expand(List<cBuildIR.IR> instructions, Env context) {
-        ySharpExpansionEngine expansionEngine = new ySharpExpansionEngine(context);
+        minimalApiExpansionEngine expansionEngine = new minimalApiExpansionEngine(context);
         for(cBuildIR.IR ir : instructions) {
             ir.exec(expansionEngine);
         }
     }
 
     public void expand(cBuildIR.IR instruction, Env context) {
-        ySharpExpansionEngine expansionEngine = new ySharpExpansionEngine(context);
+        minimalApiExpansionEngine expansionEngine = new minimalApiExpansionEngine(context);
         instruction.exec(expansionEngine);
     }
 }

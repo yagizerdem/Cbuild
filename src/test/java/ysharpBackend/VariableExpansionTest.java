@@ -4,7 +4,7 @@ import io.Cbuild.Env;
 import io.Cbuild.Expansion;
 import io.Cbuild.cBuildIR;
 import io.Cbuild.cbuildException;
-import io.Cbuild.ySharpBackend.ySharpBackend;
+import io.Cbuild.minimal_api.minimalApi;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import util.utils;
@@ -669,7 +669,7 @@ result := $(safe)
     private Env expand(String cBuildProgram) {
         Env context = new Env();
         List<cBuildIR.IR> ir = utils.generateIR(cBuildProgram);
-        ySharpBackend backend = new ySharpBackend();
+        minimalApi backend = new minimalApi();
         Expansion expansion = new Expansion();
         expansion.expand(ir, context);
         return context;

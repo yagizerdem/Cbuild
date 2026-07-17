@@ -1,4 +1,4 @@
-package io.Cbuild.ySharpBackend;
+package io.Cbuild.minimal_api;
 
 import io.Cbuild.*;
 
@@ -8,15 +8,15 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class ySharpBackend {
+public class minimalApi {
 
     private final Env globalContext;
 
-    public ySharpBackend() {
+    public minimalApi() {
         this.globalContext = new Env();
     }
 
-    public ySharpBackend(Env context) {
+    public minimalApi(Env context) {
         this.globalContext = context;
     }
 
@@ -329,8 +329,8 @@ public class ySharpBackend {
 
         @Override
         public Void exec(cBuildIR.AssignmentIR ir) {
-            Expansion.ySharpExpansionEngine expansionEngine =
-                    new Expansion.ySharpExpansionEngine(this.context);
+            Expansion.minimalApiExpansionEngine expansionEngine =
+                    new Expansion.minimalApiExpansionEngine(this.context);
             ir.exec(expansionEngine);
             return null;
         }
@@ -793,8 +793,8 @@ public class ySharpBackend {
         // hasCircularDependency(rules)
         rules = topologicalSort(rules, startNode);
 
-        Expansion.ySharpRecipeExpansionEngine recipeExpansionEngine =
-                new Expansion.ySharpRecipeExpansionEngine(this.globalContext);
+        Expansion.minimalApiRecipeExpansionEngine recipeExpansionEngine =
+                new Expansion.minimalApiRecipeExpansionEngine(this.globalContext);
 
         shell sh = new shell();
 
@@ -829,8 +829,8 @@ public class ySharpBackend {
         }
 
 
-        Expansion.ySharpRecipeExpansionEngine recipeExpansionEngine =
-                new Expansion.ySharpRecipeExpansionEngine(this.globalContext);
+        Expansion.minimalApiRecipeExpansionEngine recipeExpansionEngine =
+                new Expansion.minimalApiRecipeExpansionEngine(this.globalContext);
 
         shell sh = new shell();
 

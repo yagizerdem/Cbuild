@@ -4,8 +4,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import picocli.CommandLine;
-import ysharp.treewalk.evaluator.Interpreter;
-import io.Cbuild.ySharpBackend.ySharpBackend;
+import io.Cbuild.minimal_api.minimalApi;
 
 import java.io.File;
 import java.util.List;
@@ -60,19 +59,19 @@ y :
             List<cBuildIR.IR> ir = cBuildCompiler.compile(context);
 
 
-            ySharpBackend backend = new ySharpBackend(env);
-            List<ySharpBackend.yModel.yBaseModel> models = backend.build(ir);
+            minimalApi backend = new minimalApi(env);
+            List<minimalApi.yModel.yBaseModel> models = backend.build(ir);
             // backend.printModel(models);
 
-            List<ySharpBackend.yModel.NormalRule> rules = models.stream().map(x -> {
-                if(x instanceof ySharpBackend.yModel.NormalRule rule) return rule;
+            List<minimalApi.yModel.NormalRule> rules = models.stream().map(x -> {
+                if(x instanceof minimalApi.yModel.NormalRule rule) return rule;
                 return null;
             }).filter(Objects::nonNull).toList();
 
-            List<ySharpBackend.yModel.NormalRule> depGraph =  backend.getTargetSubgraph(rules);
+            List<minimalApi.yModel.NormalRule> depGraph =  backend.getTargetSubgraph(rules);
             backend.printModel(depGraph);
             System.out.println("-".repeat(50));
-//
+
 //            List<ySharpBackend.yModel.NormalRule> depGraph2 =  backend.getTargetSubgraph(rules, "x");
 //            backend.printModel(depGraph2);
 
@@ -83,12 +82,11 @@ y :
 //            shell shell = new shell();
 //            shell.ExecutionResult resul =  shell.runCommandCaptured("echo hit");
 
-
           //  backend.buildTargetsSequential(depGraph);
 
             backend.buildTargetsParallel(rules);
 
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
 
