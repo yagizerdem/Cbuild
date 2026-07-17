@@ -3,16 +3,22 @@ package io.Cbuild;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import picocli.CommandLine;
 import io.Cbuild.minimal_api.minimalApi;
 
-import java.io.File;
 import java.util.List;
 import java.util.Objects;
 
 public class Main {
     public static void main(String[] args) {
 
+        var args_ = List.of("--minimal", "-j",  "3",  "-f" ,"cBuildFile" ,"app1", "app2").toArray(new String[0]);
+        cli cli_ = new cli(args_);
+        cli.CliParseResponse response =  cli_.parse();
+
+        var a = 10;
+    }
+
+    public static void run() {
 //        Interpreter ySharpInterpreter = new Interpreter();
 //        ySharpInterpreter.cwd = System.getProperty("user.dir");
 //        try {
@@ -82,34 +88,15 @@ y :
 //            shell shell = new shell();
 //            shell.ExecutionResult resul =  shell.runCommandCaptured("echo hit");
 
-          //  backend.buildTargetsSequential(depGraph);
+            //  backend.buildTargetsSequential(depGraph);
 
-            backend.buildTargetsParallel(rules);
+            // backend.buildTargetsParallel(rules);
 
+
+            var a = 10;
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
         }
-
     }
-
-    public static class CLI_OPTIONS {
-
-        @CommandLine.Command(name = "--", description = "Prints a greeting")
-        public static class ySharpBackend {
-            @CommandLine.Option(names = "-c", description = "create a new archive")
-            boolean create;
-
-            @CommandLine.Option(names = { "-f", "--file" }, paramLabel = "ARCHIVE", description = "the archive file")
-            File archive;
-
-            @CommandLine.Parameters(paramLabel = "FILE",  description = "one or more files to archive")
-            File[] files;
-
-            @CommandLine.Option(names = { "-h", "--help" }, usageHelp = true, description = "display a help message")
-            private boolean helpRequested = false;
-        }
-    }
-
-
 
 }
