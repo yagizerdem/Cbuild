@@ -92,7 +92,7 @@ y :
 
             //  backend.buildTargetsSequential(depGraph);
 
-            backend.buildTargetsSequential(rules);
+            backend.buildTargetsParallel(rules,  1);
 
 
             var a = 10;

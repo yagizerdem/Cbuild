@@ -12,6 +12,10 @@ public class minimalApi {
 
     private final Env globalContext;
 
+    private final stdio stdio_ = new stdio();
+
+    private final Object EXPANSION_LOCK = new Object();
+
     public minimalApi() {
         this.globalContext = new Env();
     }
@@ -868,19 +872,28 @@ public class minimalApi {
 
         shell sh = new shell();
 
+
         executorService.submit(() -> {
-            for(cBuildIR.RecipeIR recipeIR : rule.recipeIRS) {
-                // expand recipe before executing
-                String expandedRecipe = recipeIR.exec(recipeExpansionEngine);
-                shell.ExecutionResult result = sh.runCommandCaptured(expandedRecipe);
-                if(result.isSuccess) {
-                    System.out.println(expandedRecipe);
-                    String normalizedStdout = result.stdOut.trim();
-                    if(normalizedStdout.endsWith("\n")) normalizedStdout = normalizedStdout.substring(0, normalizedStdout.length() -1);
-                    System.out.println(normalizedStdout);
+            try {
+                for(cBuildIR.RecipeIR recipeIR : rule.recipeIRS) {
+                    // expand recipe before executing
+                    String command;
+                    synchronized (EXPANSION_LOCK) {
+                        command = recipeIR.exec(recipeExpansionEngine);
+                    }
+                    shell.ExecutionResult result = sh.runCommandCaptured(command);
+                    if(result.isSuccess) {
+                        System.out.println(command);
+                        String normalizedStdout = result.stdOut.trim();
+                        if(normalizedStdout.endsWith("\n")) normalizedStdout = normalizedStdout.substring(0, normalizedStdout.length() -1);
+                        System.out.println(normalizedStdout);
+                    }
                 }
+                completableFuture.complete(rule.uuid);
             }
-            completableFuture.complete(rule.uuid);
+            catch (Throwable throwable) {
+                completableFuture.completeExceptionally(throwable);
+            }
         });
 
 
@@ -902,8 +915,11 @@ public class minimalApi {
 
         for(cBuildIR.RecipeIR recipeIR : rule.recipeIRS) {
                 // expand recipe before executing
-                String command = recipeIR.exec(recipeExpansionEngine);
-                shell.ExecutionResult result = sh.runCommandCaptured(command);
+            String command;
+            synchronized (EXPANSION_LOCK) {
+                command = recipeIR.exec(recipeExpansionEngine);
+            }
+            shell.ExecutionResult result = sh.runCommandCaptured(command);
 
 
             if (!result.isSuccess) {
@@ -914,10 +930,9 @@ public class minimalApi {
                 );
             }
 
-            System.out.println(command);
             String normalizedStdout = result.stdOut.trim();
             if(normalizedStdout.endsWith("\n")) normalizedStdout = normalizedStdout.substring(0, normalizedStdout.length() -1);
-            System.out.println(normalizedStdout);
+            stdio_.printBuildOutput(command, normalizedStdout);
         }
 
         return rule.uuid;
