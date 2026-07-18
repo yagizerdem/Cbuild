@@ -12,6 +12,10 @@ public class minimalApi {
 
     private final Env globalContext;
 
+    private final stdio stdio_ = new stdio();
+
+    private final Object EXPANSION_LOCK = new Object();
+
     public minimalApi() {
         this.globalContext = new Env();
     }
@@ -558,7 +562,6 @@ public class minimalApi {
                 sorted
         );
 
-        sorted = sorted.reversed();
         return sorted;
     }
 
@@ -681,102 +684,149 @@ public class minimalApi {
         System.out.println(builder.toString());
     }
 
-    public void buildTargetsParallel(List<yModel.NormalRule> rules, int parallelism) {
-        try {
-            // create hash table based graph this makes easier to
-            Map<String, List<String>> targetGraph = this.buildTargetDependencyGraph(rules);
-            Map<String, List<String>> reverseTargetGraph = this.buildTargetDependencyReverseGraph(rules);
-
-            // holds how many unfinished preq's to build
-            Map<String, Integer> depqCounter = new LinkedHashMap<>();
-            for(String key : targetGraph.keySet()) {
-                depqCounter.put(key, targetGraph.get(key).stream().filter(targetGraph::containsKey).toList().size());
-            }
-
-            ExecutorService executorService = Executors.newCachedThreadPool();
-
-            AtomicInteger buildCount = new AtomicInteger(0);
-            AtomicInteger activeThreadCount = new AtomicInteger(0);
-            /** get targets with all depq compiled, in initial phase
-             * this means targets with no depq in graph
-             */
-
-
-            Stack<String> activeTargets = targetGraph.keySet().stream().filter(
-                    k -> depqCounter.get(k) == 0
-            ).collect(Collectors.toSet())
-                    .stream().collect(Collectors.toCollection(Stack::new));
-            List<Future<String>> activeThreadsPool = new ArrayList<>();
-
-
-            Thread schedulerThread = new Thread(() -> {
-                try {
-                    while (buildCount.get() < targetGraph.size()) {
-                        int threadDiff = Math.max(0, parallelism - activeThreadCount.get());
-                        if(threadDiff <= 0) {
-                            Thread.sleep(200);
-                            continue;
-                        }
-                        for(int i = 0; i < threadDiff; i++) {
-                            if(!activeTargets.isEmpty()) {
-                                String activeTarget = activeTargets.pop();
-                                Future<String> future = buildTargetAsync(executorService, findTarget(rules, activeTarget));
-                                activeThreadsPool.add(future);
-                                activeThreadCount.getAndIncrement();
-                            }
-                        }
-
-                        Thread.sleep(200);
-                    }
-                } catch (InterruptedException ex) {
-
-                }
-            });
-
-            Thread completionThread = new Thread(() -> {
-                try {
-                    while (buildCount.get() < targetGraph.size()) {
-                        if(!activeThreadsPool.isEmpty())  {
-                            Future<String> future = activeThreadsPool.removeFirst();
-                            String uuid = future.get();
-                            activeThreadCount.getAndDecrement();
-                            buildCount.getAndIncrement();
-
-                            yModel.NormalRule rule = findRuleByUUID(rules, uuid);
-                            String target = rule.target;
-                            List<String> targetsThatAffectedByBuild = reverseTargetGraph.get(target);
-                            for(String t : targetsThatAffectedByBuild) {
-                                depqCounter.put(t, depqCounter.get(t) - 1);
-
-                                // check all preqs of target had been built, means 0 depq after decement
-                                if(depqCounter.get(t) == 0) {
-                                    activeTargets.push(t);
-                                }
-                            }
-                        }
-                    }
-                } catch (InterruptedException ex) {
-
-                }
-                catch (ExecutionException ex) {
-
-                }
-
-            });
-
-            schedulerThread.start();
-            completionThread.start();
-
-            schedulerThread.join();
-            completionThread.join();
-
-            executorService.close();
-
-        } catch (Exception ex) {
-
+    public void buildTargetsParallel(
+            List<yModel.NormalRule> rules,
+            int parallelism
+    ) {
+        if (parallelism < 1) {
+            throw new IllegalArgumentException(
+                    "parallelism must be greater than zero"
+            );
         }
 
+        if (rules.isEmpty()) {
+            return;
+        }
 
+        if (hasCircularDependency(rules)) {
+            throw new cbuildException(
+                    cbuildException.ErrorType.SEMANTIC,
+                    "Circular dependency detected"
+            );
+        }
+
+        Map<String, List<String>> targetGraph =
+                buildTargetDependencyGraph(rules);
+
+        Map<String, List<String>> reverseGraph =
+                buildTargetDependencyReverseGraph(rules);
+
+        Map<String, Integer> remainingDependencies =
+                new LinkedHashMap<>();
+
+        for (Map.Entry<String, List<String>> entry :
+                targetGraph.entrySet()) {
+
+            int dependencyCount = (int) entry.getValue().stream()
+                    .filter(targetGraph::containsKey)
+                    .distinct()
+                    .count();
+
+            remainingDependencies.put(
+                    entry.getKey(),
+                    dependencyCount
+            );
+        }
+
+        Deque<String> readyTargets = new ArrayDeque<>();
+
+        remainingDependencies.forEach((target, count) -> {
+            if (count == 0) {
+                readyTargets.addLast(target);
+            }
+        });
+
+        ExecutorService executor =
+                Executors.newFixedThreadPool(parallelism);
+
+        CompletionService<String> completions =
+                new ExecutorCompletionService<>(executor);
+
+        int runningCount = 0;
+        int completedCount = 0;
+
+        try {
+            while (completedCount < targetGraph.size()) {
+
+                while (
+                        runningCount < parallelism
+                                && !readyTargets.isEmpty()
+                ) {
+                    String target = readyTargets.removeFirst();
+                    yModel.NormalRule rule =
+                            findTarget(rules, target);
+
+                    completions.submit(
+                            () -> buildTargetSync(rule)
+                    );
+
+                    runningCount++;
+                }
+
+                if (runningCount == 0) {
+                    throw new cbuildException(
+                            cbuildException.ErrorType.SEMANTIC,
+                            "Build cannot progress because of circular "
+                                    + "or unresolved dependencies"
+                    );
+                }
+
+                String uuid = completions.take().get();
+
+                runningCount--;
+                completedCount++;
+
+                yModel.NormalRule completedRule =
+                        findRuleByUUID(rules, uuid);
+
+                for (String dependent :
+                        reverseGraph.getOrDefault(
+                                completedRule.target,
+                                List.of()
+                        )) {
+
+                    int remaining =
+                            remainingDependencies.compute(
+                                    dependent,
+                                    (ignored, current) -> current - 1
+                            );
+
+                    if (remaining == 0) {
+                        readyTargets.addLast(dependent);
+                    }
+                }
+            }
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+
+            cbuildException wrapped = new cbuildException(
+                    cbuildException.ErrorType.PROCESS,
+                    "Build was interrupted"
+            );
+            wrapped.initCause(ex);
+            throw wrapped;
+
+        } catch (ExecutionException ex) {
+            Throwable cause = ex.getCause();
+
+            if (cause instanceof cbuildException buildException) {
+                throw buildException;
+            }
+
+            if (cause instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+
+            cbuildException wrapped = new cbuildException(
+                    cbuildException.ErrorType.PROCESS,
+                    "Parallel build failed: " + cause.getMessage()
+            );
+                wrapped.initCause(cause);
+            throw wrapped;
+
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
 
@@ -801,19 +851,7 @@ public class minimalApi {
         for(int i = 0; i < rules.size(); i++) {
             yModel.NormalRule current = rules.get(i);
 
-            if(!isOutOfDate(current)) continue;
-
-            for(cBuildIR.RecipeIR recipeIR : current.recipeIRS) {
-                // expand recipe before executing
-                String expandedRecipe = recipeIR.exec(recipeExpansionEngine);
-                shell.ExecutionResult result = sh.runCommandCaptured(expandedRecipe);
-                if(result.isSuccess) {
-                    System.out.println(expandedRecipe);
-                    String normalizedStdout = result.stdOut.trim();
-                    if(normalizedStdout.endsWith("\n")) normalizedStdout = normalizedStdout.substring(0, normalizedStdout.length() -1);
-                    System.out.println(normalizedStdout);
-                }
-            }
+            buildTargetSync(current);
 
         }
     }
@@ -834,23 +872,69 @@ public class minimalApi {
 
         shell sh = new shell();
 
+
         executorService.submit(() -> {
-            for(cBuildIR.RecipeIR recipeIR : rule.recipeIRS) {
-                // expand recipe before executing
-                String expandedRecipe = recipeIR.exec(recipeExpansionEngine);
-                shell.ExecutionResult result = sh.runCommandCaptured(expandedRecipe);
-                if(result.isSuccess) {
-                    System.out.println(expandedRecipe);
-                    String normalizedStdout = result.stdOut.trim();
-                    if(normalizedStdout.endsWith("\n")) normalizedStdout = normalizedStdout.substring(0, normalizedStdout.length() -1);
-                    System.out.println(normalizedStdout);
+            try {
+                for(cBuildIR.RecipeIR recipeIR : rule.recipeIRS) {
+                    // expand recipe before executing
+                    String command;
+                    synchronized (EXPANSION_LOCK) {
+                        command = recipeIR.exec(recipeExpansionEngine);
+                    }
+                    shell.ExecutionResult result = sh.runCommandCaptured(command);
+                    if(result.isSuccess) {
+                        System.out.println(command);
+                        String normalizedStdout = result.stdOut.trim();
+                        if(normalizedStdout.endsWith("\n")) normalizedStdout = normalizedStdout.substring(0, normalizedStdout.length() -1);
+                        System.out.println(normalizedStdout);
+                    }
                 }
+                completableFuture.complete(rule.uuid);
             }
-            completableFuture.complete(rule.uuid);
+            catch (Throwable throwable) {
+                completableFuture.completeExceptionally(throwable);
+            }
         });
 
 
         return completableFuture;
     }
 
+    // sync build
+
+    public String buildTargetSync(yModel.NormalRule rule) {
+        if(!isOutOfDate(rule)) {
+            return rule.uuid;
+        }
+
+
+        Expansion.minimalApiRecipeExpansionEngine recipeExpansionEngine =
+                new Expansion.minimalApiRecipeExpansionEngine(this.globalContext);
+
+        shell sh = new shell();
+
+        for(cBuildIR.RecipeIR recipeIR : rule.recipeIRS) {
+                // expand recipe before executing
+            String command;
+            synchronized (EXPANSION_LOCK) {
+                command = recipeIR.exec(recipeExpansionEngine);
+            }
+            shell.ExecutionResult result = sh.runCommandCaptured(command);
+
+
+            if (!result.isSuccess) {
+                throw new cbuildException(
+                        cbuildException.ErrorType.PROCESS,
+                        "Build failed for target '%s': %s"
+                                .formatted(rule.target, command)
+                );
+            }
+
+            String normalizedStdout = result.stdOut.trim();
+            if(normalizedStdout.endsWith("\n")) normalizedStdout = normalizedStdout.substring(0, normalizedStdout.length() -1);
+            stdio_.printBuildOutput(command, normalizedStdout);
+        }
+
+        return rule.uuid;
+    }
 }
