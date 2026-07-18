@@ -558,7 +558,6 @@ public class minimalApi {
                 sorted
         );
 
-        sorted = sorted.reversed();
         return sorted;
     }
 
@@ -695,6 +694,8 @@ public class minimalApi {
 
             ExecutorService executorService = Executors.newCachedThreadPool();
 
+            CompletionService<String> completionService = new ExecutorCompletionService<>(executorService);
+
             AtomicInteger buildCount = new AtomicInteger(0);
             AtomicInteger activeThreadCount = new AtomicInteger(0);
             /** get targets with all depq compiled, in initial phase
@@ -706,7 +707,6 @@ public class minimalApi {
                     k -> depqCounter.get(k) == 0
             ).collect(Collectors.toSet())
                     .stream().collect(Collectors.toCollection(Stack::new));
-            List<Future<String>> activeThreadsPool = new ArrayList<>();
 
 
             Thread schedulerThread = new Thread(() -> {
@@ -720,8 +720,7 @@ public class minimalApi {
                         for(int i = 0; i < threadDiff; i++) {
                             if(!activeTargets.isEmpty()) {
                                 String activeTarget = activeTargets.pop();
-                                Future<String> future = buildTargetAsync(executorService, findTarget(rules, activeTarget));
-                                activeThreadsPool.add(future);
+                                completionService.submit(() -> buildTargetSync(findTarget(rules, activeTarget)));
                                 activeThreadCount.getAndIncrement();
                             }
                         }
@@ -736,22 +735,19 @@ public class minimalApi {
             Thread completionThread = new Thread(() -> {
                 try {
                     while (buildCount.get() < targetGraph.size()) {
-                        if(!activeThreadsPool.isEmpty())  {
-                            Future<String> future = activeThreadsPool.removeFirst();
-                            String uuid = future.get();
-                            activeThreadCount.getAndDecrement();
-                            buildCount.getAndIncrement();
+                        String uuid = completionService.take().get(); // returns the uuid of first completed rule
+                        activeThreadCount.getAndDecrement();
+                        buildCount.getAndIncrement();
 
-                            yModel.NormalRule rule = findRuleByUUID(rules, uuid);
-                            String target = rule.target;
-                            List<String> targetsThatAffectedByBuild = reverseTargetGraph.get(target);
-                            for(String t : targetsThatAffectedByBuild) {
-                                depqCounter.put(t, depqCounter.get(t) - 1);
+                        yModel.NormalRule rule = findRuleByUUID(rules, uuid);
+                        String target = rule.target;
+                        List<String> targetsThatAffectedByBuild = reverseTargetGraph.get(target);
+                        for(String t : targetsThatAffectedByBuild) {
+                            depqCounter.put(t, depqCounter.get(t) - 1);
 
-                                // check all preqs of target had been built, means 0 depq after decement
-                                if(depqCounter.get(t) == 0) {
-                                    activeTargets.push(t);
-                                }
+                            // check all preqs of target had been built, means 0 depq after decement
+                            if(depqCounter.get(t) == 0) {
+                                activeTargets.push(t);
                             }
                         }
                     }
@@ -801,19 +797,7 @@ public class minimalApi {
         for(int i = 0; i < rules.size(); i++) {
             yModel.NormalRule current = rules.get(i);
 
-            if(!isOutOfDate(current)) continue;
-
-            for(cBuildIR.RecipeIR recipeIR : current.recipeIRS) {
-                // expand recipe before executing
-                String expandedRecipe = recipeIR.exec(recipeExpansionEngine);
-                shell.ExecutionResult result = sh.runCommandCaptured(expandedRecipe);
-                if(result.isSuccess) {
-                    System.out.println(expandedRecipe);
-                    String normalizedStdout = result.stdOut.trim();
-                    if(normalizedStdout.endsWith("\n")) normalizedStdout = normalizedStdout.substring(0, normalizedStdout.length() -1);
-                    System.out.println(normalizedStdout);
-                }
-            }
+            buildTargetSync(current);
 
         }
     }
@@ -853,4 +837,31 @@ public class minimalApi {
         return completableFuture;
     }
 
+    // sync build
+
+    public String buildTargetSync(yModel.NormalRule rule) {
+        if(!isOutOfDate(rule)) {
+            return rule.uuid;
+        }
+
+
+        Expansion.minimalApiRecipeExpansionEngine recipeExpansionEngine =
+                new Expansion.minimalApiRecipeExpansionEngine(this.globalContext);
+
+        shell sh = new shell();
+
+        for(cBuildIR.RecipeIR recipeIR : rule.recipeIRS) {
+                // expand recipe before executing
+                String expandedRecipe = recipeIR.exec(recipeExpansionEngine);
+                shell.ExecutionResult result = sh.runCommandCaptured(expandedRecipe);
+                if(result.isSuccess) {
+                    System.out.println(expandedRecipe);
+                    String normalizedStdout = result.stdOut.trim();
+                    if(normalizedStdout.endsWith("\n")) normalizedStdout = normalizedStdout.substring(0, normalizedStdout.length() -1);
+                    System.out.println(normalizedStdout);
+                }
+            }
+
+        return rule.uuid;
+    }
 }

@@ -11,11 +11,13 @@ import java.util.Objects;
 public class Main {
     public static void main(String[] args) {
 
-        var args_ = List.of("--minimal", "-j",  "3",  "-f" ,"cBuildFile" ,"app1", "app2").toArray(new String[0]);
-        cli cli_ = new cli(args_);
-        cli.CliParseResponse response =  cli_.parse();
+//        var args_ = List.of("--minimal", "-j",  "3",  "-f" ,"cBuildFile" ,"app1", "app2").toArray(new String[0]);
+//        cli cli_ = new cli(args_);
+//        cli.CliParseResponse response =  cli_.parse();
+//
+//        var a = 10;
 
-        var a = 10;
+        run();
     }
 
     public static void run() {
@@ -90,7 +92,7 @@ y :
 
             //  backend.buildTargetsSequential(depGraph);
 
-            // backend.buildTargetsParallel(rules);
+            backend.buildTargetsSequential(rules);
 
 
             var a = 10;
