@@ -104,4 +104,37 @@ b
         System.out.println(Preprocessor.programToString(merged));
     }
 
+
+    @Test
+    void removeCommentsBasic1() {
+        String program = """
+name := beril # comment 1
+surname := kayatürk # comment 2
+
+ysharp {
+    for var i = 0; i < 10 ; i++ do
+        println i +  " # do not remove this inside ysharp context";
+    end
+}
+
+app :
+\t export var=main.h main.c \\
+    dep.h dep.c util.h \\
+    util.c
+\t # this comment ll go \\
+to shell interpreter 
+
+\t echo hit # test comment
+
+                """.trim();
+
+        List<Cursor.Pchar> processed =
+                Preprocessor.convertPchar(
+                        Preprocessor.EndOfFile(program)
+                );
+
+        String processedProgram = Preprocessor.programToString(Preprocessor.removeComments(Preprocessor.mergeContinuation(processed)));
+        System.out.println(processedProgram);
+    }
+
 }
