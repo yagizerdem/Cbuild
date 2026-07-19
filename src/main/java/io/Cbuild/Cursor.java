@@ -246,7 +246,14 @@ public class Cursor {
     }
 
     public static class Pchar {
-        public enum EscapeType {
+        public static enum Context {
+            YSHARP_HOOK,
+            LUA_HOOK,
+            CBUILD_HOOK,
+            NORMAL
+        }
+
+        public static enum EscapeType {
             BackSlash,
             Dollar
         }
@@ -256,6 +263,7 @@ public class Cursor {
         public char c;
         public boolean isEscaped;
         public EscapeType escapeType;
+        public Context context;
 
         public Pchar(char c) {
             this(0, 0, c, false);
@@ -280,12 +288,26 @@ public class Cursor {
                      int col,
                      char c,
                      boolean isEscaped,
-                     EscapeType escapeType) {
+                     EscapeType escapeType,
+                     Context context) {
             this.row = row;
             this.col = col;
             this.c = c;
             this.isEscaped = isEscaped;
             this.escapeType = escapeType;
+            this.context = context;
+        }
+
+        @Override
+        public String toString() {
+            return
+                    "row=" + row +
+                    ", col=" + col +
+                    ", c='" + c + '\'' +
+                    ", isEscaped=" + isEscaped +
+                    ", escapeType=" + escapeType +
+                    ", context=" + context
+                    ;
         }
     }
 
