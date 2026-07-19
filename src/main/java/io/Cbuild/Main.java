@@ -32,30 +32,15 @@ public class Main {
 
         try {
             String cBuildProgram = """
-
-a : b c
-\t echo hit a
-
-b : x
-\t echo hit b
-
-c : x y b
-\t echo hit c
-
-x : 
-\t echo hit x
-
-y : 
-\t echo hit y
-
-
+a\\
+b
 """;
-//            cBuildProgram += Cursor.END;
-//            List<Cursor.Pchar> processed = Preprocessor.mergeContinuation(cBuildProgram);
+            cBuildProgram = Preprocessor.EndOfFile(cBuildProgram);
+            String processed = Preprocessor.programToString(Preprocessor.mergeContinuation(Preprocessor.convertPchar(cBuildProgram)));
 
             Env env = new Env();
 
-            CharStream charStream = CharStreams.fromString(cBuildProgram);
+            CharStream charStream = CharStreams.fromString(processed);
             cbuildLexer lexer = new cbuildLexer(charStream);
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             cbuildParser parser = new cbuildParser(tokens);

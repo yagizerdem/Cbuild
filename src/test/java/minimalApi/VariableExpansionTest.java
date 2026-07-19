@@ -1,4 +1,4 @@
-package ysharpBackend;
+package minimalApi;
 
 import io.Cbuild.Env;
 import io.Cbuild.Expansion;

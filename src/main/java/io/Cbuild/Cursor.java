@@ -89,7 +89,7 @@ public class Cursor {
         STOPCHAR_MAP.put('\n', CharMask.Newline.value);
         STOPCHAR_MAP.put('\r', CharMask.Newline.value);
 
-        STOPCHAR_MAP.put('$',  CharMask.Dollar.value);
+        STOPCHAR_MAP.put('$',  CharMask.Escape.value | CharMask.Dollar.value);
         STOPCHAR_MAP.put(';',  CharMask.Semi.value);
         STOPCHAR_MAP.put('=',  CharMask.Equals.value);
         STOPCHAR_MAP.put(':',  CharMask.Colon.value);
@@ -246,28 +246,68 @@ public class Cursor {
     }
 
     public static class Pchar {
-        int row;
-        int col;
-        char c;
-        boolean isEscpaed;
+        public static enum Context {
+            YSHARP_HOOK,
+            LUA_HOOK,
+            CBUILD_HOOK,
+            NORMAL
+        }
+
+        public static enum EscapeType {
+            BackSlash,
+            Dollar
+        }
+
+        public int row;
+        public int col;
+        public char c;
+        public boolean isEscaped;
+        public EscapeType escapeType;
+        public Context context;
 
         public Pchar(char c) {
             this(0, 0, c, false);
         }
 
-        public Pchar(char c, boolean isEscpaed) {
-            this(0, 0, c, isEscpaed);
+        public Pchar(char c, boolean isEscaped) {
+            this(0, 0, c, isEscaped);
         }
 
         public Pchar(int row, int col, char c) {
             this(row, col, c, false);
         }
 
-        public Pchar(int row, int col, char c, boolean isEscpaed) {
+        public Pchar(int row, int col, char c, boolean isEscaped) {
             this.row = row;
             this.col = col;
             this.c = c;
-            this.isEscpaed = isEscpaed;
+            this.isEscaped = isEscaped;
+        }
+
+        public Pchar(int row,
+                     int col,
+                     char c,
+                     boolean isEscaped,
+                     EscapeType escapeType,
+                     Context context) {
+            this.row = row;
+            this.col = col;
+            this.c = c;
+            this.isEscaped = isEscaped;
+            this.escapeType = escapeType;
+            this.context = context;
+        }
+
+        @Override
+        public String toString() {
+            return
+                    "row=" + row +
+                    ", col=" + col +
+                    ", c='" + c + '\'' +
+                    ", isEscaped=" + isEscaped +
+                    ", escapeType=" + escapeType +
+                    ", context=" + context
+                    ;
         }
     }
 

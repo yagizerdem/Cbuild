@@ -1,8 +1,8 @@
-package ysharpBackend;
+package minimalApi;
 
 import org.junit.jupiter.api.Test;
 
-public class YsharpParseableTest {
+public class minimalApiParseableTest {
 
 
 
