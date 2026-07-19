@@ -1,4 +1,4 @@
-package ysharpBackend;
+package minimalApi;
 
 import io.Cbuild.Env;
 import io.Cbuild.Expansion;
@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class YsharpBackendTest {
+public class minimalApiBackendTest {
 
     @BeforeEach
     public void clearSymbolTable() {}

@@ -5,57 +5,92 @@ import java.util.List;
 
 public class Preprocessor {
 
-    public static List<Cursor.Pchar> mergeContinuation(String program) {
+    public static List<Cursor.Pchar> mergeContinuation(List<Cursor.Pchar> program) {
+        List<Cursor.Pchar> processed = new ArrayList<>();
+
+        for(int i = 0; i < program.size(); i++) {
+            if(Cursor.stopSet(program.get(i).c, Cursor.CharMask.Newline)) {
+                if(program.get(i).isEscaped  && program.get(i).escapeType == Cursor.Pchar.EscapeType.BackSlash) {
+                    continue;
+                }
+            }
+
+            processed.add(program.get(i));
+        }
+
+        return processed;
+    }
+
+    public static List<Cursor.Pchar> convertPchar(String program) {
         Cursor.CursorState cursorState = new Cursor.CursorState(0,1, 1);
 
         List<Cursor.Pchar> processed = new ArrayList<>();
-        int row = 1;
-        int col = 1;
-
-        boolean isDollarEscaped = false;
-        boolean isBackSlashEscaped = false;
-
         while (!Cursor.stopSet(Cursor.peek(program, cursorState), Cursor.CharMask.End)){
-            if(Cursor.stopSet(Cursor.peek(program, cursorState), Cursor.CharMask.Newline)) {
-                if(isBackSlashEscaped) {
-                    Cursor.advance(program, cursorState);// consume new line
+            if(!processed.isEmpty() &&
+                    Cursor.stopSet(Cursor.prev(processed, cursorState), Cursor.CharMask.BackSlash)) {
+
+                /**
+                 * Backslash escape only used for escaping new line
+                 * in other conditions it has no effect
+                 */
+
+                if(!Cursor.stopSet(Cursor.peek(program, cursorState), Cursor.CharMask.Newline)
+                        || Cursor.prev(processed, cursorState).isEscaped) {
+                    processed.add(new Cursor.Pchar(
+                            cursorState.row,
+                            cursorState.col,
+                            Cursor.peek(program, cursorState),
+                            false,
+                            null
+                    ));
+                    Cursor.advance(program, cursorState);
                     continue;
                 }
-                col = 1;
-                row += 1;
-                isBackSlashEscaped = false;
-                isDollarEscaped = false;
 
-                char c = Cursor.advance(program, cursorState);
-                Cursor.Pchar newPchar = new Cursor.Pchar(row, col, c);
-                processed.add(newPchar);
-                continue;
-            }
+                // new line char and not escaped
+                processed.add(new Cursor.Pchar(
+                        cursorState.row,
+                        cursorState.col,
+                        Cursor.peek(program, cursorState),
+                        true,
+                        Cursor.Pchar.EscapeType.BackSlash
+                ));
 
-            if(Cursor.stopSet(Cursor.prev(processed, cursorState).c, Cursor.CharMask.BackSlash)) {
-                char c = Cursor.peek(program, cursorState);
-                Cursor.Pchar newPchar = new Cursor.Pchar(row, col, c);
-                processed.add(newPchar);
-                isBackSlashEscaped = !isBackSlashEscaped;
-                isDollarEscaped = false;
             }
-           else  if(Cursor.stopSet(Cursor.prev(processed, cursorState).c, Cursor.CharMask.Dollar)) {
-                char c = Cursor.peek(program, cursorState);
-                Cursor.Pchar newPchar = new Cursor.Pchar(row, col, c);
-                processed.add(newPchar);
-                isDollarEscaped = !isDollarEscaped;
-                isBackSlashEscaped = false;
-            }
-           else {
-                char c = Cursor.peek(program, cursorState);
-                Cursor.Pchar newPchar = new Cursor.Pchar(row, col, c);
-                processed.add(newPchar);
-               isDollarEscaped = false;
-               isBackSlashEscaped = false;
-            }
+            else if(!processed.isEmpty() &&
+                    Cursor.stopSet(Cursor.prev(processed, cursorState), Cursor.CharMask.Dollar)) {
 
-           Cursor.advance(program, cursorState);
 
+                if(!Cursor.prev(processed, cursorState).isEscaped) {
+                    processed.add(new Cursor.Pchar(
+                            cursorState.row,
+                            cursorState.col,
+                            Cursor.peek(program, cursorState),
+                            true,
+                            Cursor.Pchar.EscapeType.Dollar
+                    ));
+                }
+                else {
+                    processed.add(new Cursor.Pchar(
+                            cursorState.row,
+                            cursorState.col,
+                            Cursor.peek(program, cursorState),
+                            false,
+                            null
+                    ));
+                }
+
+            }
+            else {
+                processed.add(new Cursor.Pchar(
+                        cursorState.row,
+                        cursorState.col,
+                        Cursor.peek(program, cursorState),
+                        false,
+                        null
+                ));
+            }
+            Cursor.advance(program, cursorState);
         }
 
         return processed;
@@ -65,5 +100,21 @@ public class Preprocessor {
         StringBuilder builder = new StringBuilder();
         program.forEach(pc -> builder.append(pc.c));
         return builder.toString();
+    }
+
+    public static String EndOfFile(String cbuildProgram) {
+        boolean exist = false;
+        for(char c : cbuildProgram.toCharArray()) {
+            if(c == Cursor.END) {
+                exist = true;
+                break;
+            }
+        }
+
+        if(!exist) {
+            cbuildProgram += Cursor.END;
+        }
+
+        return cbuildProgram;
     }
 }

@@ -1,4 +1,4 @@
-package ysharpBackend;
+package minimalApi;
 
 import io.Cbuild.Env;
 import org.junit.jupiter.api.Assertions;
@@ -9,7 +9,7 @@ import io.Cbuild.minimal_api.*;
 
 import java.util.List;
 
-public class YgraphBuilderTest {
+public class graphBuilderTest {
 
 
     @Test
