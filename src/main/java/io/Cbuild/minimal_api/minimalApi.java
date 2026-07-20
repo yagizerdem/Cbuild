@@ -1,6 +1,9 @@
 package io.Cbuild.minimal_api;
 
 import io.Cbuild.*;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.time.Instant;
 import java.util.*;
@@ -607,17 +610,17 @@ public class minimalApi {
         sorted.addAll(targetRules);
     }
 
-    public boolean isOutOfDate(yModel.NormalRule rule) {
-        if(!util.fileExist(rule.target)) return true;
+    public boolean isOutOfDate(yModel.NormalRule rule, String cwd) {
+        if(!util.fileExist(rule.target, cwd)) return true;
 
-        String targetEntryPath = util.getAbsolutePath(rule.target);
+        String targetEntryPath = util.getAbsolutePath(rule.target, cwd);
         Instant lastModifiedDateOfTarget = util.getLastModifiedDate(targetEntryPath);
 
         for(String preq : rule.prerequisites) {
-            boolean exist = util.fileExist(preq);
+            boolean exist = util.fileExist(preq, cwd);
             if(!exist) return true;
 
-            String fileSystemEntryPath = util.getAbsolutePath(preq);
+            String fileSystemEntryPath = util.getAbsolutePath(preq, cwd);
             Instant lastModifiedDateOfPreq = util.getLastModifiedDate(fileSystemEntryPath);
 
             if(lastModifiedDateOfPreq.isAfter(lastModifiedDateOfTarget)) return true;
@@ -627,9 +630,9 @@ public class minimalApi {
     }
 
 
-    public void buildTargetsParallel(List<yModel.NormalRule> rules) {
+    public void buildTargetsParallel(List<yModel.NormalRule> rules, String cwd) {
         int parallelism = Math.max(1, Runtime.getRuntime().availableProcessors());
-        buildTargetsParallel(rules, parallelism);
+        buildTargetsParallel(rules, parallelism, cwd);
     }
 
     private Map<String, List<String>> buildTargetDependencyGraph(
@@ -686,7 +689,8 @@ public class minimalApi {
 
     public void buildTargetsParallel(
             List<yModel.NormalRule> rules,
-            int parallelism
+            int parallelism,
+            String cwd
     ) {
         if (parallelism < 1) {
             throw new IllegalArgumentException(
@@ -757,7 +761,7 @@ public class minimalApi {
                             findTarget(rules, target);
 
                     completions.submit(
-                            () -> buildTargetSync(rule)
+                            () -> buildTargetSync(rule, cwd)
                     );
 
                     runningCount++;
@@ -832,14 +836,19 @@ public class minimalApi {
 
     // sync build
     public void buildTargetsSequential(List<yModel.NormalRule> rules) {
-        buildTargetsSequential(rules, findDefaultTarget(rules));
+        String cwd = System.getProperty("user.dir");
+        buildTargetsSequential(rules, findDefaultTarget(rules),  cwd);
     }
 
-    public void buildTargetsSequential(List<yModel.NormalRule> rules, String startNode) {
-        buildTargetsSequential(rules, findTarget(rules, startNode));
+    public void buildTargetsSequential(List<yModel.NormalRule> rules, String cwd) {
+        buildTargetsSequential(rules, findDefaultTarget(rules),  cwd);
     }
 
-    public void buildTargetsSequential(List<yModel.NormalRule> rules, yModel.NormalRule startNode) {
+    public void buildTargetsSequential(List<yModel.NormalRule> rules, String startNode, String cwd) {
+        buildTargetsSequential(rules, findTarget(rules, startNode), cwd);
+    }
+
+    public void buildTargetsSequential(List<yModel.NormalRule> rules, yModel.NormalRule startNode, String cwd) {
         // hasCircularDependency(rules)
         rules = topologicalSort(rules, startNode);
 
@@ -851,7 +860,7 @@ public class minimalApi {
         for(int i = 0; i < rules.size(); i++) {
             yModel.NormalRule current = rules.get(i);
 
-            buildTargetSync(current);
+            buildTargetSync(current, cwd);
 
         }
     }
@@ -859,9 +868,9 @@ public class minimalApi {
 
     // async build
 
-    public Future<String> buildTargetAsync(ExecutorService executorService, yModel.NormalRule rule) {
+    public Future<String> buildTargetAsync(ExecutorService executorService, yModel.NormalRule rule, String cwd) {
         CompletableFuture<String> completableFuture = new CompletableFuture<>();
-        if(!isOutOfDate(rule)) {
+        if(!isOutOfDate(rule, cwd)) {
             completableFuture.complete(rule.uuid);
             return completableFuture;
         }
@@ -881,7 +890,7 @@ public class minimalApi {
                     synchronized (EXPANSION_LOCK) {
                         command = recipeIR.exec(recipeExpansionEngine);
                     }
-                    shell.ExecutionResult result = sh.runCommandCaptured(command);
+                    shell.ExecutionResult result = sh.runCommandCaptured(command, cwd);
                     if(result.isSuccess) {
                         System.out.println(command);
                         String normalizedStdout = result.stdOut.trim();
@@ -902,8 +911,8 @@ public class minimalApi {
 
     // sync build
 
-    public String buildTargetSync(yModel.NormalRule rule) {
-        if(!isOutOfDate(rule)) {
+    public String buildTargetSync(yModel.NormalRule rule, String cwd) {
+        if(!isOutOfDate(rule, cwd)) {
             return rule.uuid;
         }
 
@@ -919,14 +928,14 @@ public class minimalApi {
             synchronized (EXPANSION_LOCK) {
                 command = recipeIR.exec(recipeExpansionEngine);
             }
-            shell.ExecutionResult result = sh.runCommandCaptured(command);
+            shell.ExecutionResult result = sh.runCommandCaptured(command, cwd);
 
 
             if (!result.isSuccess) {
                 throw new cbuildException(
                         cbuildException.ErrorType.PROCESS,
-                        "Build failed for target '%s': %s"
-                                .formatted(rule.target, command)
+                        "Build failed for target '%s': %s, message : %s"
+                                .formatted(rule.target, command, result.stdErr)
                 );
             }
 
@@ -936,5 +945,52 @@ public class minimalApi {
         }
 
         return rule.uuid;
+    }
+
+    public static void run(String cBuildProgram) {
+        String cwd = System.getProperty("user.dir");
+        run(cBuildProgram, cwd, null);
+    }
+
+    public static void run(String cBuildProgram, String cwd) {
+        run(cBuildProgram, cwd, null);
+    }
+
+
+    public static void run(String cBuildProgram, String cwd, String activeTarget) {
+        try {
+            cBuildProgram = Preprocessor.EndOfFile(cBuildProgram);
+            String processed = Preprocessor.programToString(Preprocessor.mergeContinuation(Preprocessor.convertPchar(cBuildProgram)));
+
+            Env env = new Env();
+
+            CharStream charStream = CharStreams.fromString(processed);
+            cbuildLexer lexer = new cbuildLexer(charStream);
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
+            cbuildParser parser = new cbuildParser(tokens);
+            parser.removeErrorListeners();
+            parser.addErrorListener(ThrowingErrorListener.INSTANCE);
+            cbuildParser.CbuildfileContext context = parser.cbuildfile();
+
+            cBuildCompiler cBuildCompiler = new cBuildCompiler();
+            List<cBuildIR.IR> ir = cBuildCompiler.compile(context);
+
+
+            minimalApi backend = new minimalApi(env);
+            List<minimalApi.yModel.yBaseModel> models = backend.build(ir);
+
+            List<minimalApi.yModel.NormalRule> rules = models.stream().map(x -> {
+                if(x instanceof minimalApi.yModel.NormalRule rule) return rule;
+                return null;
+            }).filter(Objects::nonNull).toList();
+
+            List<minimalApi.yModel.NormalRule> targetSubgraph =  activeTarget == null ?
+                    backend.getTargetSubgraph(rules) : backend.getTargetSubgraph(rules, activeTarget);
+
+
+            backend.buildTargetsParallel(targetSubgraph,1, cwd);
+        } catch (Exception ex) {
+            throw new cbuildException(cbuildException.ErrorType.PROCESS, ex.getMessage());
+        }
     }
 }

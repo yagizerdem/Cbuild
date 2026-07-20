@@ -470,20 +470,18 @@ public class Preprocessor {
         return builder.toString();
     }
 
-    public static String EndOfFile(String cbuildProgram) {
-        boolean exist = false;
-        for(char c : cbuildProgram.toCharArray()) {
-            if(c == Cursor.END) {
-                exist = true;
-                break;
-            }
+    public static String EndOfFile(String program) {
+        int markerIndex = program.indexOf(Cursor.END);
+
+        if (markerIndex >= 0) {
+            program = program.substring(0, markerIndex);
         }
 
-        if(!exist) {
-            cbuildProgram += Cursor.END;
+        if (!program.isEmpty() && !program.endsWith("\n")) {
+            program += "\n";
         }
 
-        return cbuildProgram;
+        return program + Cursor.END;
     }
 
     public static void printPcharList(List<Cursor.Pchar> processed) {
