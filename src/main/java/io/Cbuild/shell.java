@@ -3,6 +3,7 @@ package io.Cbuild;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
@@ -171,7 +172,7 @@ public class shell {
 
     private static OS os = null;
 
-    public void runCommand(String command) {
+    public void runCommand(String command , String cwd) {
         boolean windows =  isWindows();
 
         List<String> shellCommand = windows
@@ -181,6 +182,8 @@ public class shell {
         try {
             ProcessBuilder builder = new ProcessBuilder(shellCommand)
                     .inheritIO();
+
+            builder.directory(Path.of(cwd).toFile());
 
             Process process = builder.start();
             int exitCode = process.waitFor();
@@ -226,7 +229,7 @@ public class shell {
         }
     }
 
-    public ExecutionResult runCommandCaptured(String command) {
+    public ExecutionResult runCommandCaptured(String command, String cwd) {
         boolean windows = isWindows();
 
         List<String> shellCommand = windows
@@ -234,7 +237,11 @@ public class shell {
                 : List.of("sh", "-c", command);
 
         try {
-            Process process = new ProcessBuilder(shellCommand).start();
+            ProcessBuilder builder = new ProcessBuilder(shellCommand);
+
+            builder.directory(Path.of(cwd).toFile());
+
+            Process process = builder.start();
 
             try (ExecutorService executor =
                          Executors.newVirtualThreadPerTaskExecutor()) {

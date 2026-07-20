@@ -27,10 +27,6 @@ public class util {
         return absolutePath;
     }
 
-    public static String getAbsolutePath(String pathSegment) {
-        String cwd = System.getProperty("user.dir");
-        return getAbsolutePath(pathSegment, cwd);
-    }
 
 
     public static boolean fileExist(String pathSegment, String rootDir) {
@@ -38,10 +34,6 @@ public class util {
         return Files.exists(fileSystemEntryPath);
     }
 
-    public static boolean fileExist(String pathSegment) {
-        String cwd = System.getProperty("user.dir");
-        return fileExist(pathSegment, cwd);
-    }
 
     public static Instant getLastModifiedDate(String path) {
         try {
