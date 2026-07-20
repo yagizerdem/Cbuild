@@ -934,8 +934,8 @@ public class minimalApi {
             if (!result.isSuccess) {
                 throw new cbuildException(
                         cbuildException.ErrorType.PROCESS,
-                        "Build failed for target '%s': %s"
-                                .formatted(rule.target, command)
+                        "Build failed for target '%s': %s, message : %s"
+                                .formatted(rule.target, command, result.stdErr)
                 );
             }
 
@@ -949,11 +949,15 @@ public class minimalApi {
 
     public static void run(String cBuildProgram) {
         String cwd = System.getProperty("user.dir");
-        run(cBuildProgram, cwd);
+        run(cBuildProgram, cwd, null);
+    }
+
+    public static void run(String cBuildProgram, String cwd) {
+        run(cBuildProgram, cwd, null);
     }
 
 
-    public static void run(String cBuildProgram, String cwd) {
+    public static void run(String cBuildProgram, String cwd, String activeTarget) {
         try {
             cBuildProgram = Preprocessor.EndOfFile(cBuildProgram);
             String processed = Preprocessor.programToString(Preprocessor.mergeContinuation(Preprocessor.convertPchar(cBuildProgram)));
@@ -980,12 +984,13 @@ public class minimalApi {
                 return null;
             }).filter(Objects::nonNull).toList();
 
-            List<minimalApi.yModel.NormalRule> targetSubgraph =  backend.getTargetSubgraph(rules);
+            List<minimalApi.yModel.NormalRule> targetSubgraph =  activeTarget == null ?
+                    backend.getTargetSubgraph(rules) : backend.getTargetSubgraph(rules, activeTarget);
 
 
             backend.buildTargetsParallel(targetSubgraph,1, cwd);
         } catch (Exception ex) {
-            System.out.println(ex.getMessage());
+            throw new cbuildException(cbuildException.ErrorType.PROCESS, ex.getMessage());
         }
     }
 }
