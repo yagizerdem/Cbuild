@@ -137,9 +137,26 @@ public class cli {
         this.args = args;
     }
 
+    public boolean isMinimalApiMode (String[] args){
+        for(int i =0; i< args.length; i++) {
+            if(args[i].equals("--minimal")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String[] removeMinimalApiFlag(String[] args) {
+        return Arrays.stream(args)
+                .filter(arg -> !arg.equals("--minimal"))
+                .toArray(String[]::new);
+    }
+
     public CliParseResponse parse() {
-        boolean isMinimalApi = (args.length > 0 && args[0].equals("--minimal"));
-        String[] args = Arrays.copyOfRange(this.args, 1, this.args.length);
+        boolean isMinimalApi = isMinimalApiMode(this.args);
+        if(isMinimalApi) {
+            this.args = removeMinimalApiFlag(this.args);
+        }
         CommandLine commandLine;
         CLI_OPTIONS options;
 
