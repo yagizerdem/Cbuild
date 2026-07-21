@@ -19,11 +19,10 @@ jobs:
           distribution: 'microsoft'
       - run: java --version
 
-      - name: Set up GCC
+      - name: Set up MinGW
         if: ${{ matrix.os == 'windows-latest' }}
-        uses: egor-tensin/setup-gcc@v2
+        uses: egor-tensin/setup-mingw@v3
         with:
-          version: latest
           platform: x64
 
       - name: Setup Gradle
