@@ -960,7 +960,8 @@ public class minimalApi {
     public static void run(String cBuildProgram, String cwd, String activeTarget) {
         try {
             cBuildProgram = Preprocessor.EndOfFile(cBuildProgram);
-            String processed = Preprocessor.programToString(Preprocessor.mergeContinuation(Preprocessor.convertPchar(cBuildProgram)));
+            String processed = Preprocessor.programToString(Preprocessor.removeComments
+                    (Preprocessor.mergeContinuation(Preprocessor.convertPchar(cBuildProgram))));
 
             Env env = new Env();
 

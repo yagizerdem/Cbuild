@@ -1,8 +1,8 @@
-package minimalApi.build.win._001;
+package linux.minimalApi.build._001;
 
 import org.junit.jupiter.api.Test;
 
-import  io.Cbuild.minimal_api.*;
+import io.Cbuild.minimal_api.*;
 
 import java.nio.file.Path;
 
@@ -11,7 +11,7 @@ public class buildTest {
     String cwd;
 
     buildTest() {
-        this.cwd = Path.of("src\\test\\java\\minimalApi\\build\\win\\_001").toString();
+        this.cwd = Path.of("src/test/java/linux/minimalApi/build/_001").toString();
     }
 
     @Test
@@ -22,20 +22,15 @@ app.txt : # commands does not executed since app.txt should be already there
                 """;
 
         minimalApi.run(cBuildProgram, cwd);
-
     }
-
 
     @Test
     public void fileNotCreated() {
         String cBuildProgram = """
-update.md : 
-\t echo content of update.md file > update.md
+update.md :
+\t echo "content of update.md file" > update.md
                 """;
 
-
         minimalApi.run(cBuildProgram, cwd);
-
     }
-
 }

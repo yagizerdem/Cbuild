@@ -1,4 +1,4 @@
-package minimalApi.build.win._002;
+package win.minimalApi.build._002;
 
 import io.Cbuild.minimal_api.minimalApi;
 import org.junit.jupiter.api.Test;
@@ -12,7 +12,7 @@ public class buildTest {
     String cBuildFile;
 
     buildTest() {
-        this.cwd = Path.of("src\\test\\java\\minimalApi\\build\\win\\_002").toString();
+        this.cwd = Path.of("src\\test\\java\\win\\minimalApi\\build\\_002").toString();
         this.cBuildFile = """
 CC=gcc
 TARGET=runme

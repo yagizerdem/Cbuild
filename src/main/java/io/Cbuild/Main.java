@@ -4,12 +4,13 @@ import io.Cbuild.minimal_api.minimalApi;
 
 public class Main {
     public static void main(String[] args) {
-        String cBuildProgram = """
-a : 
-\t echo hit     
-                """;
 
+        String cliArgs =  " --sequential --minimal -f buildFile --jobs 10 app app2 ";
 
-        minimalApi.run(cBuildProgram);
+        cli cli_ = new cli(cliArgs.split(" "));
+        cli.CliParseResponse  response = cli_.parse();
+
+        System.out.println(response.getOptions());
+
     }
 }

@@ -5,7 +5,10 @@ on:
 
 jobs:
   unit-test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Download repo code
         uses: actions/checkout@v4
@@ -15,9 +18,22 @@ jobs:
           java-version: '21'
           distribution: 'microsoft'
       - run: java --version
+
+      - name: Set up MinGW
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: egor-tensin/setup-mingw@v3
+        with:
+          platform: x64
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
-      - name: Build with Gradle
+
+      - name: run Linux tests cases
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: | 
           chmod +x ./gradlew
-          ./gradlew build
+          ./gradlew linuxTest
+
+      - name: run Win tests cases
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: ./gradlew winTest
