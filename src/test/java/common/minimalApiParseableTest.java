@@ -1,4 +1,4 @@
-package minimalApi;
+package common;
 
 import org.junit.jupiter.api.Test;
 

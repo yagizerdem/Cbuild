@@ -1,4 +1,4 @@
-package preprocessor;
+package common.preprocessor;
 
 import io.Cbuild.Cursor;
 import io.Cbuild.Preprocessor;

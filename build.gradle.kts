@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("base")
     antlr
 }
 
@@ -45,3 +46,28 @@ tasks.generateTestGrammarSource {
 }
 
 
+tasks.register<Test>("winTest") {
+    description = "Runs integration tests."
+    group = "verification"
+
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+
+    useJUnitPlatform()
+
+    include("win/**");
+    include("common/**");
+}
+
+tasks.register<Test>("linuxTest") {
+    description = "Runs integration tests."
+    group = "verification"
+
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+
+    useJUnitPlatform()
+
+    include("linux/**");
+    include("common/**");
+}

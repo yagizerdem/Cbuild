@@ -1,4 +1,4 @@
-package minimalApi;
+package common;
 
 import io.Cbuild.Env;
 import io.Cbuild.cBuildIR;
