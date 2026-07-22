@@ -8,9 +8,9 @@ public class Main {
         String cliArgs =  " --sequential --minimal -f buildFile --jobs 10 app app2 ";
 
         cli cli_ = new cli(cliArgs.split(" "));
-        cli.CliParseResponse  response = cli_.parse();
+        cli.CliExecutionResult  response = cli_.execute();
 
-        System.out.println(response.getOptions());
+        System.out.println(response.getDiagnostic().getDiagnostics());
 
     }
 }
