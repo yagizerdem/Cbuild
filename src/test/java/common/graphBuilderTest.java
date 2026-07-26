@@ -1,6 +1,7 @@
 package common;
 
 import io.Cbuild.Env;
+import io.Cbuild.cbuildException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import util.utils;
@@ -486,7 +487,7 @@ $(missing_target): main.c
     @Test
     public void indirectCircularDependencyInPrerequisitesIsRejected() {
         Assertions.assertThrows(
-                io.Cbuild.cbuildException.class,
+                cbuildException.class,
                 () -> buildRules("""
 first = $(second)
 second = $(third)
@@ -500,7 +501,7 @@ app: $(first)
     @Test
     public void computedVariableNameCanIntroduceCircularDependency() {
         Assertions.assertThrows(
-                io.Cbuild.cbuildException.class,
+                cbuildException.class,
                 () -> buildRules("""
 selector := dependency
 dependency = $($(selector))

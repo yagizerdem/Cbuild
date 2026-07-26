@@ -37,6 +37,25 @@ b
     }
 
     @Test
+    void processedPositionShouldReflectMergedContinuation() {
+        String program = "ab\\\ncd\n";
+
+        List<Cursor.Pchar> processed =
+                Preprocessor.mergeContinuation(
+                        Preprocessor.convertPchar(program)
+                );
+
+        Cursor.Pchar c = processed.stream()
+                .filter(character -> character.c == 'c')
+                .findFirst()
+                .orElseThrow();
+
+        Assertions.assertEquals(2, c.row);
+        Assertions.assertEquals(1, c.col);
+        Assertions.assertEquals(1, c.processedRow);
+        Assertions.assertEquals(3, c.processedCol);
+    }
+    @Test
     void hookBodyShouldNotApplyEscaping() {
         String hookContinuation =
                 "    hookValue = first "

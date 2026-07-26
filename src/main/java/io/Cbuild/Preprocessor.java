@@ -110,6 +110,7 @@ public class Preprocessor {
             i++;
         }
 
+        updateProcessedPositions(processed);
         return processed;
     }
 
@@ -173,6 +174,7 @@ public class Preprocessor {
             processed.add(current);
         }
 
+        updateProcessedPositions(processed);
         return processed;
     }
 
@@ -346,9 +348,31 @@ public class Preprocessor {
             advanceCursor(program, cursor, current);
         }
 
+        updateProcessedPositions(processed);
         return processed;
     }
 
+    private static void updateProcessedPositions(
+            List<Cursor.Pchar> program
+    ) {
+        int row = 1;
+        int col = 1;
+
+        for (Cursor.Pchar character : program) {
+            character.processedRow = row;
+            character.processedCol = col;
+
+            if (Cursor.stopSet(
+                    character.c,
+                    Cursor.CharMask.Newline
+            )) {
+                row++;
+                col = 1;
+            } else {
+                col++;
+            }
+        }
+    }
     private static Cursor.Pchar.Context detectHookOpeningContext(
             String program,
             int openingBraceIndex
@@ -482,6 +506,12 @@ public class Preprocessor {
         }
 
         return program + Cursor.END;
+    }
+
+
+    public static List<Cursor.Pchar> pipeLine(String cBuildProgram) {
+        return Preprocessor.removeComments
+                (Preprocessor.mergeContinuation(Preprocessor.convertPchar(cBuildProgram)));
     }
 
     public static void printPcharList(List<Cursor.Pchar> processed) {

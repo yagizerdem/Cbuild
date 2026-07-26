@@ -1,14 +1,15 @@
 package io.Cbuild.minimal_api;
 
 import io.Cbuild.*;
+import io.Cbuild.cbuildException;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class minimalApi {
@@ -50,7 +51,7 @@ public class minimalApi {
         if (!allowedIR(ir)) {
             throw incompatible(
                     ir,
-                    "Unsupported IR type for ySharp backend: "
+                    "Unsupported IR type for minimal-backend: "
                             + ir.getClass().getSimpleName()
             );
         }
@@ -88,6 +89,11 @@ public class minimalApi {
                                 + prefix
                 );
             }
+        }
+
+        if(!validateAssignmentFlavor(assignmentIR.type)) {
+            throw new cbuildException(cbuildException.ErrorType.SEMANTIC,
+                    "Only recursive and simple assignments are supported on minimal-backend");
         }
     }
 
@@ -148,7 +154,6 @@ public class minimalApi {
 
     private boolean allowedIR(cBuildIR.IR ir) {
         return ir instanceof cBuildIR.AssignmentIR
-                || ir instanceof cBuildIR.YsharpHookIR
                 || ir instanceof cBuildIR.NormalRuleIR;
     }
 
@@ -947,30 +952,32 @@ public class minimalApi {
         return rule.uuid;
     }
 
-    public static void run(String cBuildProgram) {
+
+    public static void run(String cBuildProgram, Env env) {
         String cwd = System.getProperty("user.dir");
-        run(cBuildProgram, cwd, null);
+        run(cBuildProgram, cwd, null, env);
     }
 
     public static void run(String cBuildProgram, String cwd) {
-        run(cBuildProgram, cwd, null);
+        run(cBuildProgram, cwd, null, new Env());
     }
 
 
-    public static void run(String cBuildProgram, String cwd, String activeTarget) {
+    public static void run(String cBuildProgram, String cwd, String activeTarget, Env env) {
         try {
             cBuildProgram = Preprocessor.EndOfFile(cBuildProgram);
-            String processed = Preprocessor.programToString(Preprocessor.removeComments
-                    (Preprocessor.mergeContinuation(Preprocessor.convertPchar(cBuildProgram))));
 
-            Env env = new Env();
+            List<Cursor.Pchar> preprocessed = Preprocessor.pipeLine(cBuildProgram);
+            String processed = Preprocessor.programToString(preprocessed);
 
             CharStream charStream = CharStreams.fromString(processed);
             cbuildLexer lexer = new cbuildLexer(charStream);
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             cbuildParser parser = new cbuildParser(tokens);
             parser.removeErrorListeners();
-            parser.addErrorListener(ThrowingErrorListener.INSTANCE);
+            ThrowingErrorListener errorListener = new ThrowingErrorListener(env.getFileMetaData().getFileName(),
+                    env.getFileMetaData().fileContent, preprocessed);
+            parser.addErrorListener(errorListener);
             cbuildParser.CbuildfileContext context = parser.cbuildfile();
 
             cBuildCompiler cBuildCompiler = new cBuildCompiler();
@@ -990,8 +997,21 @@ public class minimalApi {
 
 
             backend.buildTargetsParallel(targetSubgraph,1, cwd);
-        } catch (Exception ex) {
+        }
+        catch (cbuildException ex) {
+            throw ex;
+        }
+        catch (MakeParseException ex) {
+            io.Cbuild.MakeErrorMapper mapper = new MakeErrorMapper();
+            String gnuMakeErrorMessage = mapper.map(ex.diagnostic());
+            throw new cbuildException(cbuildException.ErrorType.SYNTAX, gnuMakeErrorMessage);
+        }
+        catch (ParseCancellationException ex) {
+            throw new cbuildException(cbuildException.ErrorType.SYNTAX, ex.getMessage());
+        }
+        catch (Exception ex) {
             throw new cbuildException(cbuildException.ErrorType.PROCESS, ex.getMessage());
         }
+
     }
 }

@@ -8,6 +8,8 @@ public class Cursor {
         public int current;
         public int row;
         public int col;
+        public int processedRow;
+        public int processedCol;
 
         public CursorState() {}
 
@@ -260,6 +262,8 @@ public class Cursor {
 
         public int row;
         public int col;
+        public int processedRow;
+        public int processedCol;
         public char c;
         public boolean isEscaped;
         public EscapeType escapeType;
@@ -280,6 +284,8 @@ public class Cursor {
         public Pchar(int row, int col, char c, boolean isEscaped) {
             this.row = row;
             this.col = col;
+            this.processedRow = row;
+            this.processedCol = col;
             this.c = c;
             this.isEscaped = isEscaped;
         }
@@ -292,6 +298,8 @@ public class Cursor {
                      Context context) {
             this.row = row;
             this.col = col;
+            this.processedRow = row;
+            this.processedCol = col;
             this.c = c;
             this.isEscaped = isEscaped;
             this.escapeType = escapeType;
@@ -303,6 +311,8 @@ public class Cursor {
             return
                     "row=" + row +
                     ", col=" + col +
+                    ", processedRow=" + processedRow +
+                    ", processedCol=" + processedCol +
                     ", c='" + c + '\'' +
                     ", isEscaped=" + isEscaped +
                     ", escapeType=" + escapeType +
