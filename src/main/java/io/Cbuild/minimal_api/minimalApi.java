@@ -966,8 +966,9 @@ public class minimalApi {
     public static void run(String cBuildProgram, String cwd, String activeTarget, Env env) {
         try {
             cBuildProgram = Preprocessor.EndOfFile(cBuildProgram);
-            String processed = Preprocessor.programToString(Preprocessor.removeComments
-                    (Preprocessor.mergeContinuation(Preprocessor.convertPchar(cBuildProgram))));
+
+            List<Cursor.Pchar> preprocessed = Preprocessor.pipeLine(cBuildProgram);
+            String processed = Preprocessor.programToString(preprocessed);
 
             CharStream charStream = CharStreams.fromString(processed);
             cbuildLexer lexer = new cbuildLexer(charStream);
@@ -975,7 +976,7 @@ public class minimalApi {
             cbuildParser parser = new cbuildParser(tokens);
             parser.removeErrorListeners();
             ThrowingErrorListener errorListener = new ThrowingErrorListener(env.getFileMetaData().getFileName(),
-                    env.getFileMetaData().fileContent);
+                    env.getFileMetaData().fileContent, preprocessed);
             parser.addErrorListener(errorListener);
             cbuildParser.CbuildfileContext context = parser.cbuildfile();
 

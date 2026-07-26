@@ -13,8 +13,10 @@ public class Main {
         // System.out.println(response.getDiagnostic().getDiagnostics());
 
         String program = """
-a=10
-app
+a=10\\
+12\\
+14
+app:
 \t echo $(a)
                 """.trim();
 
