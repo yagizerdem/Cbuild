@@ -10,7 +10,25 @@ public class Main {
         cli cli_ = new cli(cliArgs.split(" "));
         cli.CliExecutionResult  response = cli_.execute();
 
-        System.out.println(response.getDiagnostic().getDiagnostics());
+        // System.out.println(response.getDiagnostic().getDiagnostics());
+
+        String program = """
+a=10
+app
+\t echo $(a)
+                """.trim();
+
+        Env context = new Env();
+
+        context.fileMetaData = new Env.FileMetaData();
+        context.fileMetaData.fileContent = program;
+        context.fileMetaData.fileName = "Cbuild";
+
+   try {
+       minimalApi.run(program, context);
+   }catch (cbuildException ex) {
+       System.out.println(ex.getMessage());
+   }
 
     }
 }

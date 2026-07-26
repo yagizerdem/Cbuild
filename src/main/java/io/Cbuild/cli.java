@@ -8,91 +8,20 @@ import java.util.concurrent.Callable;
 public class cli {
 
 
-    public static final class DiagnosticResult {
-
-        public enum Severity {
-            INFO,
-            WARNING,
-            ERROR
-        }
-
-        public static final class Diagnostic {
-
-            private final Severity severity;
-            private final String message;
-
-            public Diagnostic(Severity severity, String message) {
-                this.severity = Objects.requireNonNull(severity);
-                this.message = Objects.requireNonNull(message);
-            }
-
-            public Severity getSeverity() {
-                return severity;
-            }
-
-            public String getMessage() {
-                return message;
-            }
-
-            @Override
-            public String toString() {
-                return severity + ": " + message;
-            }
-        }
-
-        private final List<Diagnostic> diagnostics;
-
-        public DiagnosticResult(List<Diagnostic> diagnostics) {
-            this.diagnostics = Collections.unmodifiableList(
-                    new ArrayList<>(Objects.requireNonNull(diagnostics))
-            );
-        }
-
-        public boolean hasErrors() {
-            return diagnostics.stream()
-                    .anyMatch(d -> d.getSeverity() == Severity.ERROR);
-        }
-
-        public boolean hasWarnings() {
-            return diagnostics.stream()
-                    .anyMatch(d -> d.getSeverity() == Severity.WARNING);
-        }
-
-        public List<Diagnostic> getDiagnostics() {
-            return diagnostics;
-        }
-
-        public static DiagnosticResult empty() {
-            return new DiagnosticResult(List.of());
-        }
-
-        public static DiagnosticResult of(Diagnostic diagnostic) {
-            return new DiagnosticResult(List.of(diagnostic));
-        }
-
-        public static DiagnosticResult from(List<Exception> exceptions) {
-            List<Diagnostic> diagnostics = new ArrayList<>();
-            for(Exception ex : exceptions) {
-                diagnostics.add(new Diagnostic(Severity.ERROR, ex.getMessage()));
-            }
-            return new DiagnosticResult(diagnostics);
-        }
-    }
-
     public static final class CliParseResult {
 
         private final boolean success;
-        private final DiagnosticResult diagnostic;
+        private final Diagnostic.DiagnosticResult diagnosticResult;
         private final CLI_OPTIONS options;
 
         private CliParseResult(
                 boolean success,
-                DiagnosticResult diagnostic,
+                Diagnostic.DiagnosticResult diagnosticResult,
                 CLI_OPTIONS options
         ) {
             this.success = success;
-            this.diagnostic = Objects.requireNonNull(
-                    diagnostic,
+            this.diagnosticResult = Objects.requireNonNull(
+                    diagnosticResult,
                     "diagnostic cannot be null"
             );
             this.options = options;
@@ -100,11 +29,11 @@ public class cli {
 
         public static CliParseResult success(
                 CLI_OPTIONS options,
-                DiagnosticResult diagnostic
+                Diagnostic.DiagnosticResult diagnosticResult
         ) {
             return new CliParseResult(
                     true,
-                    diagnostic,
+                    diagnosticResult,
                     options
             );
         }
@@ -112,17 +41,17 @@ public class cli {
         public static CliParseResult success(CLI_OPTIONS options) {
             return new CliParseResult(
                     true,
-                    DiagnosticResult.empty(),
+                    Diagnostic.DiagnosticResult.empty(),
                     options
             );
         }
 
         public static CliParseResult failure(
-                DiagnosticResult diagnostic
+                Diagnostic.DiagnosticResult diagnosticResult
         ) {
             return new CliParseResult(
                     false,
-                    diagnostic,
+                    diagnosticResult,
                     null
             );
         }
@@ -131,8 +60,8 @@ public class cli {
             return success;
         }
 
-        public DiagnosticResult getDiagnostic() {
-            return diagnostic;
+        public Diagnostic.DiagnosticResult getDiagnostic() {
+            return diagnosticResult;
         }
 
         public CLI_OPTIONS getOptions() {
@@ -144,32 +73,32 @@ public class cli {
 
         private final boolean success;
         private final int exitCode;
-        private final DiagnosticResult diagnostic;
+        private final Diagnostic.DiagnosticResult diagnosticResult;
         private final CLI_OPTIONS options;
 
         private CliExecutionResult(
                 boolean success,
                 int exitCode,
-                DiagnosticResult diagnostic,
+                Diagnostic.DiagnosticResult diagnosticResult,
                 CLI_OPTIONS options
         ) {
             this.success = success;
             this.exitCode = exitCode;
-            this.diagnostic = Objects.requireNonNull(
-                    diagnostic,
+            this.diagnosticResult = Objects.requireNonNull(
+                    diagnosticResult,
                     "diagnostic cannot be null"
             );
             this.options = options;
         }
 
         public static CliExecutionResult success(
-                DiagnosticResult diagnostic,
+                Diagnostic.DiagnosticResult diagnosticResult,
                 CLI_OPTIONS options
         ) {
             return new CliExecutionResult(
                     true,
                     0,
-                    diagnostic,
+                    diagnosticResult,
                     options
             );
         }
@@ -178,20 +107,20 @@ public class cli {
             return new CliExecutionResult(
                     true,
                     0,
-                    DiagnosticResult.empty(),
+                    Diagnostic.DiagnosticResult.empty(),
                     options
             );
         }
 
         public static CliExecutionResult failure(
                 int exitCode,
-                DiagnosticResult diagnostic,
+                Diagnostic.DiagnosticResult diagnosticResult,
                 CLI_OPTIONS options
         ) {
             return new CliExecutionResult(
                     false,
                     exitCode,
-                    diagnostic,
+                    diagnosticResult,
                     options
             );
         }
@@ -211,14 +140,14 @@ public class cli {
                 message = exception.getClass().getSimpleName();
             }
 
-            DiagnosticResult diagnostic = DiagnosticResult.of(
-                    new DiagnosticResult.Diagnostic(
-                            DiagnosticResult.Severity.ERROR,
-                            message
+            Diagnostic.DiagnosticResult diagnosticResult = Diagnostic.DiagnosticResult.of(
+                    new Diagnostic.CliDiagnostic(
+                            message,
+                            Diagnostic.Severity.ERROR
                     )
             );
 
-            return failure(exitCode, diagnostic, null);
+            return failure(exitCode, diagnosticResult, null);
         }
 
         public boolean isSuccess() {
@@ -229,8 +158,8 @@ public class cli {
             return exitCode;
         }
 
-        public DiagnosticResult getDiagnostic() {
-            return diagnostic;
+        public Diagnostic.DiagnosticResult getDiagnostic() {
+            return diagnosticResult;
         }
 
         public CLI_OPTIONS getOptions() {
@@ -282,8 +211,8 @@ public class cli {
         List<Exception> parseErrors = parseResult.errors();
 
         if (!parseErrors.isEmpty()) {
-            DiagnosticResult diagnostics =
-                    DiagnosticResult.from(parseErrors);
+            Diagnostic.DiagnosticResult diagnostics =
+                    Diagnostic.DiagnosticResult.from(parseErrors);
 
             return CliParseResult.failure(diagnostics);
         }
@@ -304,14 +233,14 @@ public class cli {
 
         CommandLine commandLine = new CommandLine(options);
 
-        List<DiagnosticResult.Diagnostic> diagnostics =
+        List<Diagnostic> diagnostics =
                 new ArrayList<>();
 
         commandLine.setParameterExceptionHandler((exception, args) -> {
             diagnostics.add(
-                    new DiagnosticResult.Diagnostic(
-                            DiagnosticResult.Severity.ERROR,
-                            getExceptionMessage(exception)
+                    new Diagnostic.CliDiagnostic(
+                            getExceptionMessage(exception),
+                            Diagnostic.Severity.ERROR
                     )
             );
 
@@ -321,9 +250,9 @@ public class cli {
         commandLine.setExecutionExceptionHandler(
                 (exception, cmd, parseResult) -> {
                     diagnostics.add(
-                            new DiagnosticResult.Diagnostic(
-                                    DiagnosticResult.Severity.ERROR,
-                                    getExceptionMessage(exception)
+                            new Diagnostic.CliDiagnostic(
+                                    getExceptionMessage(exception),
+                                    Diagnostic.Severity.ERROR
                             )
                     );
 
@@ -333,8 +262,8 @@ public class cli {
 
         int exitCode = commandLine.execute(executionArgs);
 
-        DiagnosticResult diagnosticResult =
-                new DiagnosticResult(diagnostics);
+        Diagnostic.DiagnosticResult diagnosticResult =
+                new Diagnostic.DiagnosticResult(diagnostics);
 
 
 
@@ -410,13 +339,13 @@ public class cli {
             @Override
             public Void call() throws Exception {
                 // check parallel job count
-                List<DiagnosticResult.Diagnostic> diagnostics = new ArrayList<>();
+                List<Diagnostic> diagnostics = new ArrayList<>();
 
                 if (this.parallelJobCount <= 0) {
                     diagnostics.add(
-                            new DiagnosticResult.Diagnostic(
-                                    DiagnosticResult.Severity.WARNING,
-                                    "Job count must be greater than zero. Falling back to 1."
+                            new Diagnostic.CliDiagnostic(
+                                    "Job count must be greater than zero. Falling back to 1.",
+                                    Diagnostic.Severity.WARNING
                             )
                     );
 
@@ -425,9 +354,9 @@ public class cli {
 
                 if (this.parallelJobCount > 0 && this.buildSequential) {
                     diagnostics.add(
-                            new DiagnosticResult.Diagnostic(
-                                    DiagnosticResult.Severity.WARNING,
-                                    "The sequential build option cannot be used together with the parallel jobs option. Sequential mode will be used."
+                            new Diagnostic.CliDiagnostic(
+                                    "The sequential build option cannot be used together with the parallel jobs option. Sequential mode will be used.",
+                                    Diagnostic.Severity.WARNING
                             )
                     );
 
@@ -435,7 +364,7 @@ public class cli {
                 }
 
 
-                new CliParseResult(true, new DiagnosticResult(diagnostics), this);
+                new CliParseResult(true, new Diagnostic.DiagnosticResult(diagnostics), this);
                 return null;
             }
         }

@@ -1,12 +1,55 @@
 package io.Cbuild;
 
+import org.stringtemplate.v4.ST;
+
+import java.io.File;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.nio.file.Paths;
+import java.util.*;
 
 public class Env {
+
+    // file meta data
+
+    public static class FileMetaData {
+        public String fileAbsolutePath;
+        public int fileSize;
+        public String fileContent;
+        private List<String> lines;
+        public String fileName;
+        public String extension;
+
+        public List<String> getLines() {
+            if (lines == null) {
+                lines = fileContent.lines().toList();
+            }
+
+            return lines;
+        }
+
+        public String getFileName() {
+            return this.fileName;
+        }
+
+        public String  getFileNameWithExtension() {
+            Path filePath = Paths.get(fileName + "." + extension);
+            return filePath.toString();
+        }
+
+    }
+
+    public FileMetaData fileMetaData;
+
+    public FileMetaData setFileMetaData(FileMetaData data) {
+        this.fileMetaData = data;
+        return this.fileMetaData;
+    }
+
+    public FileMetaData getFileMetaData() {
+        return this.fileMetaData;
+    }
+
+    // symbol table related
 
     public static final class SymbolTableVariable {
 
