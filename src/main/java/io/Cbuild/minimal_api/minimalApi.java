@@ -995,6 +995,9 @@ public class minimalApi {
             List<minimalApi.yModel.NormalRule> targetSubgraph =  activeTarget == null ?
                     backend.getTargetSubgraph(rules) : backend.getTargetSubgraph(rules, activeTarget);
 
+            if(targetSubgraph.isEmpty()) {
+                throw new cbuildException(cbuildException.ErrorType.PROCESS, "cbuild: *** No targets.  Stop.");
+            }
 
             backend.buildTargetsParallel(targetSubgraph,1, cwd);
         }

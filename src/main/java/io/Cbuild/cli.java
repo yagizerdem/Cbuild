@@ -334,6 +334,16 @@ public class cli {
 
     public static class CLI_OPTIONS {
 
+        public boolean isMinimalApi = false;
+
+        public boolean getIsMinimalApi() {
+            return this.isMinimalApi;
+        }
+
+        public void setIsMinimalApi(boolean isMinimalApi) {
+            this.isMinimalApi = isMinimalApi;
+        }
+
         public static class MinimalApi extends CLI_OPTIONS implements Callable<CliCallResult> {
 
             @CommandLine.Option(
@@ -354,7 +364,7 @@ public class cli {
                     paramLabel = "BUILD_FILE",
                     description = "path to the build configuration file"
             )
-            String buildFile;
+            String buildFile = "";
 
             @CommandLine.Parameters(
                     paramLabel = "TARGET...",
@@ -383,6 +393,7 @@ public class cli {
             @Override
             public CliCallResult call() {
                 this.normalizeTargets();
+                this.setIsMinimalApi(true);
 
                 // check parallel job count
                 List<Diagnostic> diagnostics = new ArrayList<>();

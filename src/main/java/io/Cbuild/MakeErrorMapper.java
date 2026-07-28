@@ -1,5 +1,8 @@
 package io.Cbuild;
 
+import org.javatuples.Pair;
+import org.stringtemplate.v4.ST;
+
 public final class MakeErrorMapper {
 
     public String map(Diagnostic.ParseDiagnostic diagnostic) {
@@ -16,9 +19,8 @@ public final class MakeErrorMapper {
         String line = diagnostic.getSourceLine();
         String trimmed = line.stripLeading();
 
-        if (looksLikeIndentedNonRecipe(line, diagnostic)) {
-            return "missing separator";
-        }
+        Pair<Boolean, String> pair = missingSeparator(diagnostic);
+        if (pair.getValue0()) return pair.getValue1();
 
         if (isRecipeWithoutTarget(diagnostic)) {
             return "recipe commences before first target";
@@ -51,16 +53,25 @@ public final class MakeErrorMapper {
         );
     }
 
-    private boolean looksLikeIndentedNonRecipe(
-            String line,
+    private Pair<Boolean, String> missingSeparator (
             Diagnostic.ParseDiagnostic diagnostic
     ) {
-        return !line.isEmpty()
-                && !line.startsWith("\t")
+        boolean flag = !diagnostic.getSourceLine().isEmpty()
+                && !diagnostic.getSourceLine().startsWith("\t")
                 && diagnostic.getRuleStack().stream()
                 .anyMatch(rule ->
                         rule.equals("statement")
                                 || rule.equals("makefile"));
+
+        if(!flag) return new Pair<Boolean, String>(false, "");
+
+        String message = "missing separator";
+
+        if(diagnostic.getSourceLine().startsWith(" ".repeat(8))) {
+            message = "missing separator (did you mean TAB instead of 8 spaces?)";
+        }
+
+        return new Pair<Boolean, String>(true, message);
     }
 
     private boolean isRecipeWithoutTarget(Diagnostic.ParseDiagnostic diagnostic) {
