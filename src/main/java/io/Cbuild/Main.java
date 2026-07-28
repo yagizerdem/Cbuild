@@ -1,8 +1,10 @@
 package io.Cbuild;
 
 import io.Cbuild.minimal_api.minimalApi;
+import org.javatuples.Pair;
 import org.stringtemplate.v4.ST;
 
+import java.nio.Buffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,16 +24,11 @@ public class Main {
     public static void runMinimalApi(cli.CliExecutionResult result) {
 
         cli.CLI_OPTIONS.MinimalApi minimalApi = result.getOptions().toMinimalApi();
-        if(minimalApi.buildFile == null  || minimalApi.buildFile.isEmpty()) {
-            System.out.println("cbuild: *** No targets specified and no makefile found.  Stop.");
-            System.exit(0);
+        Pair<Boolean, String> pair = resolveBuildFilePath(result);
+        if(!pair.getValue0()) {
+            System.out.println(pair.getValue1());
+            return;
         }
-
-        if(!isFileExistInDir(minimalApi.buildFile, "cwd")) {
-            System.out.println(String.format("make: *** No rule to make target %s.  Stop.", "'" + minimalApi.buildFile) + "'");
-            System.exit(0);
-        }
-
 
         String program = """
 a=10\\
@@ -54,8 +51,26 @@ app:
         }
     }
 
-    public static boolean isFileExistInDir(String fileName, String dir) {
-        Path path = Paths.get(Path.of(dir).resolve(fileName).toString());
-        return Files.exists(path);
+    public static Pair<Boolean, String> resolveBuildFilePath(cli.CliExecutionResult result) {
+        return resolveBuildFilePath(result, System.getProperty("user.dir"));
+    }
+
+    public static Pair<Boolean, String> resolveBuildFilePath(cli.CliExecutionResult result, String root) {
+        cli.CLI_OPTIONS.MinimalApi minimalApi = result.getOptions().toMinimalApi();
+        if(minimalApi.buildFile == null  || minimalApi.buildFile.isEmpty()) {
+            // check for default build file name
+            Pair<Boolean, String> flag_path =  util.buildFileExists(root);
+            if(flag_path.getValue0()) {
+                return new Pair<>(true, flag_path.getValue1());
+            }
+
+            return new Pair<>(false, "cbuild: *** No targets specified and no makefile found.  Stop.");
+        }
+
+        if(util.findFileCaseInsensitive(minimalApi.buildFile, "cwd").isEmpty()) {
+            return new Pair<>(false, String.format("cbuild: *** No rule to make target %s.  Stop.", "'" + minimalApi.buildFile + "'"));
+        }
+
+        return new Pair<Boolean, String>(true, Path.of(root).resolve(minimalApi.buildFile).toString());
     }
 }
