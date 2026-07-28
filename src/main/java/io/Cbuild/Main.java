@@ -5,18 +5,19 @@ import io.Cbuild.minimal_api.minimalApi;
 public class Main {
     public static void main(String[] args) {
 
-        String cliArgs =  " --sequential --minimal -f buildFile --jobs 10 app app2 ";
+        String cliArgs =  " --sequential --minimal -f buildFile --jobs 10 app app2 app3";
 
         cli cli_ = new cli(cliArgs.split(" "));
         cli.CliExecutionResult  response = cli_.execute();
 
-        // System.out.println(response.getDiagnostic().getDiagnostics());
+        System.out.println(response.getDiagnostic());
+
 
         String program = """
 a=10\\
 12\\
 14
-app:
+app
 \t echo $(a)
                 """.trim();
 

@@ -112,6 +112,15 @@ public class cli {
             );
         }
 
+        public static CliExecutionResult success(CLI_OPTIONS options, Diagnostic.DiagnosticResult diagnosticResult) {
+            return new CliExecutionResult(
+                    true,
+                    0,
+                    diagnosticResult,
+                    options
+            );
+        }
+
         public static CliExecutionResult failure(
                 int exitCode,
                 Diagnostic.DiagnosticResult diagnosticResult,
@@ -167,7 +176,21 @@ public class cli {
         }
     }
 
-    private String[] args;
+    public static final class CliCallResult {
+        public Diagnostic.DiagnosticResult diagnosticResult;
+
+        public CliCallResult() {}
+
+        public CliCallResult(Diagnostic.DiagnosticResult diagnosticResult) {
+            this.diagnosticResult = diagnosticResult;
+        }
+
+        public Diagnostic.DiagnosticResult getDiagnosticResult() {
+            return diagnosticResult;
+        }
+    }
+
+    private final String[] args;
 
     public cli(String[] args) {
         this.args = args;
@@ -227,6 +250,10 @@ public class cli {
                 ? removeMinimalApiFlag(this.args)
                 : this.args;
 
+        // an empty arg come from java cli, clear it before processing
+        executionArgs = Arrays.stream(executionArgs).filter(x -> !x.isEmpty())
+                .toList().toArray(new String[0]);
+
         CLI_OPTIONS options = minimalApiMode
                 ? new CLI_OPTIONS.MinimalApi()
                 : new CLI_OPTIONS.cBuildApi();
@@ -261,12 +288,16 @@ public class cli {
         );
 
         int exitCode = commandLine.execute(executionArgs);
+        CliCallResult callResult = commandLine.getExecutionResult();
 
+        // parse related error/warning messages
         Diagnostic.DiagnosticResult diagnosticResult =
                 new Diagnostic.DiagnosticResult(diagnostics);
 
+        // semantic analysis related error/warning messages
+        diagnosticResult.diagnostics.addAll(callResult.diagnosticResult.diagnostics);
 
-
+        // check parse exit code is success/fail
         if (exitCode != CommandLine.ExitCode.OK) {
             return CliExecutionResult.failure(
                     exitCode,
@@ -275,7 +306,20 @@ public class cli {
             );
         }
 
-        return CliExecutionResult.success(options);
+        // check semantic analysis success/fail
+        boolean hasSemanticError = false;
+        for(Diagnostic diagnostic : diagnosticResult.getDiagnostics()) {
+            if(diagnostic.getSeverity().equals(Diagnostic.Severity.ERROR)) {
+                hasSemanticError = true;
+                break;
+            }
+        }
+
+        if(hasSemanticError) {
+            return CliExecutionResult.failure(0, diagnosticResult, options);
+        }
+
+        return CliExecutionResult.success(options, diagnosticResult);
     }
 
     private static String getExceptionMessage(Exception exception) {
@@ -290,7 +334,7 @@ public class cli {
 
     public static class CLI_OPTIONS {
 
-        public static class MinimalApi extends CLI_OPTIONS implements Callable<Void> {
+        public static class MinimalApi extends CLI_OPTIONS implements Callable<CliCallResult> {
 
             @CommandLine.Option(
                     names = "--sequential",
@@ -337,7 +381,9 @@ public class cli {
             }
 
             @Override
-            public Void call() throws Exception {
+            public CliCallResult call() {
+                this.normalizeTargets();
+
                 // check parallel job count
                 List<Diagnostic> diagnostics = new ArrayList<>();
 
@@ -352,7 +398,7 @@ public class cli {
                     this.parallelJobCount = 1;
                 }
 
-                if (this.parallelJobCount > 0 && this.buildSequential) {
+                if (this.parallelJobCount > 1 && this.buildSequential) {
                     diagnostics.add(
                             new Diagnostic.CliDiagnostic(
                                     "The sequential build option cannot be used together with the parallel jobs option. Sequential mode will be used.",
@@ -363,14 +409,31 @@ public class cli {
                     this.parallelJobCount = -1;
                 }
 
+                if(parallelJobCount == 1 && buildSequential) {
+                    parallelJobCount = -1;
+                }
 
-                new CliParseResult(true, new Diagnostic.DiagnosticResult(diagnostics), this);
-                return null;
+
+                return new CliCallResult(new Diagnostic.DiagnosticResult(diagnostics));
+            }
+
+            public void normalizeTargets() {
+                this.targets = Arrays.stream(this.targets)
+                        .filter(t -> !t.isBlank()).toList()
+                        .toArray(new String[0]);
             }
         }
 
         public static class cBuildApi extends CLI_OPTIONS {
 
+        }
+
+        public MinimalApi toMinimalApi() {
+            return (MinimalApi) this;
+        }
+
+        public cBuildApi tocBuildApi() {
+            return (cBuildApi) this;
         }
 
     }

@@ -68,7 +68,7 @@ public final class ThrowingErrorListener extends BaseErrorListener {
 
         Diagnostic.ParseDiagnostic diagnostic = new Diagnostic.ParseDiagnostic(
                 fileName,
-                line,
+                srcLineNo,
                 charPositionInLine,
                 offendingToken != null ? offendingToken.getText() : "",
                 offendingToken != null ? offendingToken.getType() : Token.INVALID_TYPE,
