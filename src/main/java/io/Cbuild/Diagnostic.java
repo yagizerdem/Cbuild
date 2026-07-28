@@ -74,6 +74,16 @@ public class Diagnostic {
             }
             return new Diagnostic.DiagnosticResult(diagnostics);
         }
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            for(int i = 0; i < this.diagnostics.size(); i++) {
+                builder.append(this.diagnostics.get(i));
+                builder.append("\n");
+            }
+            return builder.toString();
+        }
     }
 
     public static final class CliDiagnostic extends Diagnostic {

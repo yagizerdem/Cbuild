@@ -55,12 +55,26 @@ public class cbuildException extends RuntimeException {
 
     @Override
     public String getMessage() {
-        String type = errorType.name().toLowerCase();
+        return getFormattedMessage();
+    }
 
-        if (fileName == null || line < 0 || column < 0) {
-            return type + " error: " + super.getMessage();
+    public String getFormattedMessage() {
+        String severity = errorType.name().toLowerCase();
+        String rawMessage = super.getMessage();
+
+        if (!hasSourceLocation()) {
+            return severity + " error: " + rawMessage;
         }
 
-        return fileName + ":" + line + ":" + column + ": " + type + " error: " + super.getMessage();
+        return "%s:%d:%d: %s error: %s"
+                .formatted(fileName, line, column, severity, rawMessage);
+    }
+
+    public String getRawMessage() {
+        return super.getMessage();
+    }
+
+    private boolean hasSourceLocation() {
+        return fileName != null && line >= 0 && column >= 0;
     }
 }

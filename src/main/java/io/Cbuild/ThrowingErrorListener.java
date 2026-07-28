@@ -35,7 +35,7 @@ public final class ThrowingErrorListener extends BaseErrorListener {
     ) {
         // line given in antlr is preprocessed char line/col , map to actual line/col of src-fil
         Cursor.Pchar pch = this.preprocessed.stream()
-                .filter(x -> x.processedRow == line && x.processedCol == charPositionInLine)
+                .filter(x -> x.processedRow == line && (x.processedCol -1) == charPositionInLine)
                 .toList()
                 .getFirst();
 
@@ -68,7 +68,7 @@ public final class ThrowingErrorListener extends BaseErrorListener {
 
         Diagnostic.ParseDiagnostic diagnostic = new Diagnostic.ParseDiagnostic(
                 fileName,
-                line,
+                srcLineNo,
                 charPositionInLine,
                 offendingToken != null ? offendingToken.getText() : "",
                 offendingToken != null ? offendingToken.getType() : Token.INVALID_TYPE,

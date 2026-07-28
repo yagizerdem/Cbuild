@@ -1,5 +1,12 @@
 package io.Cbuild;
 
+import org.antlr.v4.codegen.model.OptionalBlock;
+import org.javatuples.Pair;
+import org.stringtemplate.v4.ST;
+
+import javax.swing.text.html.Option;
+import java.util.Optional;
+
 public final class MakeErrorMapper {
 
     public String map(Diagnostic.ParseDiagnostic diagnostic) {
@@ -16,33 +23,15 @@ public final class MakeErrorMapper {
         String line = diagnostic.getSourceLine();
         String trimmed = line.stripLeading();
 
-        if (looksLikeIndentedNonRecipe(line, diagnostic)) {
-            return "missing separator";
-        }
+        var result = recipeWithoutTarget(diagnostic);
+        if (result.isPresent()) return result.get();
 
-        if (isRecipeWithoutTarget(diagnostic)) {
-            return "recipe commences before first target";
-        }
+        result = unterminatedVariableReference(diagnostic);
+        if(result.isPresent()) return result.get();
 
-        if (isMalformedConditional(diagnostic)) {
-            return "invalid syntax in conditional";
-        }
+        result = missingSeparator(diagnostic);
+        if (result.isPresent()) return result.get();
 
-        if (isMissingEndef(diagnostic)) {
-            return "missing 'endef', unterminated 'define'";
-        }
-
-        if (isMissingEndif(diagnostic)) {
-            return "missing 'endif'";
-        }
-
-        if (isMalformedRule(diagnostic)) {
-            return "target pattern contains no '%'";
-        }
-
-        if (isUnexpectedEof(diagnostic)) {
-            return "unexpected end of file";
-        }
 
         return "parse error near '%s'".formatted(
                 diagnostic.getOffendingToken().isBlank()
@@ -51,22 +40,47 @@ public final class MakeErrorMapper {
         );
     }
 
-    private boolean looksLikeIndentedNonRecipe(
-            String line,
+    private Optional<String> missingSeparator (
             Diagnostic.ParseDiagnostic diagnostic
     ) {
-        return !line.isEmpty()
-                && !line.startsWith("\t")
+        boolean flag = !diagnostic.getSourceLine().isEmpty()
+                && !diagnostic.getSourceLine().startsWith("\t")
                 && diagnostic.getRuleStack().stream()
                 .anyMatch(rule ->
                         rule.equals("statement")
                                 || rule.equals("makefile"));
+
+        if(!flag) return Optional.empty();
+
+        String message = "missing separator";
+
+        if(diagnostic.getSourceLine().startsWith(" ".repeat(8))) {
+            message = "missing separator (did you mean TAB instead of 8 spaces?)";
+        }
+
+        return Optional.of(message);
     }
 
-    private boolean isRecipeWithoutTarget(Diagnostic.ParseDiagnostic diagnostic) {
-        return diagnostic.getSourceLine().startsWith("\t")
+    private Optional<String> recipeWithoutTarget(Diagnostic.ParseDiagnostic diagnostic) {
+        String srcLine = diagnostic.getSourceLine();
+        boolean flag = srcLine.startsWith("\t")
                 && diagnostic.getRuleStack().stream()
                 .noneMatch(rule -> rule.equals("recipe"));
+
+        if(flag) {
+            for(int i = 0; i < srcLine.length(); i++) {
+                if(Cursor.stopSet(srcLine.charAt(i), Cursor.CharMask.Blank)) continue;
+                if(!Cursor.stopSet(srcLine.charAt(i), Cursor.CharMask.Blank)){
+                    if(Cursor.stopSet(srcLine.charAt(i), Cursor.CharMask.Semi)) {
+                        return Optional.of("commands commence before first target. Stop.");
+                    }
+                    break;
+                }
+
+            }
+        }
+
+        return flag ? Optional.of("recipe commences before first target."): Optional.empty();
     }
 
     private boolean isMalformedConditional(Diagnostic.ParseDiagnostic diagnostic) {
@@ -95,5 +109,52 @@ public final class MakeErrorMapper {
     private boolean isUnexpectedEof(Diagnostic.ParseDiagnostic diagnostic) {
         return "<EOF>".equals(diagnostic.getOffendingToken())
                 || diagnostic.getOffendingToken().isBlank();
+    }
+
+    private Optional<String> unterminatedVariableReference(
+            Diagnostic.ParseDiagnostic diagnostic
+    ) {
+        String line = diagnostic.getSourceLine();
+
+        if (line == null) {
+            return Optional.empty();
+        }
+
+        if (hasUnclosedVariableReference(line)) {
+            return Optional.of("unterminated variable reference");
+        }
+
+        return Optional.empty();
+    }
+
+    private boolean hasUnclosedVariableReference(String line) {
+        int parentheses = 0;
+        int braces = 0;
+
+        for (int i = 0; i < line.length() - 1; i++) {
+            if (line.charAt(i) != '$') {
+                continue;
+            }
+
+            char next = line.charAt(i + 1);
+
+            if (next == '(') {
+                parentheses++;
+                i++;
+            } else if (next == '{') {
+                braces++;
+                i++;
+            }
+        }
+
+        for (char ch : line.toCharArray()) {
+            if (ch == ')' && parentheses > 0) {
+                parentheses--;
+            } else if (ch == '}' && braces > 0) {
+                braces--;
+            }
+        }
+
+        return parentheses > 0 || braces > 0;
     }
 }

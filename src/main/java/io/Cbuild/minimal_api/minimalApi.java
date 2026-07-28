@@ -474,7 +474,7 @@ public class minimalApi {
                     cbuildException.ErrorType.SEMANTIC,
                     "Circular dependency detected while resolving target '"
                             + activeTarget
-                            + "'."
+                            + "'. Stop."
             );
         }
 
@@ -962,6 +962,10 @@ public class minimalApi {
         run(cBuildProgram, cwd, null, new Env());
     }
 
+    public static void run(String cBuildProgram, String activeTarget, Env env) {
+        String cwd = System.getProperty("user.dir");
+        run(cBuildProgram, cwd, activeTarget, env);
+    }
 
     public static void run(String cBuildProgram, String cwd, String activeTarget, Env env) {
         try {
@@ -992,11 +996,22 @@ public class minimalApi {
                 return null;
             }).filter(Objects::nonNull).toList();
 
-            List<minimalApi.yModel.NormalRule> targetSubgraph =  activeTarget == null ?
+            if(rules.isEmpty()) {
+                throw new cbuildException(cbuildException.ErrorType.PROCESS, "cbuild: *** No targets.  Stop.");
+            }
+
+            List<minimalApi.yModel.NormalRule> targetSubgraph =  activeTarget == null || activeTarget.isEmpty() ?
                     backend.getTargetSubgraph(rules) : backend.getTargetSubgraph(rules, activeTarget);
 
+            if(targetSubgraph.isEmpty()) {
+                throw new cbuildException(cbuildException.ErrorType.PROCESS,
+                        String.format("cbuild: *** No rule to make target '%s'. Stop.", activeTarget));
+            }
 
             backend.buildTargetsParallel(targetSubgraph,1, cwd);
+        }
+        catch (RecursiveVariableExpansionException ex){
+            throw new cbuildException(cbuildException.ErrorType.PROCESS, ex.getRawMessage());
         }
         catch (cbuildException ex) {
             throw ex;
