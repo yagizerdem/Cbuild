@@ -1,13 +1,7 @@
 package io.Cbuild;
 
-import io.Cbuild.minimal_api.minimalApi;
 import org.javatuples.Pair;
-import org.stringtemplate.v4.ST;
-
-import java.nio.Buffer;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class Main {
     public static void main(String[] args) {
@@ -25,18 +19,21 @@ public class Main {
 
         cli.CLI_OPTIONS.MinimalApi minimalApi = result.getOptions().toMinimalApi();
         Pair<Boolean, String> pair = resolveBuildFilePath(result);
-        if(!pair.getValue0()) {
-            System.out.println(pair.getValue1());
-            return;
-        }
+//        if(!pair.getValue0()) {
+//            System.out.println(pair.getValue1());
+//            return;
+//        }
 
         String program = """
 a=10\\
 12\\
 14
-app:
-\t echo $(a)
-                """.trim();
+app: b
+\t echo $(a) $(b)
+b=$(c)
+c=$(b
+
+""";
 
         Env context = new Env();
 
@@ -64,11 +61,11 @@ app:
                 return new Pair<>(true, flag_path.getValue1());
             }
 
-            return new Pair<>(false, "cbuild: *** No targets specified and no makefile found.  Stop.");
+            return new Pair<>(false, "cbuild: *** No targets specified and no buildfile found.  Stop.");
         }
 
         if(util.findFileCaseInsensitive(minimalApi.buildFile, "cwd").isEmpty()) {
-            return new Pair<>(false, String.format("cbuild: *** No rule to make target %s.  Stop.", "'" + minimalApi.buildFile + "'"));
+            return new Pair<>(false, String.format("cbuild: *** No rule to build target %s.  Stop.", "'" + minimalApi.buildFile + "'"));
         }
 
         return new Pair<Boolean, String>(true, Path.of(root).resolve(minimalApi.buildFile).toString());

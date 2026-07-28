@@ -92,11 +92,7 @@ public class Expansion {
             String identifier = builder.toString();
 
             if (activeLookups.contains(identifier)) {
-                throw new cbuildException(
-                        cbuildException.ErrorType.SEMANTIC,
-                        "Recursive variable '" + identifier
-                                + "' references itself (eventually)."
-                );
+                throw new RecursiveVariableExpansionException(identifier);
             }
 
             if(context.symbolTable.containsKey(identifier)) {
