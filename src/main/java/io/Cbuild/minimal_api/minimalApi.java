@@ -1008,7 +1008,25 @@ public class minimalApi {
                         String.format("cbuild: *** No rule to make target '%s'. Stop.", activeTarget));
             }
 
-            backend.buildTargetsParallel(targetSubgraph,1, cwd);
+            if(env.setting.buildSequential) {
+                backend.buildTargetsSequential(targetSubgraph, cwd);
+            }
+            else {
+                int processorCount = Runtime.getRuntime().availableProcessors();
+                if(env.setting.parallelJobCount > processorCount) {
+                    System.out.printf(
+                            "warning: requested %d parallel jobs, but only %d processors are available; using %d jobs%n",
+                            env.setting.parallelJobCount,
+                            processorCount,
+                            processorCount
+                    );
+                }
+
+                int parallelism = Math.min(env.setting.parallelJobCount, processorCount);
+                backend.buildTargetsParallel(targetSubgraph,parallelism, cwd);
+            }
+
+
         }
         catch (RecursiveVariableExpansionException ex){
             throw new cbuildException(cbuildException.ErrorType.PROCESS, ex.getRawMessage());

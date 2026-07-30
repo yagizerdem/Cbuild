@@ -9,6 +9,24 @@ import java.util.*;
 
 public class Env {
 
+    // settings
+    public Settings setting;
+
+    public static class Settings {
+        public boolean buildSequential;
+        public int parallelJobCount;
+
+        public Settings() {};
+
+        public static Settings toSettings(cli.CLI_OPTIONS.MinimalApi options) {
+            Settings setting = new Settings();
+            setting.parallelJobCount = options.parallelJobCount;
+            setting.buildSequential = options.buildSequential;
+
+            return setting;
+        }
+    }
+
     // file meta data
 
     public static class FileMetaData {
