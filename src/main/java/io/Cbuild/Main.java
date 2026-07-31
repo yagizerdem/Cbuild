@@ -36,6 +36,13 @@ public class Main {
 //        }
 
         String program = """
+
+ifeq ($(CC),gcc)
+  libs=$(libs_for_gcc)
+else
+  libs=$(normal_libs)
+endif
+
 a=10\\
 12\\
 14

@@ -52,7 +52,7 @@ public class minimalApi {
             throw incompatible(
                     ir,
                     "Unsupported IR type for minimal-backend: "
-                            + ir.getClass().getSimpleName()
+                            + ir.getClass().getSimpleName() + ". Stop."
             );
         }
 
@@ -154,7 +154,8 @@ public class minimalApi {
 
     private boolean allowedIR(cBuildIR.IR ir) {
         return ir instanceof cBuildIR.AssignmentIR
-                || ir instanceof cBuildIR.NormalRuleIR;
+                || ir instanceof cBuildIR.NormalRuleIR
+                || ir instanceof cBuildIR.YsharpHookIR;
     }
 
     private cbuildException incompatible(cBuildIR.IR ir, String message) {
@@ -984,11 +985,17 @@ public class minimalApi {
             parser.addErrorListener(errorListener);
             cbuildParser.CbuildfileContext context = parser.cbuildfile();
 
+            // compile
             cBuildCompiler cBuildCompiler = new cBuildCompiler();
             List<cBuildIR.IR> ir = cBuildCompiler.compile(context);
 
-
             minimalApi backend = new minimalApi(env);
+
+            // validate ir-models match minimal-api subset
+            for(int i = 0; i < ir.size(); i++) {
+                backend.validateIR(ir.get(i));
+            }
+
             List<minimalApi.yModel.yBaseModel> models = backend.build(ir);
 
             List<minimalApi.yModel.NormalRule> rules = models.stream().map(x -> {
