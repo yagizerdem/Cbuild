@@ -6,7 +6,9 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-
+import ysharp.treewalk.YsharpException;
+import ysharp.treewalk.evaluator.Interpreter;
+import io.Cbuild.ySharpNatives.*;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
@@ -52,7 +54,7 @@ public class minimalApi {
             throw incompatible(
                     ir,
                     "Unsupported IR type for minimal-backend: "
-                            + ir.getClass().getSimpleName()
+                            + ir.getClass().getSimpleName() + ". Stop."
             );
         }
 
@@ -154,7 +156,8 @@ public class minimalApi {
 
     private boolean allowedIR(cBuildIR.IR ir) {
         return ir instanceof cBuildIR.AssignmentIR
-                || ir instanceof cBuildIR.NormalRuleIR;
+                || ir instanceof cBuildIR.NormalRuleIR
+                || ir instanceof cBuildIR.YsharpHookIR;
     }
 
     private cbuildException incompatible(cBuildIR.IR ir, String message) {
@@ -315,14 +318,15 @@ public class minimalApi {
             Expansion expansion = new Expansion();
             List<String> targets = new ArrayList<>();
             List<String> preq = new ArrayList<>();
+            Expansion.minimalApiValueExpansionEngine expansionEngine = new Expansion.minimalApiValueExpansionEngine(context);
             for(cBuildIR.ValueIR valueIR : ir.targets) {
-                String expansionResult = expansion.expandValue(valueIR, context);
+                String expansionResult = expansion.expandValue(valueIR, context, expansionEngine);
                 targets.addAll(Arrays.stream(expansionResult.split("\\s+"))
                         .filter(x ->  !x.trim().isBlank()).toList());
             }
 
             for(cBuildIR.ValueIR valueIR : ir.prerequisites) {
-                String expansionResult = expansion.expandValue(valueIR, context);
+                String expansionResult = expansion.expandValue(valueIR, context, expansionEngine);
                 preq.addAll(Arrays.stream(expansionResult.split("\\s+"))
                         .filter(x ->  !x.trim().isBlank()).toList());
             }
@@ -344,6 +348,13 @@ public class minimalApi {
             Expansion.minimalApiExpansionEngine expansionEngine =
                     new Expansion.minimalApiExpansionEngine(this.context);
             ir.exec(expansionEngine);
+            return null;
+        }
+
+        @Override
+        public Void exec(cBuildIR.YsharpHookIR ir) {
+            ysharp.treewalk.evaluator.Interpreter interpreter = minimalApi.getySharpInterpreter(this.context);
+            ySharpExecutor.exec(interpreter, ir.program);
             return null;
         }
 
@@ -933,14 +944,23 @@ public class minimalApi {
             synchronized (EXPANSION_LOCK) {
                 command = recipeIR.exec(recipeExpansionEngine);
             }
-            shell.ExecutionResult result = sh.runCommandCaptured(command, cwd);
+            io.Cbuild.Env.SymbolTableVariable shellVar = this.globalContext.getVariable("SHELL");
+            String shell = null;
+            if(!shellVar.isDeferred()) shell = shellVar.getRawValue();
+            if(shellVar.isDeferred()) {
+                Expansion expansion = new Expansion();
+                shell = expansion.expandValueMinimalApi(shellVar.getDeferredValue(), this.globalContext);
+            }
+
+            shell.ExecutionResult result = shell != null ?
+                    sh.runCommandCaptured(command, cwd, shell) : sh.runCommandCaptured(command, cwd);
 
 
             if (!result.isSuccess) {
                 throw new cbuildException(
                         cbuildException.ErrorType.PROCESS,
                         "Build failed for target '%s': %s, message : %s"
-                                .formatted(rule.target, command, result.stdErr)
+                                .formatted(rule.target, command, result.exceptionMessage)
                 );
             }
 
@@ -956,6 +976,10 @@ public class minimalApi {
     public static void run(String cBuildProgram, Env env) {
         String cwd = System.getProperty("user.dir");
         run(cBuildProgram, cwd, null, env);
+    }
+
+    public static void run(String cBuildProgram, String cwd, String activeTarget) {
+        run(cBuildProgram, cwd, activeTarget, new Env());
     }
 
     public static void run(String cBuildProgram, String cwd) {
@@ -984,11 +1008,17 @@ public class minimalApi {
             parser.addErrorListener(errorListener);
             cbuildParser.CbuildfileContext context = parser.cbuildfile();
 
+            // compile
             cBuildCompiler cBuildCompiler = new cBuildCompiler();
             List<cBuildIR.IR> ir = cBuildCompiler.compile(context);
 
-
             minimalApi backend = new minimalApi(env);
+
+            // validate ir-models match minimal-api subset
+            for(int i = 0; i < ir.size(); i++) {
+                backend.validateIR(ir.get(i));
+            }
+
             List<minimalApi.yModel.yBaseModel> models = backend.build(ir);
 
             List<minimalApi.yModel.NormalRule> rules = models.stream().map(x -> {
@@ -1008,7 +1038,25 @@ public class minimalApi {
                         String.format("cbuild: *** No rule to make target '%s'. Stop.", activeTarget));
             }
 
-            backend.buildTargetsParallel(targetSubgraph,1, cwd);
+            if(env.setting.buildSequential) {
+                backend.buildTargetsSequential(targetSubgraph, cwd);
+            }
+            else {
+                int processorCount = Runtime.getRuntime().availableProcessors();
+                if(env.setting.parallelJobCount > processorCount) {
+                    System.out.printf(
+                            "warning: requested %d parallel jobs, but only %d processors are available; using %d jobs%n",
+                            env.setting.parallelJobCount,
+                            processorCount,
+                            processorCount
+                    );
+                }
+
+                int parallelism = Math.min(env.setting.parallelJobCount, processorCount);
+                backend.buildTargetsParallel(targetSubgraph,parallelism, cwd);
+            }
+
+
         }
         catch (RecursiveVariableExpansionException ex){
             throw new cbuildException(cbuildException.ErrorType.PROCESS, ex.getRawMessage());
@@ -1024,9 +1072,62 @@ public class minimalApi {
         catch (ParseCancellationException ex) {
             throw new cbuildException(cbuildException.ErrorType.SYNTAX, ex.getMessage());
         }
+        catch (YsharpException ex) {
+            throw new cbuildException(cbuildException.ErrorType.SYNTAX, "[ysharp] " + ex.getMessage());
+        }
         catch (Exception ex) {
             throw new cbuildException(cbuildException.ErrorType.PROCESS, ex.getMessage());
         }
 
+    }
+
+    private ysharp.treewalk.evaluator.Interpreter getySharpInterpreter() {
+        try {
+            ysharp.treewalk.evaluator.Interpreter interpreter = new Interpreter();
+
+            interpreter.cwd =
+                    this.globalContext.setting.cwd != null && !this.globalContext.setting.cwd.isBlank() ?
+                            this.globalContext.setting.cwd : System.getProperty("user.dir");
+
+            // minimal-api specific modules
+            fsModule.Register(interpreter);
+            processModule.Register(interpreter);
+            mathModule.Register(interpreter);
+            randomModule.Register(interpreter);
+            envModule.Register(interpreter, this.globalContext);
+            globals.Register(interpreter);
+
+            return interpreter;
+        }catch (Exception ex) {
+            throw new cbuildException(
+                    cbuildException.ErrorType.PROCESS,
+                    "Failed to initialize the YSharp interpreter: " + ex.getMessage()
+            );
+        }
+    }
+
+    private static ysharp.treewalk.evaluator.Interpreter getySharpInterpreter(Env context) {
+        try {
+            ysharp.treewalk.evaluator.Interpreter interpreter = new Interpreter();
+
+            interpreter.cwd =
+                    context.setting.cwd != null && !context.setting.cwd.isBlank() ?
+                            context.setting.cwd : System.getProperty("user.dir");
+
+            // minimal-api specific modules
+            fsModule.Register(interpreter);
+            processModule.Register(interpreter);
+            mathModule.Register(interpreter);
+            randomModule.Register(interpreter);
+            envModule.Register(interpreter, context);
+            globals.Register(interpreter);
+
+            return interpreter;
+        }catch (Exception ex) {
+            throw new cbuildException(
+                    cbuildException.ErrorType.PROCESS,
+                    "Failed to initialize the YSharp interpreter: " + ex.getMessage()
+            );
+        }
     }
 }

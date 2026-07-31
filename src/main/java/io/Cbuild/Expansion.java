@@ -128,20 +128,29 @@ public class Expansion {
         }
     }
 
-    public String expandValue(cBuildIR.ValueIR ir, Env context) {
-        minimalApiValueExpansionEngine engine = new Expansion.minimalApiValueExpansionEngine(context);
+    public String expandValue(cBuildIR.ValueIR ir, Env context, Expansion.BaseExpansionEngine engine) {
         return ir.exec(engine);
     }
 
-    public void expand(List<cBuildIR.IR> instructions, Env context) {
+    public void expand(List<cBuildIR.IR> instructions, Env context, Expansion.BaseExpansionEngine engine) {
+        for(cBuildIR.IR ir : instructions) {
+            ir.exec(engine);
+        }
+    }
+
+    public void expandMinimalApi(cBuildIR.IR instruction, Env context, Expansion.BaseExpansionEngine engine) {
+        instruction.exec(engine);
+    }
+
+    public void expandMinimalApi(List<cBuildIR.IR> instructions, Env context) {
         minimalApiExpansionEngine expansionEngine = new minimalApiExpansionEngine(context);
         for(cBuildIR.IR ir : instructions) {
             ir.exec(expansionEngine);
         }
     }
 
-    public void expand(cBuildIR.IR instruction, Env context) {
-        minimalApiExpansionEngine expansionEngine = new minimalApiExpansionEngine(context);
-        instruction.exec(expansionEngine);
+    public String expandValueMinimalApi(cBuildIR.ValueIR ir, Env context) {
+        minimalApiValueExpansionEngine expansionEngine = new minimalApiValueExpansionEngine(context);
+        return ir.exec(expansionEngine);
     }
 }

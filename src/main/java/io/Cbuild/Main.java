@@ -6,10 +6,21 @@ import java.nio.file.Path;
 public class Main {
     public static void main(String[] args) {
 
-        String cliArgs =  " --sequential --minimal -f fucker --jobs 10 app app2 app3";
+        String cliArgs =  " --minimal -f fucker --jobs 100 app app2 app3";
 
         cli cli_ = new cli(cliArgs.split(" "));
         cli.CliExecutionResult response = cli_.execute();
+
+        if(!response.getDiagnostic().diagnostics.isEmpty()) {
+            response.getDiagnostic().diagnostics.forEach(d -> {
+                System.out.println(d.getSeverity().toString().toLowerCase() + " : " + d.getMessage());
+            });
+        }
+
+        if(!response.isSuccess()) {
+            return;
+        }
+
         if(response.getOptions().getIsMinimalApi()) {
             runMinimalApi(response);
         }
@@ -17,7 +28,7 @@ public class Main {
 
     public static void runMinimalApi(cli.CliExecutionResult result) {
 
-        cli.CLI_OPTIONS.MinimalApi minimalApi = result.getOptions().toMinimalApi();
+        cli.CLI_OPTIONS.MinimalApi cliOptions = result.getOptions().toMinimalApi();
         Pair<Boolean, String> pair = resolveBuildFilePath(result);
 //        if(!pair.getValue0()) {
 //            System.out.println(pair.getValue1());
@@ -25,21 +36,42 @@ public class Main {
 //        }
 
         String program = """
+
+SHELL = cmd.exe
+
+ysharp {
+
+    for var i = 0; i < 10;  i++ do
+        println i;
+    end
+    
+    env.set("k", "300");
+    env.set("name", "yagiz");
+    env.set("l_name", "erdem");
+    println env.size();
+}
+
 a=10\\
 12\\
 14
 app: b
 \t echo $(a) $(b)
+\t echo $(k)
+
+ysharp {
+    println 100 >> 2;
+}
+
 b=$(c)
-c=$(b
+c=$(a)
 
 """;
 
         Env context = new Env();
-
+        context.setting = Env.Settings.toSettings(cliOptions);
         context.fileMetaData = new Env.FileMetaData();
         context.fileMetaData.fileContent = program;
-        context.fileMetaData.fileName = result.getOptions().toMinimalApi().buildFile;
+        context.fileMetaData.fileName = cliOptions.buildFile;
 
         try {
             io.Cbuild.minimal_api.minimalApi.run(program, context);

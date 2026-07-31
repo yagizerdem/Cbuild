@@ -1,9 +1,6 @@
 package common;
 
-import io.Cbuild.Env;
-import io.Cbuild.Expansion;
-import io.Cbuild.cBuildIR;
-import io.Cbuild.cbuildException;
+import io.Cbuild.*;
 import io.Cbuild.minimal_api.minimalApi;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -671,7 +668,9 @@ result := $(safe)
         List<cBuildIR.IR> ir = utils.generateIR(cBuildProgram);
         minimalApi backend = new minimalApi();
         Expansion expansion = new Expansion();
-        expansion.expand(ir, context);
+        Expansion.minimalApiExpansionEngine expansionEngine =
+                new Expansion.minimalApiExpansionEngine(context);
+        expansion.expand(ir, context, expansionEngine);
         return context;
     }
 

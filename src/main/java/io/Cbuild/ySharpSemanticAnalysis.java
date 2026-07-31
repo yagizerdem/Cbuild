@@ -1,14 +1,13 @@
 package io.Cbuild;
 
 import ysharp.treewalk.YsharpException;
-import ysharp.treewalk.evaluator.Variable;
 import ysharp.treewalk.parser.Expr;
 import ysharp.treewalk.parser.Parser;
 import ysharp.treewalk.parser.Stmt;
 
 import java.util.Map;
 
-public class ySharpSemanticAnalysis implements Expr.Visitor<Variable.Variant>,
+public class ySharpSemanticAnalysis implements Expr.Visitor<Void>,
         Stmt.Visitor {
 
     public static void restrictFeatures(Parser.Program program) {
@@ -30,20 +29,20 @@ public class ySharpSemanticAnalysis implements Expr.Visitor<Variable.Variant>,
     // expr visitor
 
     @Override
-    public Variable.Variant visitBinaryExpr(Expr.BinaryExpr expr) {
+    public Void visitBinaryExpr(Expr.BinaryExpr expr) {
         expr.left.accept(this);
         expr.right.accept(this);
         return null;
     }
 
     @Override
-    public Variable.Variant visitUnaryExpr(Expr.UnaryExpr expr) {
+    public Void visitUnaryExpr(Expr.UnaryExpr expr) {
         expr.expr.accept(this);
         return null;
     }
 
     @Override
-    public Variable.Variant visitPipeExpr(Expr.PipeExpr expr) {
+    public Void visitPipeExpr(Expr.PipeExpr expr) {
         throw new YsharpException(
                 YsharpException.YsharpErrorType.SEMANTIC,
                 -1,
@@ -52,7 +51,7 @@ public class ySharpSemanticAnalysis implements Expr.Visitor<Variable.Variant>,
     }
 
     @Override
-    public Variable.Variant visitTernaryExpr(Expr.TernaryExpr expr) {
+    public Void visitTernaryExpr(Expr.TernaryExpr expr) {
         expr.condition.accept(this);
         expr.thenBranch.accept(this);
         expr.elseBranch.accept(this);
@@ -60,42 +59,44 @@ public class ySharpSemanticAnalysis implements Expr.Visitor<Variable.Variant>,
     }
 
     @Override
-    public Variable.Variant visitPostfixExpr(Expr.PostfixExpr expr) {
+    public Void visitPostfixExpr(Expr.PostfixExpr expr) {
         expr.operand.accept(this);
         return null;
     }
 
     @Override
-    public Variable.Variant visitAssignmentExpr(Expr.AssignmentExpr expr) {
+    public Void visitAssignmentExpr(Expr.AssignmentExpr expr) {
         expr.target.accept(this);
         expr.value.accept(this);
         return null;
     }
 
     @Override
-    public Variable.Variant visitLogicalExpr(Expr.LogicalExpr expr) {
+    public Void visitLogicalExpr(Expr.LogicalExpr expr) {
         expr.left.accept(this);
         expr.right.accept(this);
         return null;
     }
 
     @Override
-    public Variable.Variant visitGroupingExpr(Expr.GroupingExpr expr) {
+    public Void visitGroupingExpr(Expr.GroupingExpr expr) {
         expr.expression.accept(this);
         return null;
     }
 
     @Override
-    public Variable.Variant visitGetExpr(Expr.GetExpr expr) {
-        throw new YsharpException(
-                YsharpException.YsharpErrorType.SEMANTIC,
-                -1,
-                "Property access expressions are not supported in Cbuild. See the documentation for the list of supported Ysharp features."
-        );
+    public Void visitGetExpr(Expr.GetExpr expr) {
+//        throw new YsharpException(
+//                YsharpException.YsharpErrorType.SEMANTIC,
+//                -1,
+//                "Property access expressions are not supported in Cbuild. See the documentation for the list of supported Ysharp features."
+//        );
+
+        return null;
     }
 
     @Override
-    public Variable.Variant visitSetExpr(Expr.SetExpr expr) {
+    public Void visitSetExpr(Expr.SetExpr expr) {
         throw new YsharpException(
                 YsharpException.YsharpErrorType.SEMANTIC,
                 -1,
@@ -104,7 +105,7 @@ public class ySharpSemanticAnalysis implements Expr.Visitor<Variable.Variant>,
     }
 
     @Override
-    public Variable.Variant visitCallExpr(Expr.CallExpr expr) {
+    public Void visitCallExpr(Expr.CallExpr expr) {
         expr.callee.accept(this);
         for(Expr arg : expr.arguments) {
             arg.accept(this);
@@ -113,17 +114,17 @@ public class ySharpSemanticAnalysis implements Expr.Visitor<Variable.Variant>,
     }
 
     @Override
-    public Variable.Variant visitLiteralExpr(Expr.LiteralExpr expr) {
+    public Void visitLiteralExpr(Expr.LiteralExpr expr) {
         return null;
     }
 
     @Override
-    public Variable.Variant visitVariableExpr(Expr.VariableExpr expr) {
+    public Void visitVariableExpr(Expr.VariableExpr expr) {
         return null;
     }
 
     @Override
-    public Variable.Variant visitArrayInitializerExpr(Expr.ArrayInitializerExpr expr) {
+    public Void visitArrayInitializerExpr(Expr.ArrayInitializerExpr expr) {
         for (Expr elem : expr.elements) {
             elem.accept(this);
         }
@@ -131,7 +132,7 @@ public class ySharpSemanticAnalysis implements Expr.Visitor<Variable.Variant>,
     }
 
     @Override
-    public Variable.Variant visitMapInitializerExpr(Expr.MapInitializerExpr expr) {
+    public Void visitMapInitializerExpr(Expr.MapInitializerExpr expr) {
         for (Expr.MapInitializerExpr.Entry entry : expr.entries) {
             entry.value.accept(this);
         }
@@ -139,7 +140,7 @@ public class ySharpSemanticAnalysis implements Expr.Visitor<Variable.Variant>,
     }
 
     @Override
-    public Variable.Variant visitLambdaExpr(Expr.LambdaExpr expr) {
+    public Void visitLambdaExpr(Expr.LambdaExpr expr) {
         if(expr.expr != null) {
             expr.expr.accept(this);
         }
@@ -150,7 +151,7 @@ public class ySharpSemanticAnalysis implements Expr.Visitor<Variable.Variant>,
     }
 
     @Override
-    public Variable.Variant visitNexExpr(Expr.NewExpr expr) {
+    public Void visitNexExpr(Expr.NewExpr expr) {
         throw new YsharpException(
                 YsharpException.YsharpErrorType.SEMANTIC,
                 -1,
@@ -159,7 +160,7 @@ public class ySharpSemanticAnalysis implements Expr.Visitor<Variable.Variant>,
     }
 
     @Override
-    public Variable.Variant visitSuperCallExpr(Expr.SuperCallExpr expr) {
+    public Void visitSuperCallExpr(Expr.SuperCallExpr expr) {
         throw new YsharpException(
                 YsharpException.YsharpErrorType.SEMANTIC,
                 -1,
@@ -168,7 +169,7 @@ public class ySharpSemanticAnalysis implements Expr.Visitor<Variable.Variant>,
     }
 
     @Override
-    public Variable.Variant visitRangeExpr(Expr.RangeExpr expr) {
+    public Void visitRangeExpr(Expr.RangeExpr expr) {
         expr.start.accept(this);
         expr.end.accept(this);
         return null;
@@ -301,11 +302,6 @@ public class ySharpSemanticAnalysis implements Expr.Visitor<Variable.Variant>,
 
     @Override
     public void visitConstDeclaration(Stmt.ConstDeclaration stmt) {
-        throw new YsharpException(
-                YsharpException.YsharpErrorType.SEMANTIC,
-                -1,
-                "Const declarations are not supported in Cbuild. Use 'var' instead."
-        );
     }
 
     @Override
