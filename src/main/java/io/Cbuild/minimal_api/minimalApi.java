@@ -352,7 +352,7 @@ public class minimalApi {
 
         @Override
         public Void exec(cBuildIR.YsharpHookIR ir) {
-            ysharp.treewalk.evaluator.Interpreter interpreter = new Interpreter();
+            ysharp.treewalk.evaluator.Interpreter interpreter = minimalApi.getySharpInterpreter(this.context);
             ySharpExecutor.exec(interpreter, ir.program);
             return null;
         }
@@ -1074,6 +1074,31 @@ public class minimalApi {
             interpreter.cwd =
                     this.globalContext.setting.cwd != null && !this.globalContext.setting.cwd.isBlank() ?
                             this.globalContext.setting.cwd : System.getProperty("user.dir");
+
+            // minimal-api specific modules
+            fsModule.Register(interpreter);
+            processModule.Register(interpreter);
+            mathModule.Register(interpreter);
+            randomModule.Register(interpreter);
+            envModule.Register(interpreter);
+            globals.Register(interpreter);
+
+            return interpreter;
+        }catch (Exception ex) {
+            throw new cbuildException(
+                    cbuildException.ErrorType.PROCESS,
+                    "Failed to initialize the YSharp interpreter: " + ex.getMessage()
+            );
+        }
+    }
+
+    private static ysharp.treewalk.evaluator.Interpreter getySharpInterpreter(Env context) {
+        try {
+            ysharp.treewalk.evaluator.Interpreter interpreter = new Interpreter();
+
+            interpreter.cwd =
+                    context.setting.cwd != null && !context.setting.cwd.isBlank() ?
+                            context.setting.cwd : System.getProperty("user.dir");
 
             // minimal-api specific modules
             fsModule.Register(interpreter);

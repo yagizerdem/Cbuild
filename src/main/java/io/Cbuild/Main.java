@@ -46,7 +46,7 @@ ysharp {
         println i;
     end
     
-    const a = 10;
+    println random.float();
 }
 
 a=10\\
