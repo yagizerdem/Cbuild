@@ -968,6 +968,10 @@ public class minimalApi {
         run(cBuildProgram, cwd, null, env);
     }
 
+    public static void run(String cBuildProgram, String cwd, String activeTarget) {
+        run(cBuildProgram, cwd, activeTarget, new Env());
+    }
+
     public static void run(String cBuildProgram, String cwd) {
         run(cBuildProgram, cwd, null, new Env());
     }
@@ -1080,7 +1084,7 @@ public class minimalApi {
             processModule.Register(interpreter);
             mathModule.Register(interpreter);
             randomModule.Register(interpreter);
-            envModule.Register(interpreter);
+            envModule.Register(interpreter, this.globalContext);
             globals.Register(interpreter);
 
             return interpreter;
@@ -1105,7 +1109,7 @@ public class minimalApi {
             processModule.Register(interpreter);
             mathModule.Register(interpreter);
             randomModule.Register(interpreter);
-            envModule.Register(interpreter);
+            envModule.Register(interpreter, context);
             globals.Register(interpreter);
 
             return interpreter;

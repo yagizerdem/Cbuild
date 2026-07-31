@@ -37,16 +37,18 @@ public class Main {
 
         String program = """
 
-k = 100;
+k = 100
 
 ysharp {
-
 
     for var i = 0; i < 10;  i++ do
         println i;
     end
     
-    println random.float();
+    env.set("k", "300");
+    env.set("name", "yagiz");
+    env.set("l_name", "erdem");
+    println env.size();
 }
 
 a=10\\
@@ -54,6 +56,7 @@ a=10\\
 14
 app: b
 \t echo $(a) $(b)
+\t echo $(k)
 
 ysharp {
     println 100 >> 2;
