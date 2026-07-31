@@ -150,7 +150,7 @@ public class Expansion {
     }
 
     public String expandValueMinimalApi(cBuildIR.ValueIR ir, Env context) {
-        minimalApiExpansionEngine expansionEngine = new minimalApiExpansionEngine(context);
+        minimalApiValueExpansionEngine expansionEngine = new minimalApiValueExpansionEngine(context);
         return ir.exec(expansionEngine);
     }
 }

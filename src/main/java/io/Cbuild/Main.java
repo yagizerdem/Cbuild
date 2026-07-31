@@ -37,7 +37,7 @@ public class Main {
 
         String program = """
 
-k = 100
+SHELL = cmd.exe
 
 ysharp {
 

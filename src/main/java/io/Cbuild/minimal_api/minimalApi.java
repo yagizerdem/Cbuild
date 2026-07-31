@@ -944,14 +944,23 @@ public class minimalApi {
             synchronized (EXPANSION_LOCK) {
                 command = recipeIR.exec(recipeExpansionEngine);
             }
-            shell.ExecutionResult result = sh.runCommandCaptured(command, cwd);
+            io.Cbuild.Env.SymbolTableVariable shellVar = this.globalContext.getVariable("SHELL");
+            String shell = null;
+            if(!shellVar.isDeferred()) shell = shellVar.getRawValue();
+            if(shellVar.isDeferred()) {
+                Expansion expansion = new Expansion();
+                shell = expansion.expandValueMinimalApi(shellVar.getDeferredValue(), this.globalContext);
+            }
+
+            shell.ExecutionResult result = shell != null ?
+                    sh.runCommandCaptured(command, cwd, shell) : sh.runCommandCaptured(command, cwd);
 
 
             if (!result.isSuccess) {
                 throw new cbuildException(
                         cbuildException.ErrorType.PROCESS,
                         "Build failed for target '%s': %s, message : %s"
-                                .formatted(rule.target, command, result.stdErr)
+                                .formatted(rule.target, command, result.exceptionMessage)
                 );
             }
 
