@@ -318,14 +318,15 @@ public class minimalApi {
             Expansion expansion = new Expansion();
             List<String> targets = new ArrayList<>();
             List<String> preq = new ArrayList<>();
+            Expansion.minimalApiExpansionEngine expansionEngine = new Expansion.minimalApiExpansionEngine(context);
             for(cBuildIR.ValueIR valueIR : ir.targets) {
-                String expansionResult = expansion.expandValue(valueIR, context);
+                String expansionResult = expansion.expandValue(valueIR, context, expansionEngine);
                 targets.addAll(Arrays.stream(expansionResult.split("\\s+"))
                         .filter(x ->  !x.trim().isBlank()).toList());
             }
 
             for(cBuildIR.ValueIR valueIR : ir.prerequisites) {
-                String expansionResult = expansion.expandValue(valueIR, context);
+                String expansionResult = expansion.expandValue(valueIR, context, expansionEngine);
                 preq.addAll(Arrays.stream(expansionResult.split("\\s+"))
                         .filter(x ->  !x.trim().isBlank()).toList());
             }
