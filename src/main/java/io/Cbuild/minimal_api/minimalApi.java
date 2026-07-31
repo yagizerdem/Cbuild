@@ -318,7 +318,7 @@ public class minimalApi {
             Expansion expansion = new Expansion();
             List<String> targets = new ArrayList<>();
             List<String> preq = new ArrayList<>();
-            Expansion.minimalApiExpansionEngine expansionEngine = new Expansion.minimalApiExpansionEngine(context);
+            Expansion.minimalApiValueExpansionEngine expansionEngine = new Expansion.minimalApiValueExpansionEngine(context);
             for(cBuildIR.ValueIR valueIR : ir.targets) {
                 String expansionResult = expansion.expandValue(valueIR, context, expansionEngine);
                 targets.addAll(Arrays.stream(expansionResult.split("\\s+"))

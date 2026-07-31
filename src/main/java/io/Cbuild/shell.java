@@ -170,69 +170,134 @@ public class shell {
 
     private static OS os = null;
 
-    public void runCommand(String command , String cwd) {
-        boolean windows =  isWindows();
-
-        List<String> shellCommand = windows
-                ? List.of("cmd.exe", "/c", command)
-                : List.of("sh", "-c", command);
+    // uses default shell
+    public void runCommand(
+            String command,
+            String cwd,
+            String... shellExecutablePath
+    ) {
+        List<String> shellCommand =
+                createShellCommand(command, shellExecutablePath);
 
         try {
-            ProcessBuilder builder = new ProcessBuilder(shellCommand)
-                    .inheritIO();
+            Process process = new ProcessBuilder(shellCommand)
+                    .directory(Path.of(cwd).toFile())
+                    .inheritIO()
+                    .start();
 
-            builder.directory(Path.of(cwd).toFile());
-
-            Process process = builder.start();
             int exitCode = process.waitFor();
 
             if (exitCode != 0) {
                 throw new cbuildException(
                         cbuildException.ErrorType.PROCESS,
-                        """
-                        Command: %s
-                        Exit code: %d
-                        """.formatted(
-                                command,
-                                exitCode
-                        ).strip()
+                        "Command exited with code %d: %s"
+                                .formatted(exitCode, command)
                 );
             }
         } catch (IOException exception) {
             throw new cbuildException(
                     cbuildException.ErrorType.PROCESS,
-                    """
-                    Failed to start process for target.
-                    Command: %s
-                    Shell: %s
-                    Cause: %s
-                    """.formatted(
-                            command,
-                            String.join(" ", shellCommand.subList(0, shellCommand.size() - 1)),
-                            exception.getMessage()
-                    ).strip()
+                    "Failed to execute command using %s: %s"
+                            .formatted(
+                                    shellCommand.getFirst(),
+                                    exception.getMessage()
+                            )
             );
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
 
             throw new cbuildException(
                     cbuildException.ErrorType.PROCESS,
-                    """
-                    Command execution was interrupted for target.
-                    Command: %s
-                    """.formatted(
-                            command
-                    ).strip()
+                    "Command execution was interrupted: " + command
             );
         }
     }
 
-    public ExecutionResult runCommandCaptured(String command, String cwd) {
-        boolean windows = isWindows();
+    private List<String> createShellCommand(
+            String command,
+            String... shellExecutablePath
+    ) {
+        if (shellExecutablePath.length > 1) {
+            throw new IllegalArgumentException(
+                    "Only one shell executable may be provided."
+            );
+        }
 
-        List<String> shellCommand = windows
-                ? List.of("cmd.exe", "/c", command)
-                : List.of("sh", "-c", command);
+        if (shellExecutablePath.length == 0) {
+            return createDefaultShellCommand(command);
+        }
+
+        String shellPath = shellExecutablePath[0];
+
+        if (shellPath == null || shellPath.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Shell executable path must not be blank."
+            );
+        }
+
+        return createCommandForShell(shellPath, command);
+    }
+
+    private List<String> createDefaultShellCommand(String command) {
+        return switch (getOS()) {
+            case WINDOWS ->
+                    List.of(
+                            "cmd.exe",
+                            "/d",
+                            "/s",
+                            "/c",
+                            command
+                    );
+
+            case LINUX, MAC, SOLARIS ->
+                    List.of(
+                            "/bin/sh",
+                            "-c",
+                            command
+                    );
+        };
+    }
+
+    private List<String> createCommandForShell(
+            String shellPath,
+            String command
+    ) {
+        String shellName = Path.of(shellPath)
+                .getFileName()
+                .toString()
+                .toLowerCase();
+
+        return switch (shellName) {
+            case "cmd", "cmd.exe" ->
+                    List.of(
+                            shellPath,
+                            "/d",
+                            "/s",
+                            "/c",
+                            command
+                    );
+
+            case "powershell", "powershell.exe", "pwsh", "pwsh.exe" ->
+                    List.of(
+                            shellPath,
+                            "-NoProfile",
+                            "-NonInteractive",
+                            "-Command",
+                            command
+                    );
+
+            default ->
+                    List.of(
+                            shellPath,
+                            "-c",
+                            command
+                    );
+        };
+    }
+
+    public ExecutionResult runCommandCaptured(String command, String cwd, String... shellExecutablePath) {
+        List<String> shellCommand =
+                createShellCommand(command, shellExecutablePath);
 
         try {
             ProcessBuilder builder = new ProcessBuilder(shellCommand);
@@ -311,33 +376,56 @@ public class shell {
         }
     }
 
-
     public static OS getOS() {
-        if (os == null) {
-            String operSys = System.getProperty("os.name").toLowerCase();
-            if (operSys.contains("win")) {
-                os = OS.WINDOWS;
-            } else if (operSys.contains("nix") || operSys.contains("nux")
-                    || operSys.contains("aix")) {
-                os = OS.LINUX;
-            } else if (operSys.contains("mac")) {
-                os = OS.MAC;
-            } else if (operSys.contains("sunos")) {
-                os = OS.SOLARIS;
-            }
+        if (os != null) {
+            return os;
         }
+
+        String operatingSystem = System.getProperty("os.name")
+                .toLowerCase();
+
+        if (operatingSystem.contains("win")) {
+            os = OS.WINDOWS;
+        } else if (
+                operatingSystem.contains("nix")
+                        || operatingSystem.contains("nux")
+                        || operatingSystem.contains("aix")
+        ) {
+            os = OS.LINUX;
+        } else if (
+                operatingSystem.contains("mac")
+                        || operatingSystem.contains("darwin")
+        ) {
+            os = OS.MAC;
+        } else if (
+                operatingSystem.contains("sunos")
+                        || operatingSystem.contains("solaris")
+        ) {
+            os = OS.SOLARIS;
+        } else {
+            throw new UnsupportedOperationException(
+                    "Unsupported operating system: "
+                            + System.getProperty("os.name")
+            );
+        }
+
         return os;
     }
 
     public boolean isWindows() {
-        return  getOS() == OS.WINDOWS;
+        return getOS() == OS.WINDOWS;
     }
 
     public boolean isLinux() {
-        return  getOS() == OS.LINUX;
+        return getOS() == OS.LINUX;
     }
 
     public boolean isMac() {
-        return  getOS() == OS.MAC;
+        return getOS() == OS.MAC;
     }
+
+    public boolean isSolaris() {
+        return getOS() == OS.SOLARIS;
+    }
+
 }

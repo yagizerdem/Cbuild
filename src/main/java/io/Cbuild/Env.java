@@ -16,6 +16,7 @@ public class Env {
         public boolean buildSequential;
         public int parallelJobCount;
         public String cwd;
+        public boolean isMinimalApi = false;
 
         public Settings() {
             this.cwd = System.getProperty("user.dir");
@@ -25,6 +26,7 @@ public class Env {
             Settings setting = new Settings();
             setting.parallelJobCount = options.parallelJobCount;
             setting.buildSequential = options.buildSequential;
+            setting.isMinimalApi = options.isMinimalApi;
 
             return setting;
         }
@@ -264,7 +266,8 @@ public class Env {
                     putDeferredVariable(name, value);
 
             case SIMPLE ->
-                    putRawVariable(name, expansion.expandValue(value, this));
+                    putRawVariable(name, this.setting.isMinimalApi ?
+                            expansion.expandValueMinimalApi(value, this) : "NOT IMPLEMENTED YET");
 
             default ->
                     throw new UnsupportedOperationException(
