@@ -37,17 +37,28 @@ public class Main {
 
         String program = """
 
-ifeq ($(CC),gcc)
-  libs=$(libs_for_gcc)
-else
-  libs=$(normal_libs)
-endif
+k = 100;
+
+ysharp {
+
+
+    for var i = 0; i < 10;  i++ do
+        println i;
+    end
+    
+    const a = 10;
+}
 
 a=10\\
 12\\
 14
 app: b
 \t echo $(a) $(b)
+
+ysharp {
+    println 100 >> 2;
+}
+
 b=$(c)
 c=$(a)
 

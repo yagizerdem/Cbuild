@@ -301,11 +301,6 @@ public class ySharpSemanticAnalysis implements Expr.Visitor<Variable.Variant>,
 
     @Override
     public void visitConstDeclaration(Stmt.ConstDeclaration stmt) {
-        throw new YsharpException(
-                YsharpException.YsharpErrorType.SEMANTIC,
-                -1,
-                "Const declarations are not supported in Cbuild. Use 'var' instead."
-        );
     }
 
     @Override

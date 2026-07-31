@@ -71,7 +71,7 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
             return vpathIR;
         }
         else if(ctx.ysharp_hook() != null) {
-            cBuildIR.YsharpHookIR ysharpHookIR = (cBuildIR.YsharpHookIR ) ctx.vpath().accept(this);
+            cBuildIR.YsharpHookIR ysharpHookIR = (cBuildIR.YsharpHookIR ) ctx.ysharp_hook().accept(this);
             return ysharpHookIR;
         }
 

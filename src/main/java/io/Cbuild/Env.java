@@ -15,8 +15,11 @@ public class Env {
     public static class Settings {
         public boolean buildSequential;
         public int parallelJobCount;
+        public String cwd;
 
-        public Settings() {};
+        public Settings() {
+            this.cwd = System.getProperty("user.dir");
+        };
 
         public static Settings toSettings(cli.CLI_OPTIONS.MinimalApi options) {
             Settings setting = new Settings();

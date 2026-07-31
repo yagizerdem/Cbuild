@@ -6,7 +6,9 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-
+import ysharp.treewalk.YsharpException;
+import ysharp.treewalk.evaluator.Interpreter;
+import io.Cbuild.ySharpNatives.*;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
@@ -345,6 +347,13 @@ public class minimalApi {
             Expansion.minimalApiExpansionEngine expansionEngine =
                     new Expansion.minimalApiExpansionEngine(this.context);
             ir.exec(expansionEngine);
+            return null;
+        }
+
+        @Override
+        public Void exec(cBuildIR.YsharpHookIR ir) {
+            ysharp.treewalk.evaluator.Interpreter interpreter = new Interpreter();
+            ySharpExecutor.exec(interpreter, ir.program);
             return null;
         }
 
@@ -1049,9 +1058,37 @@ public class minimalApi {
         catch (ParseCancellationException ex) {
             throw new cbuildException(cbuildException.ErrorType.SYNTAX, ex.getMessage());
         }
+        catch (YsharpException ex) {
+            throw new cbuildException(cbuildException.ErrorType.SYNTAX, "[ysharp] " + ex.getMessage());
+        }
         catch (Exception ex) {
             throw new cbuildException(cbuildException.ErrorType.PROCESS, ex.getMessage());
         }
 
+    }
+
+    private ysharp.treewalk.evaluator.Interpreter getySharpInterpreter() {
+        try {
+            ysharp.treewalk.evaluator.Interpreter interpreter = new Interpreter();
+
+            interpreter.cwd =
+                    this.globalContext.setting.cwd != null && !this.globalContext.setting.cwd.isBlank() ?
+                            this.globalContext.setting.cwd : System.getProperty("user.dir");
+
+            // minimal-api specific modules
+            fsModule.Register(interpreter);
+            processModule.Register(interpreter);
+            mathModule.Register(interpreter);
+            randomModule.Register(interpreter);
+            envModule.Register(interpreter);
+            globals.Register(interpreter);
+
+            return interpreter;
+        }catch (Exception ex) {
+            throw new cbuildException(
+                    cbuildException.ErrorType.PROCESS,
+                    "Failed to initialize the YSharp interpreter: " + ex.getMessage()
+            );
+        }
     }
 }
