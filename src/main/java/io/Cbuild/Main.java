@@ -1,28 +1,43 @@
 package io.Cbuild;
 
+import io.Cbuild.lua.LuaGlobals;
 import org.javatuples.Pair;
 import java.nio.file.Path;
+import org.luaj.vm2.Globals;
+
 
 public class Main {
     public static void main(String[] args) {
 
-        String cliArgs =  " --minimal -f fucker --jobs 100 app app2 app3";
+        try {
+            Globals globals = LuaGlobals.getGlobalsCached();
+            io.Cbuild.lua.luaNatives.globals.register(globals);
+            io.Cbuild.lua.luaNatives.mathModule.register(globals);
+            io.Cbuild.lua.luaNatives.fsModule.register(globals);
+            io.Cbuild.lua.luaNatives.randomModule.register(globals);
+            io.Cbuild.lua.luaNatives.processModule.register(globals);
 
-        cli cli_ = new cli(cliArgs.split(" "));
-        cli.CliExecutionResult response = cli_.execute();
 
-        if(!response.getDiagnostic().diagnostics.isEmpty()) {
-            response.getDiagnostic().diagnostics.forEach(d -> {
-                System.out.println(d.getSeverity().toString().toLowerCase() + " : " + d.getMessage());
-            });
-        }
+            String cliArgs =  " --minimal -f fucker --jobs 100 --silent app app2 app3";
 
-        if(!response.isSuccess()) {
-            return;
-        }
+            cli cli_ = new cli(cliArgs.split(" "));
+            cli.CliExecutionResult response = cli_.execute();
 
-        if(response.getOptions().getIsMinimalApi()) {
-            runMinimalApi(response);
+            if(!response.getDiagnostic().diagnostics.isEmpty()) {
+                response.getDiagnostic().diagnostics.forEach(d -> {
+                    System.out.println(d.getSeverity().toString().toLowerCase() + " : " + d.getMessage());
+                });
+            }
+
+            if(!response.isSuccess()) {
+                return;
+            }
+
+            if(response.getOptions().getIsMinimalApi()) {
+                runMinimalApi(response);
+            }
+        }catch (Exception ex) {
+            System.out.println(ex.getMessage());
         }
     }
 
@@ -37,7 +52,6 @@ public class Main {
 
         String program = """
 
-SHELL = cmd.exe
 
 ysharp {
 

@@ -1,5 +1,6 @@
 package linux.minimalApi.build._002;
 
+import io.Cbuild.debug.TempEnv;
 import io.Cbuild.minimal_api.minimalApi;
 import org.junit.jupiter.api.Test;
 
@@ -42,16 +43,16 @@ clean:
 
     @Test
     public void compileTinyCProgram() {
-        minimalApi.run(this.cBuildFile, cwd);
+        minimalApi.run(this.cBuildFile, cwd, TempEnv.createTempEnv());
     }
 
     @Test
     public void cleanTinyCProgram() {
-        minimalApi.run(this.cBuildFile, cwd, "clean");
+        minimalApi.run(this.cBuildFile, cwd, "clean", TempEnv.createTempEnv());
     }
 
     @Test
     public void purgeTinyCProgram() {
-        minimalApi.run(this.cBuildFile, cwd, "purge");
+        minimalApi.run(this.cBuildFile, cwd, "purge", TempEnv.createTempEnv());
     }
 }

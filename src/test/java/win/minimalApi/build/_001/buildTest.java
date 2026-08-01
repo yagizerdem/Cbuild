@@ -1,5 +1,6 @@
 package win.minimalApi.build._001;
 
+import io.Cbuild.debug.TempEnv;
 import org.junit.jupiter.api.Test;
 
 import  io.Cbuild.minimal_api.*;
@@ -21,7 +22,7 @@ app.txt : # commands does not executed since app.txt should be already there
 \t echo "app.txt already exist"
                 """;
 
-        minimalApi.run(cBuildProgram, cwd);
+        minimalApi.run(cBuildProgram, cwd, "app.txt", TempEnv.createTempEnv());
 
     }
 
@@ -34,7 +35,7 @@ update.md :
                 """;
 
 
-        minimalApi.run(cBuildProgram, cwd);
+        minimalApi.run(cBuildProgram, cwd, "update.md", TempEnv.createTempEnv());
 
     }
 

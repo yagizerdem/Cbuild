@@ -28,6 +28,7 @@ dependencies {
     implementation("org.javatuples:javatuples:1.2")
     implementation("info.picocli:picocli:4.7.7")
     annotationProcessor("info.picocli:picocli-codegen:4.7.7")
+    implementation("org.luaj:luaj-jse:3.0.1")
 }
 
 tasks.test {

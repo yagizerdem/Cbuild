@@ -21,4 +21,14 @@ public class stdio {
         }
     }
 
+    public void printStdout(String stdout) {
+        if (stdout == null || stdout.isEmpty()) {
+            return;
+        }
+
+        synchronized (lock) {
+            System.out.print(stdout);
+        }
+    }
+
 }

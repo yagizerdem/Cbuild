@@ -906,12 +906,29 @@ public class minimalApi {
                     synchronized (EXPANSION_LOCK) {
                         command = recipeIR.exec(recipeExpansionEngine);
                     }
-                    shell.ExecutionResult result = sh.runCommandCaptured(command, cwd);
+                    io.Cbuild.Env.SymbolTableVariable shellVar = this.globalContext.getVariable("SHELL");
+                    String shell = null;
+                    if(shellVar !=  null) {
+                        if(!shellVar.isDeferred()) shell = shellVar.getRawValue();
+                        else {
+                            Expansion expansion = new Expansion();
+                            shell = expansion.expandValueMinimalApi(shellVar.getDeferredValue(), this.globalContext);
+                        }
+                    }
+
+
+                    shell.ExecutionResult result = shell != null ?
+                            sh.runCommandCaptured(command, cwd, shell) : sh.runCommandCaptured(command, cwd);
+
                     if(result.isSuccess) {
-                        System.out.println(command);
                         String normalizedStdout = result.stdOut.trim();
                         if(normalizedStdout.endsWith("\n")) normalizedStdout = normalizedStdout.substring(0, normalizedStdout.length() -1);
-                        System.out.println(normalizedStdout);
+                        if(!this.globalContext.setting.silent) {
+                            stdio_.printBuildOutput(command, normalizedStdout);
+                        }
+                        else {
+                            stdio_.printStdout(normalizedStdout + System.lineSeparator());
+                        }
                     }
                 }
                 completableFuture.complete(rule.uuid);
@@ -946,10 +963,12 @@ public class minimalApi {
             }
             io.Cbuild.Env.SymbolTableVariable shellVar = this.globalContext.getVariable("SHELL");
             String shell = null;
-            if(!shellVar.isDeferred()) shell = shellVar.getRawValue();
-            if(shellVar.isDeferred()) {
-                Expansion expansion = new Expansion();
-                shell = expansion.expandValueMinimalApi(shellVar.getDeferredValue(), this.globalContext);
+            if(shellVar !=  null) {
+                if(!shellVar.isDeferred()) shell = shellVar.getRawValue();
+                else {
+                    Expansion expansion = new Expansion();
+                    shell = expansion.expandValueMinimalApi(shellVar.getDeferredValue(), this.globalContext);
+                }
             }
 
             shell.ExecutionResult result = shell != null ?
@@ -966,7 +985,13 @@ public class minimalApi {
 
             String normalizedStdout = result.stdOut.trim();
             if(normalizedStdout.endsWith("\n")) normalizedStdout = normalizedStdout.substring(0, normalizedStdout.length() -1);
-            stdio_.printBuildOutput(command, normalizedStdout);
+            if(!this.globalContext.setting.silent) {
+                stdio_.printBuildOutput(command, normalizedStdout);
+            }
+            else {
+                stdio_.printStdout(normalizedStdout + System.lineSeparator());
+            }
+
         }
 
         return rule.uuid;
@@ -978,13 +1003,6 @@ public class minimalApi {
         run(cBuildProgram, cwd, null, env);
     }
 
-    public static void run(String cBuildProgram, String cwd, String activeTarget) {
-        run(cBuildProgram, cwd, activeTarget, new Env());
-    }
-
-    public static void run(String cBuildProgram, String cwd) {
-        run(cBuildProgram, cwd, null, new Env());
-    }
 
     public static void run(String cBuildProgram, String activeTarget, Env env) {
         String cwd = System.getProperty("user.dir");
