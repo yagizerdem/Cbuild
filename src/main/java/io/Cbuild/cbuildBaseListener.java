@@ -815,6 +815,30 @@ public class cbuildBaseListener implements cbuildListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitYsharp_program(cbuildParser.Ysharp_programContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterLua_hook(cbuildParser.Lua_hookContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitLua_hook(cbuildParser.Lua_hookContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterLua_program(cbuildParser.Lua_programContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitLua_program(cbuildParser.Lua_programContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

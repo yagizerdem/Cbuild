@@ -676,4 +676,24 @@ public interface cbuildListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitYsharp_program(cbuildParser.Ysharp_programContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link cbuildParser#lua_hook}.
+	 * @param ctx the parse tree
+	 */
+	void enterLua_hook(cbuildParser.Lua_hookContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link cbuildParser#lua_hook}.
+	 * @param ctx the parse tree
+	 */
+	void exitLua_hook(cbuildParser.Lua_hookContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link cbuildParser#lua_program}.
+	 * @param ctx the parse tree
+	 */
+	void enterLua_program(cbuildParser.Lua_programContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link cbuildParser#lua_program}.
+	 * @param ctx the parse tree
+	 */
+	void exitLua_program(cbuildParser.Lua_programContext ctx);
 }

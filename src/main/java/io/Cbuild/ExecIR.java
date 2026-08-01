@@ -25,6 +25,8 @@ public class ExecIR {
 
         public abstract <T> T exec(cBuildIR.YsharpHookIR ir);
 
+        public abstract <T> T exec(cBuildIR.LuaHookIR ir);
+
         public abstract <T> T exec(cBuildIR.RecipeIR ir);
 
         public abstract <T> T exec(cBuildIR.DefineIR ir);
@@ -75,6 +77,8 @@ public class ExecIR {
         public <T> T exec(cBuildIR.YsharpHookIR ir) {
             return null;
         }
+
+        public <T> T exec(cBuildIR.LuaHookIR ir) { return null; }
 
         public <T> T exec(cBuildIR.RecipeIR ir) {
             return null;
