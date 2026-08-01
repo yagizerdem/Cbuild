@@ -1,13 +1,12 @@
 package io.Cbuild;
 
-import org.stringtemplate.v4.ST;
-
-import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
 public class Env {
+
 
     // settings
     public Settings setting;
@@ -17,9 +16,14 @@ public class Env {
         public int parallelJobCount;
         public String cwd;
         public boolean isMinimalApi = false;
+        public boolean silent = false;
 
         public Settings() {
             this.cwd = System.getProperty("user.dir");
+        };
+
+        public Settings(String cwd) {
+            this.cwd = cwd;
         };
 
         public static Settings toSettings(cli.CLI_OPTIONS.MinimalApi options) {
@@ -27,6 +31,7 @@ public class Env {
             setting.parallelJobCount = options.parallelJobCount;
             setting.buildSequential = options.buildSequential;
             setting.isMinimalApi = options.isMinimalApi;
+            setting.silent = options.silent;
 
             return setting;
         }

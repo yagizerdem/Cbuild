@@ -379,6 +379,12 @@ public class cli {
             )
             boolean helpRequested;
 
+            @CommandLine.Option(
+                    names = { "-s", "--silent" },
+                    description = "show this help message and exit"
+            )
+            boolean silent;
+
             @Override
             public String toString() {
                 return
@@ -386,7 +392,8 @@ public class cli {
                         "parallelJobCount=" + parallelJobCount + "\n" +
                         "buildFile='" + buildFile + '\'' + "\n" +
                         "targets=" + Arrays.toString(targets) + "\n" +
-                        "helpRequested=" + helpRequested
+                        "helpRequested=" + helpRequested +  "\n" +
+                        "silent=" + silent
                         ;
             }
 

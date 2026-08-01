@@ -20,7 +20,7 @@ public class utils {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         cbuildParser parser = new cbuildParser(tokens);
         parser.removeErrorListeners();
-        parser.addErrorListener(ThrowingErrorListener.INSTANCE);
+        // parser.addErrorListener(ThrowingErrorListener.INSTANCE);
         parser.cbuildfile();
     }
 
@@ -30,7 +30,7 @@ public class utils {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         cbuildParser parser = new cbuildParser(tokens);
         parser.removeErrorListeners();
-        parser.addErrorListener(ThrowingErrorListener.INSTANCE);
+        // parser.addErrorListener(ThrowingErrorListener.INSTANCE);
         cbuildParser.CbuildfileContext context = parser.cbuildfile();
 
         cBuildCompiler cBuildCompiler = new cBuildCompiler();

@@ -19,7 +19,8 @@ public class minimalApiBackendTest {
         Env context = new Env();
         Expansion expansion = new Expansion();
         context.symbolTable.put("name", Env.SymbolTableVariable.rawVariable("foo bar"));
-        String expanded = expansion.expandValue(identifier, context);
+        String expanded = expansion.expandValue(identifier, context,
+                new Expansion.minimalApiValueExpansionEngine(context));
         Assertions.assertEquals("foo bar", expanded);
     }
 
@@ -32,7 +33,8 @@ public class minimalApiBackendTest {
         Expansion expansion = new Expansion();
         context.symbolTable.put("postfix", Env.SymbolTableVariable.rawVariable("name"));
         context.symbolTable.put("full name", Env.SymbolTableVariable.rawVariable("yagiz erdem"));
-        String expanded = expansion.expandValue(identifier, context);
+        String expanded = expansion.expandValue(identifier, context,
+                new Expansion.minimalApiValueExpansionEngine(context));
         Assertions.assertEquals("yagiz erdem", expanded);
     }
 
@@ -45,7 +47,8 @@ public class minimalApiBackendTest {
 
         Env context = new Env();
         Expansion expansion = new Expansion();
-        String expanded = expansion.expandValue(value, context);
+        String expanded = expansion.expandValue(value, context,
+                new Expansion.minimalApiValueExpansionEngine(context));
 
         Assertions.assertEquals("hello world", expanded);
     }
@@ -61,7 +64,8 @@ public class minimalApiBackendTest {
         Env context = new Env();
         Expansion expansion = new Expansion();
         context.symbolTable.put("name", Env.SymbolTableVariable.rawVariable("yagiz"));
-        String expanded = expansion.expandValue(value, context);
+        String expanded = expansion.expandValue(value, context,
+                new Expansion.minimalApiValueExpansionEngine(context));
 
         Assertions.assertEquals("hello yagiz!", expanded);
     }
@@ -76,7 +80,8 @@ public class minimalApiBackendTest {
 
         Env context = new Env();
         Expansion expansion = new Expansion();
-        String expanded = expansion.expandValue(value, context);
+        String expanded = expansion.expandValue(value, context,
+                new Expansion.minimalApiValueExpansionEngine(context));
 
         Assertions.assertEquals("beforeafter", expanded);
     }
@@ -92,7 +97,8 @@ public class minimalApiBackendTest {
         Env context = new Env();
         Expansion expansion = new Expansion();
         context.symbolTable.put("empty", Env.SymbolTableVariable.rawVariable(""));
-        String expanded = expansion.expandValue(value, context);
+        String expanded = expansion.expandValue(value, context,
+                new Expansion.minimalApiValueExpansionEngine(context));
 
         Assertions.assertEquals("ab", expanded);
     }
@@ -110,7 +116,8 @@ public class minimalApiBackendTest {
         Env context = new Env();
         Expansion expansion = new Expansion();
         context.symbolTable.put("compiler_flags", Env.SymbolTableVariable.rawVariable("-Wall -O2"));
-        String expanded = expansion.expandValue(value, context);
+        String expanded = expansion.expandValue(value, context,
+                new Expansion.minimalApiValueExpansionEngine(context));
 
         Assertions.assertEquals("-Wall -O2", expanded);
     }
@@ -128,7 +135,8 @@ public class minimalApiBackendTest {
         Expansion expansion = new Expansion();
         context.symbolTable.put("active", Env.SymbolTableVariable.rawVariable("cc"));
         context.symbolTable.put("tool.cc", Env.SymbolTableVariable.rawVariable("clang"));
-        String expanded = expansion.expandValue(value, context);
+        String expanded = expansion.expandValue(value, context,
+                new Expansion.minimalApiValueExpansionEngine(context));
 
         Assertions.assertEquals("clang", expanded);
     }
@@ -150,7 +158,8 @@ public class minimalApiBackendTest {
         context.symbolTable.put("env", Env.SymbolTableVariable.rawVariable("dev"));
         context.symbolTable.put("profile.dev", Env.SymbolTableVariable.rawVariable("debug"));
         context.symbolTable.put("selected.debug", Env.SymbolTableVariable.rawVariable("build-debug"));
-        String expanded = expansion.expandValue(value, context);
+        String expanded = expansion.expandValue(value, context,
+                new Expansion.minimalApiValueExpansionEngine(context));
 
         Assertions.assertEquals("build-debug", expanded);
     }
@@ -166,7 +175,8 @@ public class minimalApiBackendTest {
         Env context = new Env();
         Expansion expansion = new Expansion();
         context.symbolTable.put("word", Env.SymbolTableVariable.rawVariable("echo"));
-        String expanded = expansion.expandValue(value, context);
+        String expanded = expansion.expandValue(value, context,
+                new Expansion.minimalApiValueExpansionEngine(context));
 
         Assertions.assertEquals("echo-echo", expanded);
     }
@@ -179,7 +189,8 @@ public class minimalApiBackendTest {
         Expansion expansion = new Expansion();
         context.symbolTable.put("outer", Env.SymbolTableVariable.rawVariable("$(inner)"));
         context.symbolTable.put("inner", Env.SymbolTableVariable.rawVariable("expanded"));
-        String expanded = expansion.expandValue(value, context);
+        String expanded = expansion.expandValue(value, context,
+                new Expansion.minimalApiValueExpansionEngine(context));
 
         Assertions.assertEquals("$(inner)", expanded);
     }
@@ -203,7 +214,8 @@ public class minimalApiBackendTest {
         context.symbolTable.put("mode", Env.SymbolTableVariable.rawVariable("debug"));
         context.symbolTable.put("kind", Env.SymbolTableVariable.rawVariable("cflags"));
         context.symbolTable.put("config.linux.debug.cflags", Env.SymbolTableVariable.rawVariable("-g -Wall"));
-        String expanded = expansion.expandValue(value, context);
+        String expanded = expansion.expandValue(value, context,
+                new Expansion.minimalApiValueExpansionEngine(context));
 
         Assertions.assertEquals("-g -Wall", expanded);
     }
@@ -231,7 +243,8 @@ public class minimalApiBackendTest {
         context.symbolTable.put("profile", Env.SymbolTableVariable.rawVariable("release"));
         context.symbolTable.put("tool.linux", Env.SymbolTableVariable.rawVariable("gcc"));
         context.symbolTable.put("flags.linux.release", Env.SymbolTableVariable.rawVariable("-O3 -DNDEBUG"));
-        String expanded = expansion.expandValue(value, context);
+        String expanded = expansion.expandValue(value, context,
+                new Expansion.minimalApiValueExpansionEngine(context));
 
         Assertions.assertEquals("cc=gcc flags=-O3 -DNDEBUG", expanded);
     }
@@ -252,7 +265,8 @@ public class minimalApiBackendTest {
         context.symbolTable.put("selected", Env.SymbolTableVariable.rawVariable("compiler"));
         context.symbolTable.put("alias.compiler", Env.SymbolTableVariable.rawVariable("CC"));
         context.symbolTable.put("CC", Env.SymbolTableVariable.rawVariable("clang"));
-        String expanded = expansion.expandValue(value, context);
+        String expanded = expansion.expandValue(value, context,
+                new Expansion.minimalApiValueExpansionEngine(context));
 
         Assertions.assertEquals("clang", expanded);
     }
@@ -270,7 +284,8 @@ public class minimalApiBackendTest {
         Env context = new Env();
         Expansion expansion = new Expansion();
         context.symbolTable.put("prefix.suffix", Env.SymbolTableVariable.rawVariable("fallback"));
-        String expanded = expansion.expandValue(value, context);
+        String expanded = expansion.expandValue(value, context,
+                new Expansion.minimalApiValueExpansionEngine(context));
 
         Assertions.assertEquals("fallback", expanded);
     }
@@ -302,7 +317,8 @@ public class minimalApiBackendTest {
         context.symbolTable.put("os.current", Env.SymbolTableVariable.rawVariable("linux"));
         context.symbolTable.put("arch.native", Env.SymbolTableVariable.rawVariable("x86_64"));
         context.symbolTable.put("matrix.linux.x86_64.asan", Env.SymbolTableVariable.rawVariable("build/linux-x86_64-asan"));
-        String expanded = expansion.expandValue(value, context);
+        String expanded = expansion.expandValue(value, context,
+                new Expansion.minimalApiValueExpansionEngine(context));
 
         Assertions.assertEquals("build/linux-x86_64-asan", expanded);
     }
