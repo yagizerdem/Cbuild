@@ -22,7 +22,7 @@ app.txt : # commands does not executed since app.txt should be already there
 \t echo "app.txt already exist"
                 """;
 
-        minimalApi.run(cBuildProgram, cwd, TempEnv.createTempEnv());
+        minimalApi.run(cBuildProgram, cwd, "app.txt", TempEnv.createTempEnv());
     }
 
     @Test
@@ -32,6 +32,6 @@ update.md :
 \t echo "content of update.md file" > update.md
                 """;
 
-        minimalApi.run(cBuildProgram, cwd, TempEnv.createTempEnv());
+        minimalApi.run(cBuildProgram, cwd, "update.md", TempEnv.createTempEnv());
     }
 }

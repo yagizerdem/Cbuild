@@ -43,7 +43,7 @@ clean:
 
     @Test
     public void compileTinyCProgram() {
-        minimalApi.run(this.cBuildFile, cwd, TempEnv.createTempEnv());
+        minimalApi.run(this.cBuildFile, cwd,"all", TempEnv.createTempEnv());
     }
 
     @Test
