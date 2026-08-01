@@ -411,4 +411,16 @@ public interface cbuildVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitYsharp_program(cbuildParser.Ysharp_programContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link cbuildParser#lua_hook}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLua_hook(cbuildParser.Lua_hookContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link cbuildParser#lua_program}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLua_program(cbuildParser.Lua_programContext ctx);
 }

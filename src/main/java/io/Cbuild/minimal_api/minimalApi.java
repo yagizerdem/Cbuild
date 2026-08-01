@@ -2,10 +2,12 @@ package io.Cbuild.minimal_api;
 
 import io.Cbuild.*;
 import io.Cbuild.cbuildException;
+import io.Cbuild.lua.LuaGlobals;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.luaj.vm2.Globals;
 import ysharp.treewalk.YsharpException;
 import ysharp.treewalk.evaluator.Interpreter;
 import io.Cbuild.ySharpNatives.*;
@@ -157,7 +159,8 @@ public class minimalApi {
     private boolean allowedIR(cBuildIR.IR ir) {
         return ir instanceof cBuildIR.AssignmentIR
                 || ir instanceof cBuildIR.NormalRuleIR
-                || ir instanceof cBuildIR.YsharpHookIR;
+                || ir instanceof cBuildIR.YsharpHookIR
+                || ir instanceof cBuildIR.LuaHookIR;
     }
 
     private cbuildException incompatible(cBuildIR.IR ir, String message) {
@@ -355,6 +358,13 @@ public class minimalApi {
         public Void exec(cBuildIR.YsharpHookIR ir) {
             ysharp.treewalk.evaluator.Interpreter interpreter = minimalApi.getySharpInterpreter(this.context);
             ySharpExecutor.exec(interpreter, ir.program);
+            return null;
+        }
+
+        @Override
+        public Void exec(cBuildIR.LuaHookIR ir) {
+            Globals interpreter = minimalApi.getLuaInterpreter(this.context);
+            LuaGlobals.executeCode(interpreter, ir.program);
             return null;
         }
 
@@ -1147,5 +1157,10 @@ public class minimalApi {
                     "Failed to initialize the YSharp interpreter: " + ex.getMessage()
             );
         }
+    }
+
+    private static Globals getLuaInterpreter(Env context) {
+        Globals interpreter =  LuaGlobals.getGlobalsCached();
+        return interpreter;
     }
 }

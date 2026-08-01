@@ -71,8 +71,12 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
             return vpathIR;
         }
         else if(ctx.ysharp_hook() != null) {
-            cBuildIR.YsharpHookIR ysharpHookIR = (cBuildIR.YsharpHookIR ) ctx.ysharp_hook().accept(this);
+            cBuildIR.YsharpHookIR ysharpHookIR = (cBuildIR.YsharpHookIR) ctx.ysharp_hook().accept(this);
             return ysharpHookIR;
+        }
+        else if(ctx.lua_hook() != null) {
+            cBuildIR.LuaHookIR luaHookIR = (cBuildIR.LuaHookIR) ctx.lua_hook().accept(this);
+            return luaHookIR;
         }
 
         throw new IllegalArgumentException(
@@ -907,6 +911,14 @@ public class cBuildCompiler extends cbuildBaseVisitor<Object> {
     public Object visitYsharp_hook(cbuildParser.Ysharp_hookContext ctx) {
         cBuildIR.YsharpHookIR ir = new cBuildIR.YsharpHookIR();
         String program = ctx.ysharp_program().getText();
+        ir.program = program;
+        return ir;
+    }
+
+    @Override
+    public Object visitLua_hook(cbuildParser.Lua_hookContext ctx) {
+        cBuildIR.LuaHookIR ir = new cBuildIR.LuaHookIR();
+        String program = ctx.lua_program().getText();
         ir.program = program;
         return ir;
     }

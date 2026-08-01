@@ -39,6 +39,7 @@ statement
     | ws? function br
     | ws? rule
     | ws? ysharp_hook
+    | ws? lua_hook
     ;
 
 define
@@ -339,6 +340,7 @@ keywords
     | UNDEFINE
     | VPATH
     | YSHARP
+    | LUA
     ;
 
 colon
@@ -358,6 +360,10 @@ ws
 ysharp_hook : YSHARP ws? '{' ysharp_program '}' ws? ;
 
 ysharp_program : .*? ;
+
+lua_hook : LUA ws? '{' lua_program '}' ws? ;
+
+lua_program : .*? ;
 
 ASSIGN_OP
     : ':::='
@@ -414,6 +420,7 @@ SLIT
     ;
 
 YSHARP: 'ysharp';
+LUA: 'lua';
 
 CHARS
     : ~[ \t\r\n$(){}:,=#|]+

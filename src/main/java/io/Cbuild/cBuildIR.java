@@ -562,4 +562,18 @@ public class cBuildIR {
         }
     }
 
+    public static class LuaHookIR extends BaseIR {
+        public String program;
+
+        public LuaHookIR() {}
+
+        public LuaHookIR(String program) {
+            this.program = program;
+        }
+
+        public <T> T exec(ExecIR.AbstractExecIR executor) {
+            return executor.exec(this);
+        }
+    }
+
 }

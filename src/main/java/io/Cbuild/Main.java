@@ -72,8 +72,8 @@ app: b
 \t echo $(a) $(b)
 \t echo $(k)
 
-ysharp {
-    println 100 >> 2;
+lua {
+    println("inside lua hook")
 }
 
 b=$(c)
