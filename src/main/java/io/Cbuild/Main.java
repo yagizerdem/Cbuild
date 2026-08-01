@@ -13,9 +13,9 @@ public class Main {
             Globals globals = LuaGlobals.getGlobalsCached();
             io.Cbuild.lua.luaNatives.globals.register(globals);
             io.Cbuild.lua.luaNatives.mathModule.register(globals);
-            LuaGlobals.executeCode(globals, """
-                        println(math.abs(-20))
-                    """);
+            io.Cbuild.lua.luaNatives.fsModule.register(globals);
+            io.Cbuild.lua.luaNatives.randomModule.register(globals);
+            io.Cbuild.lua.luaNatives.processModule.register(globals);
 
 
             String cliArgs =  " --minimal -f fucker --jobs 100 --silent app app2 app3";
@@ -52,7 +52,6 @@ public class Main {
 
         String program = """
 
-SHELL = cmd.exe
 
 ysharp {
 
