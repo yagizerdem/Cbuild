@@ -8,7 +8,10 @@ import org.luaj.vm2.Globals;
 
 public class Main {
     public static void main(String[] args) {
+        cBuildMain();
+    }
 
+    public static void cBuildMain() {
         try {
             Globals globals = LuaGlobals.getGlobalsCached();
             io.Cbuild.lua.luaNatives.globals.register(globals);
