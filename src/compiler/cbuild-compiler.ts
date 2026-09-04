@@ -1,6 +1,5 @@
-import { AbstractParseTreeVisitor } from "antlr4ts/tree/AbstractParseTreeVisitor";
-import { ParseTree } from "antlr4ts/tree/ParseTree";
-import { cbuildVisitor } from "@parser/cbuildVisitor";
+import { AbstractParseTreeVisitor, ParseTree } from "antlr4ng";
+import { cbuildVisitor } from "@parser/cbuildVisitor.js";
 import {
   ArgumentContext,
   ArgumentsContext,
@@ -48,7 +47,7 @@ import {
   Vpath_argsContext,
   VpathContext,
   WsContext,
-} from "@parser/cbuildParser";
+} from "@parser/cbuildParser.js";
 import {
   AssignmentIR,
   AssignmentPrefix,
@@ -73,11 +72,11 @@ import {
   ruleSeparatorFromSymbol,
   textPart,
   varRefPart,
-} from "@compiler/ir";
+} from "@compiler/ir.js";
 import {
   make_function_dispatcher,
   MakeFunctionHandler,
-} from "@src/gnu-make-functions/make_function_dispatcher";
+} from "@src/gnu-make-functions/make_function_dispatcher.js";
 
 type AssignmentPrefixPair = [AssignmentPrefix, ValuePart[]];
 
@@ -142,11 +141,11 @@ export class CBuildCompiler
 
     throw new Error(
       "Unsupported statement at line " +
-        ctx.start.line +
+        ctx.start?.line +
         ", column " +
-        ctx.start.charPositionInLine +
+        ctx.start?.column +
         ": `" +
-        ctx.text +
+        ctx.getText() +
         "`",
     );
   }
@@ -154,7 +153,9 @@ export class CBuildCompiler
   public visitAssignment(ctx: AssignmentContext): unknown {
     const assignmentIR = new AssignmentIR();
 
-    assignmentIR.type = assignmentTypeFromSymbol(ctx.ASSIGN_OP().text.trim());
+    assignmentIR.type = assignmentTypeFromSymbol(
+      ctx.ASSIGN_OP().getText().trim(),
+    );
 
     if (ctx.pattern() != null && !ctx.pattern()!.isEmpty) {
       // left value
@@ -194,7 +195,7 @@ export class CBuildCompiler
   }
 
   public visitAssignment_prefix(ctx: Assignment_prefixContext): unknown {
-    const specifier = ctx.specifiers().text.trim();
+    const specifier = ctx.specifiers().getText().trim();
     const prefix = assignmentPrefixFromSymbol(specifier);
     const parts = ctx.pattern().accept(this) as ValuePart[];
     const pair: AssignmentPrefixPair = [prefix, parts];
@@ -216,7 +217,7 @@ export class CBuildCompiler
     const parts: ValuePart[] = [];
     for (let i = 0; i < (ctx.children?.length ?? 0); i++) {
       const ast_node = ctx.children![i];
-      if (i === 0 && ast_node.text.trim().length === 0) continue; // skip first WS
+      if (i === 0 && ast_node.getText().trim().length === 0) continue; // skip first WS
       const part_s = ast_node.accept(this);
       this.collectValueParts(parts, part_s);
     }
@@ -248,11 +249,11 @@ export class CBuildCompiler
   }
 
   public visitChar_in_assign(ctx: Char_in_assignContext): unknown {
-    if (ctx.text === "$$") {
+    if (ctx.getText() === "$$") {
       return "$";
     }
 
-    return ctx.text;
+    return ctx.getText();
   }
 
   public visitFunction(ctx: FunctionContext): unknown {
@@ -260,7 +261,7 @@ export class CBuildCompiler
       return this.compileVarRef(ctx);
     }
 
-    const name = ctx.function_name()!.text;
+    const name = ctx.function_name()!.getText();
     if (this.dispatcher.has(name)) {
       const handler: MakeFunctionHandler = this.dispatcher.getHandler(name);
       const functionIr: FunctionIR = handler.compile(ctx);
@@ -270,7 +271,7 @@ export class CBuildCompiler
 
     const parts: ValuePart[] = [];
 
-    for (let i = 0; i < ctx.childCount; i++) {
+    for (let i = 0; i < ctx.getChildCount(); i++) {
       const child = ctx.getChild(i) as ParseTree;
       const result = child.accept(this);
       this.collectValueParts(parts, result);
@@ -291,7 +292,7 @@ export class CBuildCompiler
 
   public visitFunction_name_atom(ctx: Function_name_atomContext): unknown {
     if (ctx.CHARS() != null) {
-      return textPart(ctx.CHARS()!.text);
+      return textPart(ctx.CHARS()!.getText());
     }
     if (ctx.function() != null) {
       return ctx.function()!.accept(this);
@@ -317,7 +318,7 @@ export class CBuildCompiler
   }
 
   private compileVarRef(ctx: FunctionContext): ValuePart {
-    const raw = ctx.VAR()!.text;
+    const raw = ctx.VAR()!.getText();
     const part = textPart(raw);
     const value = new ValueIR([part]);
     return varRefPart(value);
@@ -327,10 +328,10 @@ export class CBuildCompiler
     const conditionalIR = new ConditionalIR();
 
     if (ctx.if_eq_kw() != null) {
-      conditionalIR.kind = conditionKindFromKeyword(ctx.if_eq_kw()!.text);
+      conditionalIR.kind = conditionKindFromKeyword(ctx.if_eq_kw()!.getText());
       conditionalIR.condition = ctx.condition()!.accept(this) as Condition;
     } else if (ctx.if_def_kw() != null) {
-      conditionalIR.kind = conditionKindFromKeyword(ctx.if_def_kw()!.text);
+      conditionalIR.kind = conditionKindFromKeyword(ctx.if_def_kw()!.getText());
 
       const condition: Condition = {};
       const result = ctx.identifier()!.accept(this);
@@ -344,7 +345,7 @@ export class CBuildCompiler
     }
 
     if (ctx.statements_opt(0) != null) {
-      const thenResult = ctx.statements_opt(0).accept(this);
+      const thenResult = ctx.statements_opt(0)!.accept(this);
 
       if (Array.isArray(thenResult)) {
         for (const obj of thenResult) {
@@ -356,7 +357,7 @@ export class CBuildCompiler
     }
 
     if (ctx.statements_opt().length > 1 && ctx.statements_opt(1) != null) {
-      const elseResult = ctx.statements_opt(1).accept(this);
+      const elseResult = ctx.statements_opt(1)!.accept(this);
 
       if (Array.isArray(elseResult)) {
         for (const obj of elseResult) {
@@ -380,15 +381,15 @@ export class CBuildCompiler
     const condition: Condition = {};
 
     if (ctx.expressions_opt().length === 2) {
-      if (ctx.expressions_opt(0).expressions() != null) {
-        const leftParts = ctx.expressions_opt(0).accept(this) as ValuePart[];
+      if (ctx.expressions_opt(0)?.expressions() != null) {
+        const leftParts = ctx.expressions_opt(0)!.accept(this) as ValuePart[];
         condition.left = new ValueIR(leftParts);
       } else {
         condition.left = new ValueIR();
       }
 
-      if (ctx.expressions_opt(1).expressions() != null) {
-        const rightParts = ctx.expressions_opt(1).accept(this) as ValuePart[];
+      if (ctx.expressions_opt(1)?.expressions() != null) {
+        const rightParts = ctx.expressions_opt(1)!.accept(this) as ValuePart[];
         condition.right = new ValueIR(rightParts);
       } else {
         condition.right = new ValueIR();
@@ -397,8 +398,8 @@ export class CBuildCompiler
       return condition;
     }
 
-    const left = this.unquote(ctx.SLIT(0).text);
-    const right = this.unquote(ctx.SLIT(1).text);
+    const left = this.unquote(ctx.SLIT(0)?.getText() || "");
+    const right = this.unquote(ctx.SLIT(1)?.getText() || "");
 
     condition.left = new ValueIR([textPart(left)]);
 
@@ -408,7 +409,7 @@ export class CBuildCompiler
   }
 
   public visitIdentifier(ctx: IdentifierContext): unknown {
-    const text_part = textPart(ctx.text);
+    const text_part = textPart(ctx.getText());
     return text_part;
   }
 
@@ -446,7 +447,7 @@ export class CBuildCompiler
 
   public visitExpression_atom(ctx: Expression_atomContext): unknown {
     if (ctx.text() != null) {
-      return textPart(ctx.text()!.text);
+      return textPart(ctx.text()!.getText());
     }
 
     if (ctx.function() != null) {
@@ -476,7 +477,7 @@ export class CBuildCompiler
 
   public visitExpr_nested_atom(ctx: Expr_nested_atomContext): unknown {
     if (ctx.text_nested() != null) {
-      return textPart(ctx.text_nested()!.text);
+      return textPart(ctx.text_nested()!.getText());
     }
 
     if (ctx.function() != null) {
@@ -507,7 +508,9 @@ export class CBuildCompiler
 
     const targetsIR = ctx.targets()!.accept(this) as ValueIR[];
 
-    const ruleSeparator = ruleSeparatorFromSymbol(ctx.colon()!.text.trim());
+    const ruleSeparator = ruleSeparatorFromSymbol(
+      ctx.colon()!.getText().trim(),
+    );
 
     if (ctx.prerequisites() != null && !ctx.prerequisites()!.isEmpty) {
       const prerequisitesIR = ctx.prerequisites()!.accept(this) as ValueIR[];
@@ -640,7 +643,7 @@ export class CBuildCompiler
 
   public visitExpr_in_recipe_atom(ctx: Expr_in_recipe_atomContext): unknown {
     if (ctx.text_in_recipe() != null) {
-      return textPart(ctx.text_in_recipe()!.text);
+      return textPart(ctx.text_in_recipe()!.getText());
     }
 
     if (ctx.function() != null) {
@@ -651,7 +654,7 @@ export class CBuildCompiler
   }
 
   public visitText_in_recipe(ctx: Text_in_recipeContext): unknown {
-    return textPart(ctx.text);
+    return textPart(ctx.getText());
   }
 
   public visitConditional_in_recipe(
@@ -660,10 +663,10 @@ export class CBuildCompiler
     const conditionalIR = new ConditionalIR();
 
     if (ctx.if_eq_kw() != null) {
-      conditionalIR.kind = conditionKindFromKeyword(ctx.if_eq_kw()!.text);
+      conditionalIR.kind = conditionKindFromKeyword(ctx.if_eq_kw()!.getText());
       conditionalIR.condition = ctx.condition()!.accept(this) as Condition;
     } else if (ctx.if_def_kw() != null) {
-      conditionalIR.kind = conditionKindFromKeyword(ctx.if_def_kw()!.text);
+      conditionalIR.kind = conditionKindFromKeyword(ctx.if_def_kw()!.getText());
 
       const condition: Condition = {};
 
@@ -679,7 +682,7 @@ export class CBuildCompiler
     }
 
     if (ctx.recipes_opt(0) != null) {
-      const thenResult = ctx.recipes_opt(0).accept(this);
+      const thenResult = ctx.recipes_opt(0)!.accept(this);
 
       if (Array.isArray(thenResult)) {
         for (const obj of thenResult) {
@@ -691,7 +694,7 @@ export class CBuildCompiler
     }
 
     if (ctx.recipes_opt().length > 1 && ctx.recipes_opt(1) != null) {
-      const elseResult = ctx.recipes_opt(1).accept(this);
+      const elseResult = ctx.recipes_opt(1)!.accept(this);
 
       if (Array.isArray(elseResult)) {
         for (const obj of elseResult) {
@@ -714,7 +717,9 @@ export class CBuildCompiler
   public visitStatic_pattern_rule(ctx: Static_pattern_ruleContext): unknown {
     const targetsIR = ctx.targets().accept(this) as ValueIR[];
 
-    const ruleSeparator = ruleSeparatorFromSymbol(ctx.colon(0).text.trim());
+    const ruleSeparator = ruleSeparatorFromSymbol(
+      ctx.colon(0)?.getText().trim() || "",
+    );
 
     const targetPatternParts = ctx.pattern().accept(this) as ValuePart[];
 
@@ -753,7 +758,7 @@ export class CBuildCompiler
     const defineIR = new DefineIR();
 
     if (ctx.specifiers() != null) {
-      const specifier = ctx.specifiers()!.text.trim();
+      const specifier = ctx.specifiers()!.getText().trim();
       defineIR.specifiers = assignmentPrefixFromSymbol(specifier);
     }
 
@@ -762,7 +767,7 @@ export class CBuildCompiler
 
     if (ctx.ASSIGN_OP() != null) {
       defineIR.assignmentType = assignmentTypeFromSymbol(
-        ctx.ASSIGN_OP()!.text.trim(),
+        ctx.ASSIGN_OP()!.getText().trim(),
       );
     }
 
@@ -814,7 +819,7 @@ export class CBuildCompiler
   }
 
   public visitChar_in_def(ctx: Char_in_defContext): unknown {
-    return textPart(ctx.text);
+    return textPart(ctx.getText());
   }
 
   public visitVpath(ctx: VpathContext): unknown {
@@ -839,7 +844,7 @@ export class CBuildCompiler
   }
 
   public visitWs(ctx: WsContext): unknown {
-    const part = textPart(ctx.text);
+    const part = textPart(ctx.getText());
     return part;
   }
 

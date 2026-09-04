@@ -1,5 +1,5 @@
-import { AbstractParseTreeVisitor } from "antlr4ts/tree/AbstractParseTreeVisitor";
-import { cbuildVisitor } from "@parser/cbuildVisitor";
+import { AbstractParseTreeVisitor } from "antlr4ng";
+import { cbuildVisitor } from "@parser/cbuildVisitor.js";
 import {
   ArgumentContext,
   Expr_nested_atomContext,
@@ -10,18 +10,18 @@ import {
   Exprs_nestedContext,
   FunctionContext,
   WsContext,
-} from "@parser/cbuildParser";
+} from "@parser/cbuildParser.js";
 import {
   FunctionIR,
   ValueIR,
   functionCallPart,
   textPart,
   varRefPart,
-} from "@compiler/ir";
-import { cbuildException, ErrorType } from "@src/cbuild-exception";
-import { make_function_dispatcher } from "@gnu-make-functions/make_function_dispatcher";
-import type { MakeFunction } from "@gnu-make-functions/type";
-import { I_compiler_base } from "@src/gnu-make-functions/compiler/Icompiler-base";
+} from "@compiler/ir.js";
+import { cbuildException, ErrorType } from "@src/cbuild-exception.js";
+import { make_function_dispatcher } from "@gnu-make-functions/make_function_dispatcher.js";
+import type { MakeFunction } from "@gnu-make-functions/type.js";
+import { I_compiler_base } from "@src/gnu-make-functions/compiler/Icompiler-base.js";
 
 export class compile_fn
   extends AbstractParseTreeVisitor<ValueIR>
@@ -52,8 +52,8 @@ export class compile_fn
           expected +
           " argument(s), but got " +
           given,
-        ctx.start.line,
-        ctx.start.charPositionInLine + 1,
+        ctx.start?.line || 0,
+        (ctx.start?.column || 0) + 1,
       );
     }
 
@@ -75,7 +75,9 @@ export class compile_fn
 
     for (const ast_node of ctx.children ?? []) {
       const partValue = ast_node.accept(this);
-      value.parts.push(...partValue.parts);
+      if (partValue) {
+        value.parts.push(...partValue.parts);
+      }
     }
 
     return value;
@@ -96,7 +98,7 @@ export class compile_fn
     const value = new ValueIR();
 
     if (ctx.text() != null) {
-      value.parts.push(textPart(ctx.text()!.text));
+      value.parts.push(textPart(ctx.text()!.getText()));
       return value;
     }
 
@@ -107,15 +109,17 @@ export class compile_fn
     }
 
     if (ctx.function() != null) {
-      if (this.dispatcher.has(ctx.function()!.function_name()!.text)) {
+      if (this.dispatcher.has(ctx.function()!.function_name()!.getText())) {
         const handler = this.dispatcher.getHandler(
-          ctx.function()!.function_name()!.text,
+          ctx.function()!.function_name()!.getText(),
         );
         const functionIR = handler.compile(ctx.function()!);
         value.parts.push(functionCallPart(functionIR));
       } else {
         const varName = new ValueIR();
-        varName.parts.push(textPart(ctx.function()!.function_name()!.text));
+        varName.parts.push(
+          textPart(ctx.function()!.function_name()!.getText()),
+        );
         value.parts.push(varRefPart(varName));
       }
 
@@ -151,7 +155,7 @@ export class compile_fn
     const value = new ValueIR();
 
     if (ctx.text_nested() != null) {
-      value.parts.push(textPart(ctx.text_nested()!.text));
+      value.parts.push(textPart(ctx.text_nested()!.getText()));
       return value;
     }
 
@@ -162,15 +166,17 @@ export class compile_fn
     }
 
     if (ctx.function() != null) {
-      if (this.dispatcher.has(ctx.function()!.function_name()!.text)) {
+      if (this.dispatcher.has(ctx.function()!.function_name()!.getText())) {
         const handler = this.dispatcher.getHandler(
-          ctx.function()!.function_name()!.text,
+          ctx.function()!.function_name()!.getText(),
         );
         const functionIR = handler.compile(ctx.function()!);
         value.parts.push(functionCallPart(functionIR));
       } else {
         const varName = new ValueIR();
-        varName.parts.push(textPart(ctx.function()!.function_name()!.text));
+        varName.parts.push(
+          textPart(ctx.function()!.function_name()!.getText()),
+        );
         value.parts.push(varRefPart(varName));
       }
 
@@ -181,7 +187,7 @@ export class compile_fn
   }
 
   public visitWs(ctx: WsContext): ValueIR {
-    const part = textPart(ctx.text);
+    const part = textPart(ctx.getText());
     const val = new ValueIR();
     val.parts.push(part);
     return val;

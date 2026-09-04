@@ -1,9 +1,9 @@
-import { FunctionIR } from "@compiler/ir";
-import { FunctionContext } from "@parser/cbuildParser";
-import { cbuildException, ErrorType } from "@src/cbuild-exception";
-import type { MakeFunction } from "@gnu-make-functions/type";
-import { compile_fn } from "@gnu-make-functions/compiler/compile_fn";
-import { util } from "@gnu-make-functions/compiler/util";
+import { FunctionIR } from "@compiler/ir.js";
+import { FunctionContext } from "@parser/cbuildParser.js";
+import { cbuildException, ErrorType } from "@src/cbuild-exception.js";
+import type { MakeFunction } from "@gnu-make-functions/type.js";
+import { compile_fn } from "@gnu-make-functions/compiler/compile_fn.js";
+import { util } from "@gnu-make-functions/compiler/util.js";
 
 export class compile_filter extends compile_fn {
   public override compile(
@@ -16,8 +16,8 @@ export class compile_filter extends compile_fn {
       throw new cbuildException(
         ErrorType.SEMANTIC,
         "filter: expected exactly 2 arguments: pattern..., text",
-        ctx.start.line,
-        ctx.start.charPositionInLine + 1,
+        ctx.start?.line || 0,
+        (ctx.start?.column || 0) + 1,
       );
     }
 

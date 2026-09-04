@@ -1,38 +1,75 @@
-import { CharStreams, CommonTokenStream } from "antlr4ts";
-import { ANTLRErrorListener } from "antlr4ts/ANTLRErrorListener";
-import { ATNSimulator } from "antlr4ts/atn/ATNSimulator";
-import { RecognitionException } from "antlr4ts/RecognitionException";
-import { Recognizer } from "antlr4ts/Recognizer";
-import { Token } from "antlr4ts/Token";
-import { cbuildLexer } from "@parser/cbuildLexer";
-import { CbuildfileContext, cbuildParser } from "@parser/cbuildParser";
+import {
+  ATNConfigSet,
+  BitSet,
+  CharStream,
+  CommonTokenStream,
+  DFA,
+  Parser,
+} from "antlr4ng";
+import {
+  ANTLRErrorListener,
+  ATNSimulator,
+  RecognitionException,
+  Recognizer,
+  Token,
+} from "antlr4ng";
+import { cbuildLexer } from "@parser/cbuildLexer.js";
+import { CbuildfileContext, cbuildParser } from "@parser/cbuildParser.js";
 
-class SyntaxErrorCollector<TSymbol> implements ANTLRErrorListener<TSymbol> {
+class SyntaxErrorCollector implements ANTLRErrorListener {
   public readonly errors: string[] = [];
 
-  public syntaxError<T extends TSymbol>(
-    _recognizer: Recognizer<T, ATNSimulator>,
-    _offendingSymbol: T | undefined,
+  syntaxError<S extends Token, T extends ATNSimulator>(
+    recognizer: Recognizer<T>,
+    offendingSymbol: S | null,
     line: number,
     charPositionInLine: number,
     msg: string,
-    _error: RecognitionException | undefined,
+    e: RecognitionException | null,
   ): void {
     this.errors.push(`line ${line}:${charPositionInLine} ${msg}`);
   }
+
+  reportAmbiguity(
+    recognizer: Parser,
+    dfa: DFA,
+    startIndex: number,
+    stopIndex: number,
+    exact: boolean,
+    ambigAlts: BitSet | undefined,
+    configs: ATNConfigSet,
+  ): void {}
+
+  reportAttemptingFullContext(
+    recognizer: Parser,
+    dfa: DFA,
+    startIndex: number,
+    stopIndex: number,
+    conflictingAlts: BitSet | undefined,
+    configs: ATNConfigSet,
+  ): void {}
+
+  reportContextSensitivity(
+    recognizer: Parser,
+    dfa: DFA,
+    startIndex: number,
+    stopIndex: number,
+    prediction: number,
+    configs: ATNConfigSet,
+  ): void {}
 }
 
 export function runBuildFile(buildFile: string): CbuildfileContext {
-  const charStream = CharStreams.fromString(buildFile);
+  const charStream = CharStream.fromString(buildFile);
   const lexer = new cbuildLexer(charStream);
-  const lexerErrors = new SyntaxErrorCollector<number>();
+  const lexerErrors = new SyntaxErrorCollector();
 
   lexer.removeErrorListeners();
   lexer.addErrorListener(lexerErrors);
 
   const tokenStream = new CommonTokenStream(lexer);
   const parser = new cbuildParser(tokenStream);
-  const parserErrors = new SyntaxErrorCollector<Token>();
+  const parserErrors = new SyntaxErrorCollector();
 
   parser.removeErrorListeners();
   parser.addErrorListener(parserErrors);

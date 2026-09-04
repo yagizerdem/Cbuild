@@ -18,7 +18,8 @@
       "@src/*": ["./src/*"],
       "@parser/*": ["./src/parser/*"],
       "@compiler/*": ["./src/compiler/*"],
-      "@gnu-make-functions/*": ["./src/gnu-make-functions/*"]
+      "@gnu-make-functions/*": ["./src/gnu-make-functions/*"],
+      "@tests/*": ["./__tests__/*"]
     }
   }
 }

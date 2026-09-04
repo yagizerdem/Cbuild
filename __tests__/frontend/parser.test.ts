@@ -1,5 +1,5 @@
 import { test } from "vitest";
-import { runBuildFile } from "../util/parse";
+import { runBuildFile } from "@tests/util/parse.js";
 
 test("SimpleHelloWorld", () => {
   const buildFile = `hello:
@@ -413,7 +413,6 @@ all:
 clean:
 	rm -rf subdir
 `;
-
 });
 
 test("environmentVariableImportedIntoMake", () => {
@@ -960,4 +959,3 @@ clean:
 
   runBuildFile(buildFile);
 });
-

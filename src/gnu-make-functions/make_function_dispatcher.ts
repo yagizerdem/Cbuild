@@ -1,6 +1,6 @@
-import { FunctionContext } from "@parser/cbuildParser";
-import { FunctionIR } from "@compiler/ir";
-import * as type from "@gnu-make-functions/type";
+import { FunctionContext } from "@parser/cbuildParser.js";
+import { FunctionIR } from "@compiler/ir.js";
+import * as type from "@gnu-make-functions/type.js";
 
 export interface MakeFunctionHandler {
   compile(ctx: FunctionContext): FunctionIR;

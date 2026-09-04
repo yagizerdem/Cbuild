@@ -1,4 +1,4 @@
-import { FunctionIR } from "@compiler/ir";
+import { FunctionIR } from "@compiler/ir.js";
 
 export class util {
   public static cleanWS(ir: FunctionIR): void {
