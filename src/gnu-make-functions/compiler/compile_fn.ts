@@ -108,7 +108,11 @@ export class compile_fn
       return value;
     }
 
-    if (ctx.function() != null) {
+    if (
+      ctx.function() != null &&
+      ctx.function()!.function_name() != null &&
+      !ctx.function()!.function_name()!.isEmpty()
+    ) {
       if (this.dispatcher.has(ctx.function()!.function_name()!.getText())) {
         const handler = this.dispatcher.getHandler(
           ctx.function()!.function_name()!.getText(),

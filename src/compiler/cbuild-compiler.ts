@@ -157,7 +157,7 @@ export class CBuildCompiler
       ctx.ASSIGN_OP().getText().trim(),
     );
 
-    if (ctx.pattern() != null && !ctx.pattern()!.isEmpty) {
+    if (ctx.pattern() != null && !ctx.pattern()!.isEmpty()) {
       // left value
       const left_parts = ctx.pattern()!.accept(this) as ValuePart[];
       const left_valueIR = new ValueIR(left_parts);
@@ -512,7 +512,7 @@ export class CBuildCompiler
       ctx.colon()!.getText().trim(),
     );
 
-    if (ctx.prerequisites() != null && !ctx.prerequisites()!.isEmpty) {
+    if (ctx.assignment() == null) {
       const prerequisitesIR = ctx.prerequisites()!.accept(this) as ValueIR[];
       let recipeIRS: RecipeIR[] = [];
       let orderonlyprerequisitesIR: ValueIR[] = [];

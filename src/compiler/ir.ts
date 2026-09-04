@@ -12,7 +12,10 @@ export abstract class BaseIR implements IR {
   constructor(
     public row = 0,
     public col = 0,
-  ) {}
+  ) {
+    this.row = row;
+    this.col = col;
+  }
 
   abstract exec<T>(executor: Executor): T;
 }
@@ -126,8 +129,10 @@ export class AssignmentIR extends BaseIR {
     public right?: ValueIR,
     public prefix?: AssignmentPrefix,
     public type?: AssignmentType,
+    row?: number,
+    col?: number,
   ) {
-    super();
+    super(row, col);
   }
 
   exec<T>(executor: Executor): T {
@@ -173,8 +178,10 @@ export class ConditionalIR extends BaseIR {
   constructor(
     public kind?: ConditionKind,
     public condition?: Condition,
+    row?: number,
+    col?: number,
   ) {
-    super();
+    super(row, col);
   }
 
   exec<T>(executor: Executor): T {
@@ -228,8 +235,8 @@ export class NormalRuleIR extends BaseIR implements Rule {
   public separator: RuleSeparator;
   public readonly recipes: RecipeIR[];
 
-  constructor(options: NormalRuleOptions = {}) {
-    super();
+  constructor(options: NormalRuleOptions = {}, row?: number, col?: number) {
+    super(row, col);
     this.targets = options.targets ?? [];
     this.prerequisites = options.prerequisites ?? [];
     this.orderOnlyPrerequisites = options.orderOnlyPrerequisites ?? [];
@@ -254,8 +261,8 @@ export class TargetRuleIR extends BaseIR implements Rule {
   public separator?: RuleSeparator;
   public readonly recipes: RecipeIR[] = [];
 
-  constructor(options: TargetRuleOptions = {}) {
-    super();
+  constructor(options: TargetRuleOptions = {}, row?: number, col?: number) {
+    super(row, col);
     this.targets = options.targets ?? [];
     this.assignment = options.assignment;
     this.separator = options.separator;
@@ -283,8 +290,12 @@ export class StaticPatternRuleIR extends BaseIR implements Rule {
   public readonly recipes: RecipeIR[];
   public separator?: RuleSeparator;
 
-  constructor(options: StaticPatternRuleOptions = {}) {
-    super();
+  constructor(
+    options: StaticPatternRuleOptions = {},
+    row?: number,
+    col?: number,
+  ) {
+    super(row, col);
     this.targets = options.targets ?? [];
     this.targetPattern = options.targetPattern;
     this.prerequisites = options.prerequisites ?? [];
@@ -305,8 +316,12 @@ export type Recipe =
   | { kind: "conditional"; conditional: ConditionalIR };
 
 export class RecipeIR extends BaseIR {
-  private constructor(public readonly recipe: Recipe) {
-    super();
+  private constructor(
+    public readonly recipe: Recipe,
+    row?: number,
+    col?: number,
+  ) {
+    super(row, col);
   }
 
   static command(command: ValueIR): RecipeIR {
@@ -336,8 +351,10 @@ export class DefineIR extends BaseIR {
     public name?: ValueIR,
     public assignmentType?: AssignmentType,
     public value?: ValueIR,
+    row?: number,
+    col?: number,
   ) {
-    super();
+    super(row, col);
   }
 
   exec<T>(executor: Executor): T {
@@ -351,8 +368,12 @@ export type Vpath =
   | { type: "set-pattern"; pattern: ValueIR; directories: ValueIR[] };
 
 export class VpathIR extends BaseIR {
-  private constructor(public readonly vpath: Vpath) {
-    super();
+  private constructor(
+    public readonly vpath: Vpath,
+    row?: number,
+    col?: number,
+  ) {
+    super(row, col);
   }
 
   static clearAll(): VpathIR {
