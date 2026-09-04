@@ -1,6 +1,6 @@
 import { AbstractParseTreeVisitor } from "antlr4ts/tree/AbstractParseTreeVisitor";
 import { ParseTree } from "antlr4ts/tree/ParseTree";
-import { cbuildVisitor } from "../parser/cbuildVisitor";
+import { cbuildVisitor } from "@parser/cbuildVisitor";
 import {
   ArgumentContext,
   ArgumentsContext,
@@ -48,7 +48,7 @@ import {
   Vpath_argsContext,
   VpathContext,
   WsContext,
-} from "../parser/cbuildParser";
+} from "@parser/cbuildParser";
 import {
   AssignmentIR,
   AssignmentPrefix,
@@ -73,60 +73,25 @@ import {
   ruleSeparatorFromSymbol,
   textPart,
   varRefPart,
-} from "./ir";
+} from "@compiler/ir";
+import {
+  make_function_dispatcher,
+  MakeFunctionHandler,
+} from "@src/gnu-make-functions/make_function_dispatcher";
 
 type AssignmentPrefixPair = [AssignmentPrefix, ValuePart[]];
-
-const MAKE_FUNCTIONS = new Set([
-  "abspath",
-  "addprefix",
-  "addsuffix",
-  "and",
-  "basename",
-  "call",
-  "dir",
-  "error",
-  "eval",
-  "file",
-  "filter",
-  "filter-out",
-  "findstring",
-  "firstword",
-  "flavor",
-  "foreach",
-  "guile",
-  "if",
-  "info",
-  "join",
-  "lastword",
-  "let",
-  "notdir",
-  "or",
-  "origin",
-  "patsubst",
-  "realpath",
-  "shell",
-  "sort",
-  "strip",
-  "subst",
-  "suffix",
-  "value",
-  "warning",
-  "wildcard",
-  "word",
-  "wordlist",
-  "words",
-]);
 
 export class CBuildCompiler
   extends AbstractParseTreeVisitor<unknown>
   implements cbuildVisitor<unknown>
 {
   public compiled_program: IR[];
+  private readonly dispatcher;
 
   public constructor() {
     super();
     this.compiled_program = [];
+    this.dispatcher = new make_function_dispatcher();
   }
 
   protected defaultResult(): unknown {
@@ -296,19 +261,11 @@ export class CBuildCompiler
     }
 
     const name = ctx.function_name()!.text;
-    if (MAKE_FUNCTIONS.has(name)) {
-      const functionIR = new FunctionIR(name);
-      const argumentsContext = ctx.arguments();
-
-      if (argumentsContext != null) {
-        for (const argumentContext of argumentsContext.argument()) {
-          const argumentParts = argumentContext.accept(this) as ValuePart[];
-          functionIR.args.push(new ValueIR(argumentParts));
-        }
-      }
-
-      const callee = functionCallPart(functionIR);
-      return callee;
+    if (this.dispatcher.has(name)) {
+      const handler: MakeFunctionHandler = this.dispatcher.getHandler(name);
+      const functionIr: FunctionIR = handler.compile(ctx);
+      const calee: ValuePart = functionCallPart(functionIr);
+      return calee;
     }
 
     const parts: ValuePart[] = [];

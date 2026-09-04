@@ -13,7 +13,14 @@
     "removeComments": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": ["./"],
+      "@src/*": ["./src/*"],
+      "@parser/*": ["./src/parser/*"],
+      "@compiler/*": ["./src/compiler/*"],
+      "@gnu-make-functions/*": ["./src/gnu-make-functions/*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"]
