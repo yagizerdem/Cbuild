@@ -5,7 +5,7 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "antlr4ts": "antlr4ts -visitor cbuild.g4 -o ./src/generated"
+    "antlr4ts": "antlr4ts -visitor cbuild.g4 -o ./src/parser"
   },
   "devDependencies": {
     "@types/node": "^26.4.1",
