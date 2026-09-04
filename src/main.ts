@@ -1,7 +1,6 @@
 import { CharStreams, CommonTokenStream } from "antlr4ts";
-import cbuildLexer from "./generated/cbuildLexer";
-import cbuildParser from "./generated/cbuildParser";
-import { Cursor } from "./Cursor";
+import { cbuildLexer } from "./generated/cbuildLexer";
+import { cbuildParser } from "./generated/cbuildParser";
 
 var program: string = `
 SRCS     = $(wildcard *.c)
