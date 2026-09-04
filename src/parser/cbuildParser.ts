@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Generated from cbuild.g4 by ANTLR 4.9.0-SNAPSHOT
 
 
@@ -13,7 +14,6 @@ import { ParserATNSimulator } from "antlr4ts/atn/ParserATNSimulator";
 import { ParseTreeListener } from "antlr4ts/tree/ParseTreeListener";
 import { ParseTreeVisitor } from "antlr4ts/tree/ParseTreeVisitor";
 import { RecognitionException } from "antlr4ts/RecognitionException";
-import { RuleContext } from "antlr4ts/RuleContext";
 //import { RuleVersion } from "antlr4ts/RuleVersion";
 import { TerminalNode } from "antlr4ts/tree/TerminalNode";
 import { Token } from "antlr4ts/Token";

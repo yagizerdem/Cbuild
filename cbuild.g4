@@ -418,7 +418,7 @@ CHARS
 NL : '\r'? '\n' ;
 
 LEADING_TAB
-    : {getCharPositionInLine() == 0}? '\t'
+    : {this.charPositionInLine == 0}? '\t'
     ;
 
 WS

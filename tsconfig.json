@@ -7,7 +7,6 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "outDir": "./dist",
-    "rootDir": "./src",
     "sourceMap": true,
     "declaration": true,
     "removeComments": true,
@@ -21,7 +20,5 @@
       "@compiler/*": ["./src/compiler/*"],
       "@gnu-make-functions/*": ["./src/gnu-make-functions/*"]
     }
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
+  }
 }

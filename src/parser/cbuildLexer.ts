@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Generated from cbuild.g4 by ANTLR 4.9.0-SNAPSHOT
 
 
@@ -135,7 +136,7 @@ export class cbuildLexer extends Lexer {
 	private LEADING_TAB_sempred(_localctx: RuleContext, predIndex: number): boolean {
 		switch (predIndex) {
 		case 0:
-			return getCharPositionInLine() == 0;
+			return this.charPositionInLine == 0;
 		}
 		return true;
 	}
