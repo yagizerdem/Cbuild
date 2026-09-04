@@ -408,9 +408,6 @@ SLIT
     | '\'' ( '\\' . | ~['\\\r\n] )* '\''
     ;
 
-YSHARP: 'ysharp';
-LUA: 'lua';
-
 CHARS
     : ~[ \t\r\n$(){}:,=#|]+
     ;
@@ -418,7 +415,7 @@ CHARS
 NL : '\r'? '\n' ;
 
 LEADING_TAB
-    : {this.charPositionInLine == 0}? '\t'
+    : {this.column == 0}? '\t'
     ;
 
 WS
