@@ -35,21 +35,39 @@ export class ExpansionEngine extends BaseExpansionEngine {
     this.context = context;
   }
 
-  public override exec<T>(ir: AssignmentIR): T {
-    if (!(ir instanceof AssignmentIR)) {
-      throw new Error("Unsupported IR node for ExpansionEngine");
+  public expand<T>(ir: AssignmentIR | ValueIR | ValuePart | RecipeIR): T {
+    if (ir instanceof AssignmentIR) {
+      const identifier = ir.left!.exec<string>(this.valueExpansionEngine);
+      if (ir.type == AssignmentType.SIMPLE) {
+        const value = ir.right!.exec<string>(this.valueExpansionEngine);
+        this.context.setRawVariable(identifier, value);
+      }
+      if (ir.type == AssignmentType.RECURSIVE) {
+        this.context.setDeferredVariable(identifier, ir.right!);
+      }
     }
 
-    const identifier = ir.left!.exec<string>(this.valueExpansionEngine);
-    if (ir.type == AssignmentType.SIMPLE) {
-      const value = ir.right!.exec<string>(this.valueExpansionEngine);
-      this.context.setRawVariable(identifier, value);
-    }
-    if (ir.type == AssignmentType.RECURSIVE) {
-      this.context.setDeferredVariable(identifier, ir.right!);
+    if (ir instanceof RecipeIR) {
+      return ir.exec<T>(new RecipeExpansionEngine(this.context));
     }
 
-    return null as T;
+    if (ir instanceof ValueIR) {
+      return this.valueExpansionEngine.expand(ir) as T;
+    }
+
+    // expand value parts
+    if (
+      "kind" in ir &&
+      (ir.kind === "variable-reference" || ir.kind === "text")
+    ) {
+      return this.valueExpansionEngine.expand(ir as VarRefPart) as T;
+    }
+
+    throw new Error("Unsupported IR node for expansion");
+  }
+
+  public override exec<T>(ir: IR): T {
+    return this.expand(ir);
   }
 }
 
@@ -67,18 +85,22 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
     this.activeLookups.clear();
   }
 
-  public override exec<T>(ir: IR | ValuePart): T {
+  public expand(ir: ValueIR | ValuePart): string {
     if (ir instanceof ValueIR) {
-      return this.expandValueToString(ir, this.activeLookups) as T;
+      return this.expandValueToString(ir, this.activeLookups);
     }
     if ("kind" in ir && ir.kind === "variable-reference") {
-      return this.expandVarRefToString(ir, this.activeLookups) as T;
+      return this.expandVarRefToString(ir, this.activeLookups);
     }
     if ("kind" in ir && ir.kind === "text") {
-      return ir.lexeme as T;
+      return ir.lexeme;
     }
 
     throw new Error("Unsupported IR node or ValuePart for cbuild backend");
+  }
+
+  public override exec<T>(ir: ValueIR): T {
+    return this.expandValueToString(ir, this.activeLookups) as T;
   }
 
   private expandValueToString(ir: ValueIR, activeLookups: Set<string>): string {
@@ -145,7 +167,7 @@ export class RecipeExpansionEngine extends BaseExpansionEngine {
     this.context = context;
   }
 
-  public override exec<T>(ir: IR | ValuePart): T {
+  public override exec<T>(ir: RecipeIR): T {
     if (!(ir instanceof RecipeIR) || ir.recipe.kind !== "command") {
       throw new Error(
         "RecipeIR only support command recipes for cbuild backend",
@@ -178,4 +200,14 @@ export class Expansion {
     const expansionEngine = new ValueExpansionEngine(context);
     return ir.exec<string>(expansionEngine);
   }
+}
+
+export function expandValue(ir: ValueIR, context: Env): string {
+  const expansionEngine = new ValueExpansionEngine(context);
+  return ir.exec<string>(expansionEngine);
+}
+
+export function expandRecipe(ir: RecipeIR, context: Env): string {
+  const expansionEngine = new RecipeExpansionEngine(context);
+  return ir.exec<string>(expansionEngine);
 }

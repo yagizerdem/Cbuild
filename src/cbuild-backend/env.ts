@@ -20,6 +20,10 @@ export class Settings {
     this.isMinimalApi = isMinimalApi;
     this.silent = silent;
   }
+
+  // public get defaultSettings(): Settings {
+  //   return new
+  // }
 }
 
 export class SymbolTableVariable {
