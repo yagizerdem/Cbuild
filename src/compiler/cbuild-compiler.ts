@@ -47,6 +47,7 @@ import {
   Vpath_argsContext,
   VpathContext,
   WsContext,
+  IncludeContext,
 } from "@parser/cbuildParser.js";
 import {
   AssignmentIR,
@@ -72,6 +73,8 @@ import {
   ruleSeparatorFromSymbol,
   textPart,
   varRefPart,
+  IncludeIR,
+  Include,
 } from "@compiler/ir.js";
 import {
   make_function_dispatcher,
@@ -137,6 +140,9 @@ export class CBuildCompiler
     } else if (ctx.vpath() != null) {
       const vpathIR = ctx.vpath()!.accept(this) as VpathIR;
       return vpathIR;
+    } else if (ctx.include() != null) {
+      const includeIR = ctx.include()!.accept(this) as IncludeIR;
+      return includeIR;
     }
 
     throw new Error(
@@ -256,7 +262,7 @@ export class CBuildCompiler
     return ctx.getText();
   }
 
-  public visitFunction(ctx: FunctionContext): unknown {
+  public visitFunction(ctx: FunctionContext): ValuePart {
     if (ctx.VAR() != null) {
       return this.compileVarRef(ctx);
     }
@@ -280,7 +286,7 @@ export class CBuildCompiler
     return varRefPart(new ValueIR(parts));
   }
 
-  public visitFunction_name(ctx: Function_nameContext): unknown {
+  public visitFunction_name(ctx: Function_nameContext): ValuePart[] {
     const parts: ValuePart[] = [];
     for (const atom_ctx of ctx.function_name_atom()) {
       const result = atom_ctx.accept(this);
@@ -290,17 +296,17 @@ export class CBuildCompiler
     return parts;
   }
 
-  public visitFunction_name_atom(ctx: Function_name_atomContext): unknown {
+  public visitFunction_name_atom(ctx: Function_name_atomContext): ValuePart {
     if (ctx.CHARS() != null) {
       return textPart(ctx.CHARS()!.getText());
     }
     if (ctx.function() != null) {
-      return ctx.function()!.accept(this);
+      return ctx.function()!.accept(this) as ValuePart;
     }
     return textPart("");
   }
 
-  public visitArguments(ctx: ArgumentsContext): unknown {
+  public visitArguments(ctx: ArgumentsContext): ValuePart[] {
     const parts: ValuePart[] = [];
     for (const args_ctx of ctx.argument()) {
       const result = args_ctx.accept(this);
@@ -310,7 +316,7 @@ export class CBuildCompiler
     return parts;
   }
 
-  public visitArgument(ctx: ArgumentContext): unknown {
+  public visitArgument(ctx: ArgumentContext): ValuePart[] {
     const parts: ValuePart[] = [];
     const result = ctx.expressions().accept(this);
     this.collectValueParts(parts, result);
@@ -324,7 +330,7 @@ export class CBuildCompiler
     return varRefPart(value);
   }
 
-  public visitConditional(ctx: ConditionalContext): unknown {
+  public visitConditional(ctx: ConditionalContext): ConditionalIR {
     const conditionalIR = new ConditionalIR();
 
     if (ctx.if_eq_kw() != null) {
@@ -377,7 +383,7 @@ export class CBuildCompiler
     return conditionalIR;
   }
 
-  public visitCondition(ctx: ConditionContext): unknown {
+  public visitCondition(ctx: ConditionContext): Condition {
     const condition: Condition = {};
 
     if (ctx.expressions_opt().length === 2) {
@@ -408,20 +414,20 @@ export class CBuildCompiler
     return condition;
   }
 
-  public visitIdentifier(ctx: IdentifierContext): unknown {
+  public visitIdentifier(ctx: IdentifierContext): ValuePart {
     const text_part = textPart(ctx.getText());
     return text_part;
   }
 
-  public visitExpressions_opt(ctx: Expressions_optContext): unknown {
+  public visitExpressions_opt(ctx: Expressions_optContext): ValuePart[] {
     if (ctx.expressions() == null) {
       return [] as ValuePart[];
     }
 
-    return ctx.expressions()!.accept(this);
+    return ctx.expressions()!.accept(this) as ValuePart[];
   }
 
-  public visitExpressions(ctx: ExpressionsContext): unknown {
+  public visitExpressions(ctx: ExpressionsContext): ValuePart[] {
     const parts: ValuePart[] = [];
 
     for (const astNode of ctx.children ?? []) {
@@ -822,15 +828,15 @@ export class CBuildCompiler
     return textPart(ctx.getText());
   }
 
-  public visitVpath(ctx: VpathContext): unknown {
+  public visitVpath(ctx: VpathContext): VpathIR {
     if (ctx.vpath_args() == null) {
       return VpathIR.clearAll();
     }
 
-    return ctx.vpath_args()!.accept(this);
+    return ctx.vpath_args()!.accept(this) as VpathIR;
   }
 
-  public visitVpath_args(ctx: Vpath_argsContext): unknown {
+  public visitVpath_args(ctx: Vpath_argsContext): VpathIR {
     const arg = new ValueIR(ctx.pattern().accept(this) as ValuePart[]);
 
     if (ctx.expressions() == null) {
@@ -843,9 +849,22 @@ export class CBuildCompiler
     return VpathIR.setPattern(arg, directories);
   }
 
-  public visitWs(ctx: WsContext): unknown {
+  public visitWs(ctx: WsContext): ValuePart {
     const part = textPart(ctx.getText());
     return part;
+  }
+
+  public visitInclude(ctx: IncludeContext): IncludeIR {
+    const parts = ctx.expressions()!.accept(this) as ValuePart[];
+
+    if (ctx.include_kw().DASH_INCLUDE() != null)
+      return IncludeIR.dashInclude(new ValueIR(parts));
+    else if (ctx.include_kw().INCLUDE() != null)
+      return IncludeIR.include(new ValueIR(parts));
+    else if (ctx.include_kw().SINCLUDE() != null)
+      return IncludeIR.sinclude(new ValueIR(parts));
+
+    throw new Error("Unknown include type");
   }
 
   // utility

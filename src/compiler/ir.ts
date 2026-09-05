@@ -392,3 +392,36 @@ export class VpathIR extends BaseIR {
     return executor.exec(this);
   }
 }
+
+export type Include = "include" | "sinclude" | "-include";
+
+export class IncludeIR extends BaseIR {
+  constructor(
+    public readonly includepath: ValueIR,
+    public readonly include: Include,
+    row?: number,
+    col?: number,
+  ) {
+    super(row, col);
+  }
+
+  static include(includepath: ValueIR, row?: number, col?: number): IncludeIR {
+    return new IncludeIR(includepath, "include", row, col);
+  }
+
+  static sinclude(includepath: ValueIR, row?: number, col?: number): IncludeIR {
+    return new IncludeIR(includepath, "sinclude", row, col);
+  }
+
+  static dashInclude(
+    includepath: ValueIR,
+    row?: number,
+    col?: number,
+  ): IncludeIR {
+    return new IncludeIR(includepath, "-include", row, col);
+  }
+
+  exec<T>(executor: Executor): T {
+    return executor.exec(this);
+  }
+}
