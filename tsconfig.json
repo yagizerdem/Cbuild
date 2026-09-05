@@ -20,6 +20,7 @@
       "@parser/*": ["./src/parser/*"],
       "@compiler/*": ["./src/compiler/*"],
       "@gnu-make-functions/*": ["./src/gnu-make-functions/*"],
+      "@cbuild-backend/*": ["./src/cbuild-backend/*"],
       "@tests/*": ["./__tests__/*"]
     }
   }
