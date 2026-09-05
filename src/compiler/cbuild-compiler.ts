@@ -48,6 +48,7 @@ import {
   VpathContext,
   WsContext,
   IncludeContext,
+  Exprs_nestedContext,
 } from "@parser/cbuildParser.js";
 import {
   AssignmentIR,
@@ -118,6 +119,7 @@ export class CBuildCompiler
     const statements: IR[] = [];
     for (const stmt_ctx of ctx.statement()) {
       const ir = stmt_ctx.accept(this) as IR;
+      if (ir == null) continue;
       statements.push(ir);
     }
     return statements;
@@ -143,6 +145,8 @@ export class CBuildCompiler
     } else if (ctx.include() != null) {
       const includeIR = ctx.include()!.accept(this) as IncludeIR;
       return includeIR;
+    } else if (ctx.COMMENT() != null) {
+      return null; // ignore comments
     }
 
     throw new Error(
@@ -497,6 +501,16 @@ export class CBuildCompiler
     }
 
     return undefined;
+  }
+
+  public visitExprs_nested(ctx: Exprs_nestedContext): ValuePart[] {
+    const parts: ValuePart[] = [];
+
+    for (const child of ctx.children ?? []) {
+      this.collectValueParts(parts, child.accept(this));
+    }
+
+    return parts;
   }
 
   public visitStatements_opt(ctx: Statements_optContext): unknown {

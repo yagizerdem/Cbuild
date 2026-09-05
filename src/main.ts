@@ -1,7 +1,7 @@
 import { compile } from "@tests/util/compile.js";
 
 const buildFile = `
-TARGET_EXEC := final_program
+TARGET_EXEC := final_program 
 
 BUILD_DIR := ./build
 SRC_DIRS := ./src
