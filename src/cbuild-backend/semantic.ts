@@ -2,7 +2,6 @@ import { cbuildException, ErrorType } from "@src/cbuild-exception.js";
 import {
   AssignmentIR,
   AssignmentType,
-  functionCallPart,
   IR,
   NormalRuleIR,
   ValuePart,

@@ -12,11 +12,6 @@ import {
   ValueExpansionEngine,
 } from "@cbuild-backend/expansion.js";
 import { BaseModel, NormalRule } from "@cbuild-backend/model.js";
-import {
-  fileExistbyAbsolutePathAsync,
-  getModifiedTimeNsAsync,
-  resolveAndGetAbsolutePath,
-} from "./file-utils.js";
 
 export class GraphBuilder implements Executor {
   public readonly ruleModels: BaseModel[] = [];

@@ -60,6 +60,26 @@ export class cbuildException extends Error {
     Object.setPrototypeOf(this, cbuildException.prototype);
   }
 
+  public static from({
+    errorType,
+    message,
+    fileName,
+    line = -1,
+    column = -1,
+  }: {
+    errorType: ErrorType;
+    message: string;
+    fileName?: string | null;
+    line?: number;
+    column?: number;
+  }): cbuildException {
+    if (fileName != null) {
+      return new cbuildException(errorType, message, fileName, line, column);
+    }
+
+    return new cbuildException(errorType, message, line, column);
+  }
+
   public getErrorType(): ErrorType {
     return this.errorType;
   }
