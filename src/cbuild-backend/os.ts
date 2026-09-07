@@ -1,4 +1,3 @@
-// os-info.js
 import os from "node:os";
 
 const PLATFORM_NAMES = new Map([
