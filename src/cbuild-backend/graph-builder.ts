@@ -126,3 +126,96 @@ function hasCircularDependencyRecursive(
 
   return false;
 }
+
+export function getTargetSubgraph(
+  rules: NormalRule[],
+  activeTarget: string | null,
+): NormalRule[];
+
+export function getTargetSubgraph(rules: NormalRule[]): NormalRule[];
+
+export function getTargetSubgraph(
+  rules: NormalRule[],
+  activeTarget?: string | null,
+): NormalRule[] {
+  if (arguments.length === 1) {
+    return getTargetSubgraph(rules, findDefaultTarget(rules));
+  }
+
+  const subGraph: NormalRule[] = [];
+  const stack: (string | null | undefined)[] = [];
+  const visitedTargets = new Set<string | null | undefined>();
+
+  stack.push(activeTarget);
+
+  while (stack.length > 0) {
+    const currentTarget = stack.pop();
+
+    if (visitedTargets.has(currentTarget)) {
+      continue;
+    }
+
+    visitedTargets.add(currentTarget);
+
+    for (const rule of rules) {
+      if (rule.target === currentTarget) {
+        subGraph.push(rule);
+        stack.push(...rule.prerequisites);
+      }
+    }
+  }
+
+  if (hasCircularDependency(subGraph)) {
+    throw new cbuildException(
+      ErrorType.SEMANTIC,
+      "Circular dependency detected while resolving target '" +
+        activeTarget +
+        "'. Stop.",
+    );
+  }
+
+  return subGraph;
+}
+
+export function findDefaultTarget(rules: NormalRule[]): string | null {
+  if (rules.length === 0) return null;
+  return rules[0]!.target;
+}
+
+export function findTarget(rules: NormalRule[], target: string): NormalRule {
+  for (const rule of rules) {
+    if (rule.target === target) return rule;
+  }
+  throw new cbuildException(ErrorType.PROCESS, "Target not found: " + target);
+}
+
+export function findTargetList(
+  rules: NormalRule[],
+  target: string,
+): NormalRule[] {
+  const targetRules: NormalRule[] = rules.filter((r) => r.target === target);
+
+  if (targetRules.length === 0)
+    throw new cbuildException(ErrorType.PROCESS, "Target not found: " + target);
+  return targetRules;
+}
+
+export function findRuleByUUID(rules: NormalRule[], uuid: string): NormalRule {
+  for (const rule of rules) {
+    if (rule.uuid === uuid) return rule;
+  }
+
+  // programmatic error
+  throw new Error(`rule with uuid ${uuid} not found`);
+}
+
+// preserve order of targets
+export function findTopLevelTargets(rules: NormalRule[]): string[] {
+  const prerequisiteTargets: Set<string> = new Set(
+    rules.flatMap((rule) => rule.prerequisites),
+  );
+
+  return Array.from(new Set(rules.map((rule) => rule.target))).filter(
+    (target) => !prerequisiteTargets.has(target),
+  );
+}
