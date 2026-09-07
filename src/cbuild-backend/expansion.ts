@@ -41,9 +41,11 @@ export class ExpansionEngine extends BaseExpansionEngine {
       if (ir.type == AssignmentType.SIMPLE) {
         const value = ir.right!.exec<string>(this.valueExpansionEngine);
         this.context.setRawVariable(identifier, value);
+        return null as T;
       }
       if (ir.type == AssignmentType.RECURSIVE) {
         this.context.setDeferredVariable(identifier, ir.right!);
+        return null as T;
       }
     }
 
@@ -67,7 +69,10 @@ export class ExpansionEngine extends BaseExpansionEngine {
   }
 
   public override exec<T>(ir: IR): T {
-    return this.expand(ir);
+    if (ir instanceof AssignmentIR || ir instanceof ValueIR || ir instanceof RecipeIR) {
+      return this.expand<T>(ir);
+    }
+    throw new Error("Unsupported IR node for expansion");
   }
 }
 
