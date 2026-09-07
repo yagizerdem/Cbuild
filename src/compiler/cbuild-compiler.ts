@@ -161,11 +161,11 @@ export class CBuildCompiler
   }
 
   public visitAssignment(ctx: AssignmentContext): unknown {
-    const assignmentIR = new AssignmentIR();
-
-    assignmentIR.type = assignmentTypeFromSymbol(
+    const assignmentType = assignmentTypeFromSymbol(
       ctx.ASSIGN_OP().getText().trim(),
     );
+
+    const assignmentIR = new AssignmentIR(assignmentType);
 
     if (ctx.pattern() != null && !ctx.pattern()!.isEmpty()) {
       // left value
