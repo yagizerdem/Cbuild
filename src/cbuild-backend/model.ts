@@ -10,21 +10,21 @@ export abstract class BaseModel {
 }
 
 export interface NormalRuleOptions {
-  target?: string;
-  prerequisites?: string[];
-  shellCommands?: string[];
-  recipeIRS?: RecipeIR[];
-  normalRuleIR?: NormalRuleIR;
+  target: string;
+  prerequisites: string[];
+  shellCommands: string[];
+  recipeIRS: RecipeIR[];
+  normalRuleIR: NormalRuleIR;
 }
 
 export class NormalRule extends BaseModel {
-  public target: string | undefined;
-  public prerequisites: string[] | undefined;
-  public shellCommands: string[] | undefined;
-  public recipeIRS: RecipeIR[] | undefined;
-  public normalRuleIR: NormalRuleIR | undefined;
+  public target: string;
+  public prerequisites: string[];
+  public shellCommands: string[];
+  public recipeIRS: RecipeIR[];
+  public normalRuleIR: NormalRuleIR;
 
-  public constructor(options: NormalRuleOptions = {}) {
+  public constructor(options: NormalRuleOptions) {
     super();
 
     this.target = options.target;

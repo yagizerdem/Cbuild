@@ -69,7 +69,60 @@ export class GraphBuilder implements Executor {
           prerequisites: [...prerequisites],
           normalRuleIR: ir,
           recipeIRS: [...ir.recipes],
+          shellCommands: [], // do not use raw shell commands, expand from recipeIR before execution
         }),
     );
   }
+}
+
+export function hasCircularDependency(rules: NormalRule[]): boolean {
+  const graph = new Map<string, string[]>();
+
+  for (const rule of rules) {
+    const prerequisites = graph.get(rule.target) ?? [];
+    prerequisites.push(...rule.prerequisites);
+    graph.set(rule.target, prerequisites);
+  }
+
+  const visited = new Set<string>();
+  const activePath = new Set<string>();
+
+  for (const target of graph.keys()) {
+    if (hasCircularDependencyRecursive(target, graph, visited, activePath)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function hasCircularDependencyRecursive(
+  target: string,
+  graph: Map<string, string[]>,
+  visited: Set<string>,
+  activePath: Set<string>,
+): boolean {
+  if (activePath.has(target)) {
+    return true;
+  }
+
+  if (visited.has(target)) {
+    return false;
+  }
+
+  activePath.add(target);
+
+  for (const prerequisite of graph.get(target) ?? []) {
+    if (
+      graph.has(prerequisite) &&
+      hasCircularDependencyRecursive(prerequisite, graph, visited, activePath)
+    ) {
+      return true;
+    }
+  }
+
+  activePath.delete(target);
+  visited.add(target);
+
+  return false;
 }
