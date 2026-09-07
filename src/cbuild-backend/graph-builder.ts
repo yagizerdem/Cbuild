@@ -6,12 +6,17 @@ import {
   type ValueIR,
 } from "@compiler/ir.js";
 import { cbuildException, ErrorType } from "@src/cbuild-exception.js";
-import { Env } from "./env.js";
+import { Env } from "@cbuild-backend/env.js";
 import {
   ExpansionEngine,
   ValueExpansionEngine,
 } from "@cbuild-backend/expansion.js";
 import { BaseModel, NormalRule } from "@cbuild-backend/model.js";
+import {
+  fileExistbyAbsolutePathAsync,
+  getModifiedTimeNsAsync,
+  resolveAndGetAbsolutePath,
+} from "./file-utils.js";
 
 export class GraphBuilder implements Executor {
   public readonly ruleModels: BaseModel[] = [];
@@ -218,4 +223,117 @@ export function findTopLevelTargets(rules: NormalRule[]): string[] {
   return Array.from(new Set(rules.map((rule) => rule.target))).filter(
     (target) => !prerequisiteTargets.has(target),
   );
+}
+
+export function getAllSubgraphs(rules: NormalRule[]): NormalRule[][] {
+  const subGraphs: NormalRule[][] = [];
+  const topLevelTargets: string[] = findTopLevelTargets(rules);
+  topLevelTargets.forEach((target) => {
+    subGraphs.push(getTargetSubgraph(rules, target));
+  });
+  return subGraphs;
+}
+
+export function topologicalSort(
+  graph: NormalRule[],
+  startNode: NormalRule,
+): NormalRule[] {
+  const rulesByTarget: Map<string, NormalRule[]> = new Map<
+    string,
+    NormalRule[]
+  >();
+
+  for (const rule of graph) {
+    if (!rulesByTarget.has(rule.target)) {
+      rulesByTarget.set(rule.target, []);
+    }
+
+    rulesByTarget.get(rule.target)!.push(rule);
+  }
+
+  const sorted: NormalRule[] = [];
+  const visitingTargets = new Set<string>();
+  const visitedTargets = new Set<string>();
+
+  topologicalSortRecursive(
+    startNode.target,
+    rulesByTarget,
+    visitingTargets,
+    visitedTargets,
+    sorted,
+  );
+
+  return sorted;
+}
+
+function topologicalSortRecursive(
+  target: string,
+  rulesByTarget: Map<string, NormalRule[]>,
+  visitingTargets: Set<string>,
+  visitedTargets: Set<string>,
+  sorted: NormalRule[],
+): void {
+  if (visitedTargets.has(target)) {
+    return;
+  }
+
+  if (visitingTargets.has(target)) {
+    throw new cbuildException(
+      ErrorType.SEMANTIC,
+      "Circular dependency detected while sorting target '" + target + "'.",
+    );
+  }
+
+  visitingTargets.add(target);
+
+  const targetRules: NormalRule[] = rulesByTarget.get(target) ?? [];
+
+  for (const rule of targetRules) {
+    for (const prerequisite of rule.prerequisites) {
+      if (rulesByTarget.has(prerequisite)) {
+        topologicalSortRecursive(
+          prerequisite,
+          rulesByTarget,
+          visitingTargets,
+          visitedTargets,
+          sorted,
+        );
+      }
+    }
+  }
+
+  visitingTargets.delete(target);
+  visitedTargets.add(target);
+  sorted.push(...targetRules);
+}
+
+export async function shouldRebuild(
+  rule: NormalRule,
+  baseDir: string,
+): Promise<boolean> {
+  const targetEntryPath: string = resolveAndGetAbsolutePath(
+    baseDir,
+    rule.target,
+  );
+
+  if (!(await fileExistbyAbsolutePathAsync(targetEntryPath))) return true;
+
+  const lastModifiedDateOfTarget: bigint | undefined =
+    await getModifiedTimeNsAsync(targetEntryPath);
+
+  if (!lastModifiedDateOfTarget) return true;
+
+  for (const preq of rule.prerequisites) {
+    const preqAbsolutePath = resolveAndGetAbsolutePath(baseDir, preq);
+    const exist: boolean = await fileExistbyAbsolutePathAsync(preqAbsolutePath);
+    if (!exist) return true;
+
+    const lastModifiedDateOfPreq: bigint | undefined =
+      await getModifiedTimeNsAsync(preqAbsolutePath);
+
+    if (!lastModifiedDateOfPreq) return true;
+    if (lastModifiedDateOfPreq > lastModifiedDateOfTarget) return true;
+  }
+
+  return false;
 }
