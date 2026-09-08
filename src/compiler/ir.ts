@@ -63,8 +63,11 @@ export class FunctionIR extends BaseIR {
 }
 
 export const AssignmentType = {
+  // cbuilc backend only
   RECURSIVE: "=",
   SIMPLE: ":=",
+
+  // full api
   POSIX_SIMPLE: "::=",
   IMMEDIATE_ESCAPED: ":::=",
   CONDITIONAL: "?=",
@@ -125,12 +128,12 @@ function normalizeSymbol(symbol: string, name: string): string {
 
 export class AssignmentIR extends BaseIR {
   constructor(
+    public type: AssignmentType,
     public left?: ValueIR,
     public right?: ValueIR,
     public prefix?: AssignmentPrefix,
-    public type?: AssignmentType,
-    row?: number,
-    col?: number,
+    row: number = 0,
+    col: number = 0,
   ) {
     super(row, col);
   }
