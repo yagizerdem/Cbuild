@@ -7,7 +7,7 @@ import {
   resolveAndGetAbsolutePath,
 } from "@cbuild-backend/file-utils.js";
 import { Env } from "@cbuild-backend/env.js";
-import { AssignmentIR, IR, NormalRuleIR } from "@src/compiler/ir.js";
+import { IR } from "@src/compiler/ir.js";
 import { isCompatible } from "@cbuild-backend/semantic.js";
 import { cbuildException, ErrorType } from "@src/cbuild-exception.js";
 import {
@@ -17,9 +17,12 @@ import {
   GraphBuilder,
   hasCircularDependency,
   topologicalSort,
-} from "./graph-builder.js";
-import { RecipeExpansionEngine, ValueExpansionEngine } from "./expansion.js";
-import { ProcessRunner } from "./process.js";
+} from "@cbuild-backend/graph-builder.js";
+import {
+  RecipeExpansionEngine,
+  ValueExpansionEngine,
+} from "@cbuild-backend/expansion.js";
+import { ProcessRunner } from "@cbuild-backend/process.js";
 
 interface RunnerOptions {
   context?: Env;
