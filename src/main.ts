@@ -19,7 +19,7 @@ const context = new Env({
   cwd: process.cwd(),
   isMinimalApi: true,
   parallelJobCount: 2,
-  silent: true,
+  silent: false,
 });
 
 const core = new Core(context);

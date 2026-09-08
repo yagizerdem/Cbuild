@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { cbuildException, ErrorType } from "@src/cbuild-exception.js";
 import { getOsInfo } from "@cbuild-backend/os.js";
 
@@ -68,7 +68,7 @@ export class ProcessRunner {
   }
 
   /** Runs an already-expanded command. No variable expansion or prefix parsing. */
-  public async run(
+  public async runAsync(
     command: string,
     options: ProcessOptions = {},
   ): Promise<ProcessResult> {
@@ -167,7 +167,7 @@ export class ProcessRunner {
    * Expansion and continuation joining belong to the caller. This is not a
    * make parser: '+' / recursive make and .ONESHELL are not implemented.
    */
-  public async runRecipe(
+  public async runRecipeAsync(
     lines: readonly string[],
     options: RecipeOptions = {},
   ): Promise<ProcessResult[]> {
@@ -180,7 +180,7 @@ export class ProcessRunner {
         (options.echo ?? console.log)(command);
       }
       results.push(
-        await this.run(command, {
+        await this.runAsync(command, {
           ...options,
           ignoreErrors:
             prefix.includes("-") ||
@@ -188,6 +188,118 @@ export class ProcessRunner {
         }),
       );
     }
+    return results;
+  }
+
+  public runSync(command: string, options: ProcessOptions = {}): ProcessResult {
+    const settings = { ...this.defaults, ...options };
+    const shell = settings.shell ?? defaultShell();
+
+    if (settings.signal?.aborted) {
+      throw new ProcessError(
+        "Command cancelled before launch",
+        null,
+        settings.signal.reason,
+      );
+    }
+
+    if (!shell.executable.trim()) {
+      throw new TypeError("Shell executable must not be empty");
+    }
+
+    const capture = settings.output === "capture";
+    const env = { ...process.env, ...this.defaults.env, ...options.env };
+
+    const isCmd =
+      process.platform === "win32" &&
+      /(?:^|[\\/])cmd(?:\.exe)?$/i.test(shell.executable);
+
+    const standardCmd =
+      isCmd && shell.args.join(" ").toLowerCase() === "/d /s /c";
+
+    let child: ReturnType<typeof spawnSync>;
+
+    try {
+      child = standardCmd
+        ? spawnSync(command, {
+            shell: shell.executable,
+            cwd: settings.cwd,
+            env,
+            stdio: capture ? ["ignore", "pipe", "pipe"] : "inherit",
+            windowsHide: true,
+            maxBuffer: Infinity,
+          })
+        : spawnSync(shell.executable, [...shell.args, command], {
+            shell: false,
+            cwd: settings.cwd,
+            env,
+            stdio: capture ? ["ignore", "pipe", "pipe"] : "inherit",
+            windowsHide: true,
+            maxBuffer: Infinity,
+          });
+    } catch (error) {
+      throw new ProcessError(
+        `Could not start shell: ${shell.executable}`,
+        null,
+        error,
+      );
+    }
+
+    const result: ProcessResult = {
+      command,
+      exitCode: child.status,
+      signal: child.signal,
+      stdout: child.stdout?.toString("utf8") ?? "",
+      stderr: child.stderr?.toString("utf8") ?? "",
+    };
+
+    if (child.error) {
+      throw new ProcessError(
+        `Command could not complete: ${command}: ${child.error.message}`,
+        result,
+        child.error,
+      );
+    }
+
+    if (
+      child.signal !== null ||
+      (child.status !== 0 && !settings.ignoreErrors)
+    ) {
+      throw new ProcessError(
+        `Command failed (${child.signal ?? child.status}): ${command}`,
+        result,
+      );
+    }
+
+    return result;
+  }
+
+  public runRecipeSync(
+    lines: readonly string[],
+    options: RecipeOptions = {},
+  ): ProcessResult[] {
+    const results: ProcessResult[] = [];
+
+    for (const line of lines) {
+      const prefix = /^[\t ]*[@-]*/.exec(line)![0];
+      const command = line.slice(prefix.length);
+
+      if (!command.trim()) continue;
+
+      if (!options.silent && !prefix.includes("@")) {
+        (options.echo ?? console.log)(command);
+      }
+
+      results.push(
+        this.runSync(command, {
+          ...options,
+          ignoreErrors:
+            prefix.includes("-") ||
+            (options.ignoreErrors ?? this.defaults.ignoreErrors),
+        }),
+      );
+    }
+
     return results;
   }
 }

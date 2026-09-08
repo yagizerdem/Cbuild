@@ -55,6 +55,20 @@ export async function getFileStatsAsync(
   }
 }
 
+export function getFileStats(filePath: string): fs.BigIntStats | undefined {
+  try {
+    return fs.statSync(filePath, { bigint: true });
+  } catch (error) {
+    if (isMissingPath(error)) return undefined;
+
+    throw error;
+  }
+}
+
+export function getModifiedTimeNs(filePath: string): bigint | undefined {
+  return getFileStats(filePath)?.mtimeNs;
+}
+
 export async function getModifiedTimeNsAsync(
   filePath: string,
 ): Promise<bigint | undefined> {

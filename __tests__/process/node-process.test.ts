@@ -7,7 +7,7 @@ const runner = new ProcessRunner({
 });
 
 test("custom executable receives the complete command and environment", async () => {
-  const result = await runner.run(
+  const result = await runner.runAsync(
     'process.stdout.write(process.env.CBUILD_TEST_VALUE); process.stderr.write("err")',
     { env: { CBUILD_TEST_VALUE: "spaces & Unicode: ş" } },
   );
@@ -20,7 +20,7 @@ test("custom executable receives the complete command and environment", async ()
 });
 
 test("default shell executes shell syntax", async () => {
-  const result = await new ProcessRunner({ output: "capture" }).run(
+  const result = await new ProcessRunner({ output: "capture" }).runAsync(
     "echo first && echo second",
   );
   expect(result.stdout).toContain("first");
@@ -29,16 +29,16 @@ test("default shell executes shell syntax", async () => {
 
 test("failures retain output and can be explicitly ignored", async () => {
   await expect(
-    runner.run('process.stderr.write("failed"); process.exit(7)'),
+    runner.runAsync('process.stderr.write("failed"); process.exit(7)'),
   ).rejects.toMatchObject({ result: { exitCode: 7, stderr: "failed" } });
   expect(
-    (await runner.run("process.exit(7)", { ignoreErrors: true })).exitCode,
+    (await runner.runAsync("process.exit(7)", { ignoreErrors: true })).exitCode,
   ).toBe(7);
 });
 
 test("missing executable rejects even with ignoreErrors", async () => {
   await expect(
-    runner.run("", {
+    runner.runAsync("", {
       shell: { executable: "cbuild-nonexistent-shell-82764", args: [] },
       ignoreErrors: true,
     }),
@@ -47,7 +47,7 @@ test("missing executable rejects even with ignoreErrors", async () => {
 
 test("recipe prefixes control echo and failure handling", async () => {
   const echo = vi.fn();
-  const results = await runner.runRecipe(
+  const results = await runner.runRecipeAsync(
     [
       '@process.stdout.write("hidden")',
       "-process.exit(3)",
@@ -61,7 +61,7 @@ test("recipe prefixes control echo and failure handling", async () => {
     'process.stdout.write("done")',
   ]);
   await expect(
-    runner.runRecipe(["process.exit(2)", "process.exit(0)"], { echo }),
+    runner.runRecipeAsync(["process.exit(2)", "process.exit(0)"], { echo }),
   ).rejects.toMatchObject({ result: { exitCode: 2 } });
 });
 
@@ -69,6 +69,8 @@ test("pre-aborted command rejects", async () => {
   const controller = new AbortController();
   controller.abort();
   await expect(
-    runner.run("setInterval(() => {}, 1000)", { signal: controller.signal }),
+    runner.runAsync("setInterval(() => {}, 1000)", {
+      signal: controller.signal,
+    }),
   ).rejects.toBeInstanceOf(ProcessError);
 });
