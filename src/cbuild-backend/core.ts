@@ -9,7 +9,11 @@ import {
 import { Env } from "@cbuild-backend/env.js";
 import { IR } from "@src/compiler/ir.js";
 import { isCompatible } from "@cbuild-backend/semantic.js";
-import { cbuildException, ErrorType } from "@src/cbuild-exception.js";
+import {
+  CbuildException,
+  ErrorType,
+  MachineCode,
+} from "@src/cbuild-exception.js";
 import {
   findDefaultTarget,
   findTarget,
@@ -42,14 +46,7 @@ export class Core {
         throw new Error("No context available");
       })();
 
-    if (!isCompatible(rules)) {
-      throw cbuildException.from({
-        errorType: ErrorType.SEMANTIC,
-        message: "Incompatible rules",
-        line: -1,
-        column: -1,
-      });
-    }
+    isCompatible(rules);
 
     const graphBuilder = new GraphBuilder(currentContext);
 
@@ -60,10 +57,11 @@ export class Core {
 
     const target = findDefaultTarget(normalRulesGraph);
     if (!target) {
-      throw cbuildException.from({
+      throw CbuildException.from({
         errorType: ErrorType.SEMANTIC,
+        machineCode: MachineCode.NO_TARGET_FOUND,
         message: "No target found",
-        line: -1,
+        row: -1,
         column: -1,
       });
     }
@@ -76,9 +74,12 @@ export class Core {
     const flag = hasCircularDependency(rulesSubGraph);
 
     if (flag) {
-      throw cbuildException.from({
+      throw CbuildException.from({
         errorType: ErrorType.SEMANTIC,
+        machineCode: MachineCode.CIRCULAR_DEPQ,
         message: "Circular dependency detected",
+        row: -1,
+        column: -1,
       });
     }
 
@@ -236,10 +237,13 @@ export class Core {
             });
 
       if (result.exitCode == null || result.exitCode !== 0) {
-        throw new cbuildException(
-          ErrorType.PROCESS,
-          `Build failed for target '${rule.target}': ${command}, message : ${result.stderr}`,
-        );
+        throw CbuildException.from({
+          column: -1,
+          row: -1,
+          errorType: ErrorType.PROCESS,
+          machineCode: MachineCode.SHELL_COMMAND_FAILED,
+          message: `Build failed for target '${rule.target}': ${command}, message : ${result.stderr}`,
+        });
       }
 
       let normalizedStdout: string = result.stdout.trim();
@@ -296,10 +300,13 @@ export class Core {
           }));
 
       if (result.exitCode == null || result.exitCode !== 0) {
-        throw new cbuildException(
-          ErrorType.PROCESS,
-          `Build failed for target '${rule.target}': ${command}, message : ${result.stderr}`,
-        );
+        throw CbuildException.from({
+          column: -1,
+          row: -1,
+          errorType: ErrorType.PROCESS,
+          machineCode: MachineCode.SHELL_COMMAND_FAILED,
+          message: `Build failed for target '${rule.target}': ${command}, message : ${result.stderr}`,
+        });
       }
 
       let normalizedStdout: string = result.stdout.trim();

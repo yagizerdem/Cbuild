@@ -1,5 +1,9 @@
 import { spawn, spawnSync } from "node:child_process";
-import { cbuildException, ErrorType } from "@src/cbuild-exception.js";
+import {
+  CbuildException,
+  ErrorType,
+  MachineCode,
+} from "@src/cbuild-exception.js";
 import { getOsInfo } from "@cbuild-backend/os.js";
 
 export interface ShellOptions {
@@ -34,19 +38,6 @@ export interface RecipeOptions extends ProcessOptions {
   echo?: (command: string) => void;
 }
 
-export class ProcessError extends cbuildException {
-  public constructor(
-    message: string,
-    public readonly result: ProcessResult | null = null,
-    cause?: unknown,
-  ) {
-    super(ErrorType.PROCESS, message);
-    Object.setPrototypeOf(this, new.target.prototype);
-    this.name = "ProcessError";
-    this.cause = cause;
-  }
-}
-
 /** Explicit shell configuration also supports bash, PowerShell and custom shells. */
 export function defaultShell(): ShellOptions {
   const info = getOsInfo();
@@ -75,11 +66,13 @@ export class ProcessRunner {
     const settings = { ...this.defaults, ...options };
     const shell = settings.shell ?? defaultShell();
     if (settings.signal?.aborted) {
-      throw new ProcessError(
-        "Command cancelled before launch",
-        null,
-        settings.signal.reason,
-      );
+      throw CbuildException.from({
+        column: -1,
+        row: -1,
+        errorType: ErrorType.PROCESS,
+        machineCode: MachineCode.SHELL_COMMAND_ABORTED,
+        message: `cbuild: Command cancelled before launch. Stop.`,
+      });
     }
     if (!shell.executable.trim()) {
       throw new TypeError("Shell executable must not be empty");
@@ -131,21 +124,26 @@ export class ProcessRunner {
           };
           if (failure) {
             reject(
-              new ProcessError(
-                `Command could not complete: ${command}: ${failure.message}`,
-                result,
-                failure,
-              ),
+              CbuildException.from({
+                column: -1,
+                row: -1,
+                errorType: ErrorType.PROCESS,
+                machineCode: MachineCode.SHELL_COMMAND_FAILED,
+                message: `cbuild: Command could not complete: ${command}: ${failure.message}. Stop.`,
+              }),
             );
           } else if (
             signal !== null ||
             (exitCode !== 0 && !settings.ignoreErrors)
           ) {
             reject(
-              new ProcessError(
-                `Command failed (${signal ?? exitCode}): ${command}`,
-                result,
-              ),
+              CbuildException.from({
+                column: -1,
+                row: -1,
+                errorType: ErrorType.PROCESS,
+                machineCode: MachineCode.SHELL_COMMAND_FAILED,
+                message: `cbuild: Command failed (${signal ?? exitCode}): ${command}. Stop.`,
+              }),
             );
           } else {
             resolve(result);
@@ -153,11 +151,13 @@ export class ProcessRunner {
         });
       } catch (error) {
         reject(
-          new ProcessError(
-            `Could not start shell: ${shell.executable}`,
-            null,
-            error,
-          ),
+          CbuildException.from({
+            column: -1,
+            row: -1,
+            errorType: ErrorType.PROCESS,
+            machineCode: MachineCode.SHELL_COMMAND_FAILED,
+            message: `cbuild: Could not start shell: ${shell.executable}. Stop.`,
+          }),
         );
       }
     });
@@ -196,15 +196,23 @@ export class ProcessRunner {
     const shell = settings.shell ?? defaultShell();
 
     if (settings.signal?.aborted) {
-      throw new ProcessError(
-        "Command cancelled before launch",
-        null,
-        settings.signal.reason,
-      );
+      throw CbuildException.from({
+        column: -1,
+        row: -1,
+        errorType: ErrorType.PROCESS,
+        machineCode: MachineCode.SHELL_COMMAND_ABORTED,
+        message: `cbuild: Command cancelled before launch. Stop.`,
+      });
     }
 
     if (!shell.executable.trim()) {
-      throw new TypeError("Shell executable must not be empty");
+      throw CbuildException.from({
+        column: -1,
+        row: -1,
+        errorType: ErrorType.PROCESS,
+        machineCode: MachineCode.INVALID_SHELL_PATH,
+        message: `cbuild: Shell executable must not be empty. Stop.`,
+      });
     }
 
     const capture = settings.output === "capture";
@@ -238,11 +246,13 @@ export class ProcessRunner {
             maxBuffer: Infinity,
           });
     } catch (error) {
-      throw new ProcessError(
-        `Could not start shell: ${shell.executable}`,
-        null,
-        error,
-      );
+      throw CbuildException.from({
+        column: -1,
+        row: -1,
+        errorType: ErrorType.PROCESS,
+        machineCode: MachineCode.SHELL_COMMAND_FAILED,
+        message: `cbuild: Could not start shell: ${shell.executable}. Stop.`,
+      });
     }
 
     const result: ProcessResult = {
@@ -254,21 +264,26 @@ export class ProcessRunner {
     };
 
     if (child.error) {
-      throw new ProcessError(
-        `Command could not complete: ${command}: ${child.error.message}`,
-        result,
-        child.error,
-      );
+      throw CbuildException.from({
+        column: -1,
+        row: -1,
+        errorType: ErrorType.PROCESS,
+        machineCode: MachineCode.SHELL_COMMAND_FAILED,
+        message: `cbuild: Command could not complete: ${command}: ${child.error.message}. Stop.`,
+      });
     }
 
     if (
       child.signal !== null ||
       (child.status !== 0 && !settings.ignoreErrors)
     ) {
-      throw new ProcessError(
-        `Command failed (${child.signal ?? child.status}): ${command}`,
-        result,
-      );
+      throw CbuildException.from({
+        column: -1,
+        row: -1,
+        errorType: ErrorType.PROCESS,
+        machineCode: MachineCode.SHELL_COMMAND_FAILED,
+        message: `cbuild: Command failed (${child.signal ?? child.status}): ${command}. Stop.`,
+      });
     }
 
     return result;

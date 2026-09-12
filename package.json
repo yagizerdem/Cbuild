@@ -12,7 +12,8 @@
     "build": "tsc -p ./tsconfig.prod.json && tsc-alias -p ./tsconfig.prod.json",
     "disable-generated-typecheck": "npx tsx ./scripts/disable-generated-typecheck.ts",
     "dev": "npm run build:dev && node --enable-source-maps ./dist/src/main.js",
-    "start": "npm run build && node --enable-source-maps ./dist/src/main.js"
+    "start": "npm run build && node --enable-source-maps ./dist/src/main.js",
+    "type-check": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/node": "^26.4.1",

@@ -1,6 +1,10 @@
 import { FunctionIR } from "@compiler/ir.js";
 import { FunctionContext } from "@parser/cbuildParser.js";
-import { cbuildException, ErrorType } from "@src/cbuild-exception.js";
+import {
+  CbuildException,
+  ErrorType,
+  MachineCode,
+} from "@src/cbuild-exception.js";
 import type { MakeFunction } from "@gnu-make-functions/type.js";
 import { compile_fn } from "@gnu-make-functions/compiler/compile_fn.js";
 import { util } from "@gnu-make-functions/compiler/util.js";
@@ -14,12 +18,14 @@ export class compile_file extends compile_fn {
     util.cleanWS(ir);
 
     if (ir.args.length !== 2 && ir.args.length !== 3) {
-      throw new cbuildException(
-        ErrorType.SEMANTIC,
-        "file: expected 2 or 3 arguments: op filename[, text]",
-        ctx.start?.line || 0,
-        (ctx.start?.column || 0) + 1,
-      );
+      throw CbuildException.from({
+        column: ctx.start?.column || 0,
+        row: ctx.start?.line || 0,
+        errorType: ErrorType.SEMANTIC,
+        machineCode: MachineCode.FUNCTION_COMPILATION_ERROR,
+        message:
+          "buildFile: file: expected 2 or 3 arguments: op filename[, text]",
+      });
     }
 
     return ir;

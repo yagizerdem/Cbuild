@@ -1,9 +1,12 @@
 import { FunctionIR } from "@compiler/ir.js";
 import { FunctionContext } from "@parser/cbuildParser.js";
-import { cbuildException, ErrorType } from "@src/cbuild-exception.js";
+import {
+  CbuildException,
+  ErrorType,
+  MachineCode,
+} from "@src/cbuild-exception.js";
 import type { MakeFunction } from "@gnu-make-functions/type.js";
 import { compile_fn } from "@gnu-make-functions/compiler/compile_fn.js";
-import { util } from "@gnu-make-functions/compiler/util.js";
 
 export class compile_filter_out extends compile_fn {
   public override compile(
@@ -13,12 +16,14 @@ export class compile_filter_out extends compile_fn {
     const ir = super.compile(ctx, func);
 
     if (ir.args.length !== 2) {
-      throw new cbuildException(
-        ErrorType.SEMANTIC,
-        "filter-out: expected exactly 2 arguments: pattern..., text",
-        ctx.start?.line || 0,
-        (ctx.start?.column || 0) + 1,
-      );
+      throw CbuildException.from({
+        column: ctx.start?.column || 0,
+        row: ctx.start?.line || 0,
+        errorType: ErrorType.SEMANTIC,
+        machineCode: MachineCode.FUNCTION_COMPILATION_ERROR,
+        message:
+          "buildFile: filter-out: expected exactly 2 arguments: pattern..., text",
+      });
     }
 
     return ir;

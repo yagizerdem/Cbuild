@@ -1,6 +1,10 @@
 import { FunctionIR } from "@compiler/ir.js";
 import { FunctionContext } from "@parser/cbuildParser.js";
-import { cbuildException, ErrorType } from "@src/cbuild-exception.js";
+import {
+  CbuildException,
+  ErrorType,
+  MachineCode,
+} from "@src/cbuild-exception.js";
 import type { MakeFunction } from "@gnu-make-functions/type.js";
 import { compile_fn } from "@gnu-make-functions/compiler/compile_fn.js";
 import { util } from "@gnu-make-functions/compiler/util.js";
@@ -14,12 +18,13 @@ export class compile_word extends compile_fn {
     util.cleanWS(ir);
 
     if (ir.args.length !== 2) {
-      throw new cbuildException(
-        ErrorType.SEMANTIC,
-        "word: expected exactly 2 arguments: n, text",
-        ctx.start?.line || 0,
-        (ctx.start?.column || 0) + 1,
-      );
+      throw CbuildException.from({
+        errorType: ErrorType.SEMANTIC,
+        message: "buildFile: word: expected exactly 2 arguments: n, text",
+        row: ctx.start?.line || 0,
+        column: (ctx.start?.column || 0) + 1,
+        machineCode: MachineCode.FUNCTION_COMPILATION_ERROR,
+      });
     }
 
     return ir;
