@@ -67,6 +67,8 @@ import { KeywordsContext } from "./cbuildParser.js";
 import { ColonContext } from "./cbuildParser.js";
 import { Comment_optContext } from "./cbuildParser.js";
 import { WsContext } from "./cbuildParser.js";
+import { HookContext } from "./cbuildParser.js";
+import { Hook_programContext } from "./cbuildParser.js";
 
 
 /**
@@ -467,5 +469,17 @@ export class cbuildVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitWs?: (ctx: WsContext) => Result;
+    /**
+     * Visit a parse tree produced by `cbuildParser.hook`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitHook?: (ctx: HookContext) => Result;
+    /**
+     * Visit a parse tree produced by `cbuildParser.hook_program`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitHook_program?: (ctx: Hook_programContext) => Result;
 }
 

@@ -1,3 +1,5 @@
+import { ParserRuleContext } from "antlr4ng";
+
 export interface Executor {
   exec<T>(node: IR): T;
 }
@@ -9,10 +11,9 @@ export interface IR {
 }
 
 export abstract class BaseIR implements IR {
-  constructor(
-    public row = 0,
-    public col = 0,
-  ) {
+  public row: number;
+  public col: number;
+  constructor(row = 0, col = 0) {
     this.row = row;
     this.col = col;
   }
@@ -422,6 +423,18 @@ export class IncludeIR extends BaseIR {
     col?: number,
   ): IncludeIR {
     return new IncludeIR(includepath, "-include", row, col);
+  }
+
+  exec<T>(executor: Executor): T {
+    return executor.exec(this);
+  }
+}
+
+export class HookIR extends BaseIR {
+  public readonly hookProgram: string;
+  constructor(hookProgram: string, row?: number, col?: number) {
+    super(row, col);
+    this.hookProgram = hookProgram;
   }
 
   exec<T>(executor: Executor): T {

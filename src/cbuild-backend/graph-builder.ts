@@ -1,5 +1,6 @@
 import {
   AssignmentIR,
+  HookIR,
   NormalRuleIR,
   type Executor,
   type IR,
@@ -16,6 +17,7 @@ import {
   ValueExpansionEngine,
 } from "@cbuild-backend/expansion.js";
 import { BaseModel, NormalRule } from "@cbuild-backend/model.js";
+import globalInterpreter from "@cbuild-backend/interpreter/interpreter.js";
 
 export class GraphBuilder implements Executor {
   public readonly ruleModels: BaseModel[] = [];
@@ -48,6 +50,12 @@ export class GraphBuilder implements Executor {
       ir.exec(new ExpansionEngine(this.context));
       return null as T;
     }
+
+    if (ir instanceof HookIR) {
+      globalInterpreter.run(ir.hookProgram);
+      return null as T;
+    }
+
     throw CbuildException.from({
       column: ir.col,
       row: ir.row,

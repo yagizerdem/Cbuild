@@ -6,6 +6,7 @@ import {
 import {
   AssignmentIR,
   AssignmentType,
+  HookIR,
   IR,
   NormalRuleIR,
   ValuePart,
@@ -48,6 +49,10 @@ function validateIR(ir: IR): void {
 
   if (ir instanceof NormalRuleIR) {
     validateNormalRule(ir);
+  }
+
+  if (ir instanceof HookIR) {
+    // do not need to validate hookIR parser already handles it
   }
 }
 
@@ -140,5 +145,9 @@ function validateAssignmentFlavor(type: AssignmentType): boolean {
 }
 
 function allowedIR(ir: IR): boolean {
-  return ir instanceof AssignmentIR || ir instanceof NormalRuleIR;
+  return (
+    ir instanceof AssignmentIR ||
+    ir instanceof NormalRuleIR ||
+    ir instanceof HookIR
+  );
 }

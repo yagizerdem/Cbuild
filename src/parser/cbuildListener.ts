@@ -67,6 +67,8 @@ import { KeywordsContext } from "./cbuildParser.js";
 import { ColonContext } from "./cbuildParser.js";
 import { Comment_optContext } from "./cbuildParser.js";
 import { WsContext } from "./cbuildParser.js";
+import { HookContext } from "./cbuildParser.js";
+import { Hook_programContext } from "./cbuildParser.js";
 
 
 /**
@@ -724,6 +726,26 @@ export class cbuildListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitWs?: (ctx: WsContext) => void;
+    /**
+     * Enter a parse tree produced by `cbuildParser.hook`.
+     * @param ctx the parse tree
+     */
+    enterHook?: (ctx: HookContext) => void;
+    /**
+     * Exit a parse tree produced by `cbuildParser.hook`.
+     * @param ctx the parse tree
+     */
+    exitHook?: (ctx: HookContext) => void;
+    /**
+     * Enter a parse tree produced by `cbuildParser.hook_program`.
+     * @param ctx the parse tree
+     */
+    enterHook_program?: (ctx: Hook_programContext) => void;
+    /**
+     * Exit a parse tree produced by `cbuildParser.hook_program`.
+     * @param ctx the parse tree
+     */
+    exitHook_program?: (ctx: Hook_programContext) => void;
 
     visitTerminal(node: TerminalNode): void {}
     visitErrorNode(node: ErrorNode): void {}

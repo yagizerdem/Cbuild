@@ -257,7 +257,7 @@ export class Core {
   }
 
   public async buildTargetAsync(rule: NormalRule) {
-    if (!this.shouldRebuildAsync(rule, process.cwd())) {
+    if (!(await this.shouldRebuildAsync(rule, process.cwd()))) {
       return;
     }
 
