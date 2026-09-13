@@ -10,7 +10,7 @@ app:
 \t echo $(MESSAGE)
 
 hook {
-  println("hello world");
+  println(("hello WORLD"):length());
 }
 
 `;
