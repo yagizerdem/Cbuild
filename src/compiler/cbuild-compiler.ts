@@ -238,14 +238,14 @@ export class CBuildCompiler
   public visitExpr_in_assign(ctx: Expr_in_assignContext): unknown {
     const parts: ValuePart[] = [];
     for (const atom_ctx of ctx.expr_in_assign_atom()) {
-      if (atom_ctx.function() != null && !atom_ctx.function()!.isEmpty) {
+      if (atom_ctx.function() != null && !atom_ctx.function()!.isEmpty()) {
         const atom = atom_ctx.function()!.accept(this);
         if (this.isValuePart(atom)) {
           parts.push(atom);
         }
       } else if (
         atom_ctx.text_in_assign() != null &&
-        !atom_ctx.text_in_assign()!.isEmpty
+        !atom_ctx.text_in_assign()!.isEmpty()
       ) {
         let lexeme = "";
         for (const char_ctx of atom_ctx.text_in_assign()!.char_in_assign()) {

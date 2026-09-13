@@ -3,17 +3,11 @@ import { Env } from "@cbuild-backend/env.js";
 import { Core } from "@cbuild-backend/core.js";
 
 const buildFile = `
-app : a b
-\t echo test
+NAME = fucker
+MESSAGE = hello $(NAME)
 
-a: c
-\t echo a
-b : 
-\t echo b
-
-hook {
-  stdio.println("hook executed")
-}
+app:
+\t echo $(MESSAGE)
 `;
 
 const ir = compile(buildFile);
