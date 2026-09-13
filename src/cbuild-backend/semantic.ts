@@ -1,7 +1,12 @@
-import { cbuildException, ErrorType } from "@src/cbuild-exception.js";
+import {
+  CbuildException,
+  ErrorType,
+  MachineCode,
+} from "@src/cbuild-exception.js";
 import {
   AssignmentIR,
   AssignmentType,
+  HookIR,
   IR,
   NormalRuleIR,
   ValuePart,
@@ -12,16 +17,12 @@ export function isCompatible(instructions: IR[]): boolean {
     validateCompatibility(instructions);
     return true;
   } catch (error: unknown) {
-    if (error instanceof cbuildException) {
-      return false;
+    if (error instanceof CbuildException) {
+      // maybe log in the future idk
+      throw error;
     }
-
     throw error;
   }
-}
-
-function incompatible(ir: IR, message: string): cbuildException {
-  return new cbuildException(ErrorType.SEMANTIC, message, ir.row, ir.col);
 }
 
 function validateCompatibility(instructions: IR[]): void {
@@ -32,10 +33,13 @@ function validateCompatibility(instructions: IR[]): void {
 
 function validateIR(ir: IR): void {
   if (!allowedIR(ir)) {
-    throw incompatible(
-      ir,
-      `Unsupported IR type for minimal-backend: ${ir.constructor.name}. Stop.`,
-    );
+    throw CbuildException.from({
+      column: ir.col,
+      row: ir.row,
+      errorType: ErrorType.SEMANTIC,
+      machineCode: MachineCode.UNSUPPORTED_IR,
+      message: `buildFile: Unsupported IR type for cbuild backend: ${ir}. Stop.`,
+    });
   }
 
   if (ir instanceof AssignmentIR) {
@@ -45,6 +49,10 @@ function validateIR(ir: IR): void {
 
   if (ir instanceof NormalRuleIR) {
     validateNormalRule(ir);
+  }
+
+  if (ir instanceof HookIR) {
+    // do not need to validate hookIR parser already handles it
   }
 }
 
@@ -64,26 +72,36 @@ function validateAssignment(assignmentIR: AssignmentIR): void {
   const prefix = assignmentIR.prefix?.trim() || null;
 
   if (prefix != null && prefix.trim().length > 0) {
-    throw incompatible(
-      assignmentIR,
-      `Assignment prefixes are not supported by the ySharp backend: ${prefix}`,
-    );
+    throw CbuildException.from({
+      column: assignmentIR.col,
+      row: assignmentIR.row,
+      errorType: ErrorType.SEMANTIC,
+      machineCode: MachineCode.UNSUPPORTED_IR,
+      message: `Assignment prefixes are not supported by the cbuild backend: ${prefix}`,
+    });
   }
 
   if (!validateAssignmentFlavor(assignmentIR.type)) {
-    incompatible(
-      assignmentIR,
-      `Unsupported assignment type for minimal-backend: ${assignmentIR.type}`,
-    );
+    throw CbuildException.from({
+      column: assignmentIR.col,
+      row: assignmentIR.row,
+      errorType: ErrorType.SEMANTIC,
+      machineCode: MachineCode.UNSUPPORTED_IR,
+      message: `Unsupported assignment type for cbuild backend: ${assignmentIR.type}`,
+    });
   }
 }
 
 function validateNormalRule(normalRuleIR: NormalRuleIR): void {
   if (normalRuleIR.orderOnlyPrerequisites.length > 0) {
-    throw incompatible(
-      normalRuleIR,
-      "Order-only prerequisites are not supported by the ySharp backend",
-    );
+    throw CbuildException.from({
+      column: normalRuleIR.col,
+      row: normalRuleIR.row,
+      errorType: ErrorType.SEMANTIC,
+      machineCode: MachineCode.UNSUPPORTED_IR,
+      message:
+        "Order-only prerequisites are not supported by the cbuild backend",
+    });
   }
 
   for (const target of normalRuleIR.targets) {
@@ -97,10 +115,13 @@ function validateNormalRule(normalRuleIR: NormalRuleIR): void {
   for (const recipe of normalRuleIR.recipes) {
     // conditionals are  not supported in cbuild backend
     if ("kind" in recipe && recipe.kind === "conditional") {
-      throw incompatible(
-        normalRuleIR,
-        "Conditional recipes are not supported by the cbuild backend",
-      );
+      throw CbuildException.from({
+        column: normalRuleIR.col,
+        row: normalRuleIR.row,
+        errorType: ErrorType.SEMANTIC,
+        machineCode: MachineCode.UNSUPPORTED_IR,
+        message: "Conditional recipes are not supported by the cbuild backend",
+      });
     }
   }
 }
@@ -108,10 +129,13 @@ function validateNormalRule(normalRuleIR: NormalRuleIR): void {
 function validateParts(parts: ValuePart[], owner: IR, context: string): void {
   for (const part of parts) {
     if ("kind" in part && part.kind === "function-call") {
-      throw incompatible(
-        owner,
-        `${context} contains an unsupported function call: ${part}`,
-      );
+      throw CbuildException.from({
+        column: owner.col,
+        row: owner.row,
+        errorType: ErrorType.SEMANTIC,
+        machineCode: MachineCode.UNSUPPORTED_IR,
+        message: `${context} contains an unsupported function call: ${part}`,
+      });
     }
   }
 }
@@ -121,5 +145,9 @@ function validateAssignmentFlavor(type: AssignmentType): boolean {
 }
 
 function allowedIR(ir: IR): boolean {
-  return ir instanceof AssignmentIR || ir instanceof NormalRuleIR;
+  return (
+    ir instanceof AssignmentIR ||
+    ir instanceof NormalRuleIR ||
+    ir instanceof HookIR
+  );
 }

@@ -9,7 +9,11 @@ import {
 import { Env } from "@cbuild-backend/env.js";
 import { IR } from "@src/compiler/ir.js";
 import { isCompatible } from "@cbuild-backend/semantic.js";
-import { cbuildException, ErrorType } from "@src/cbuild-exception.js";
+import {
+  CbuildException,
+  ErrorType,
+  MachineCode,
+} from "@src/cbuild-exception.js";
 import {
   findDefaultTarget,
   findTarget,
@@ -34,7 +38,7 @@ export class Core {
     this.context = context;
   }
 
-  public run(rules: IR[], options?: RunnerOptions) {
+  public async runAsync(rules: IR[], options?: RunnerOptions) {
     const currentContext =
       options?.context ??
       this.context ??
@@ -42,28 +46,22 @@ export class Core {
         throw new Error("No context available");
       })();
 
-    if (!isCompatible(rules)) {
-      throw cbuildException.from({
-        errorType: ErrorType.SEMANTIC,
-        message: "Incompatible rules",
-        line: -1,
-        column: -1,
-      });
-    }
+    isCompatible(rules);
 
     const graphBuilder = new GraphBuilder(currentContext);
 
     // contains type of relations in under single interface. ex. hooks
-    const graph: BaseModel[] = graphBuilder.build(rules);
+    const graph: BaseModel[] = await graphBuilder.buildAsync(rules);
     // contains relation only needed for build
     const normalRulesGraph = this.collectNormalRuleModels(graph);
 
     const target = findDefaultTarget(normalRulesGraph);
     if (!target) {
-      throw cbuildException.from({
+      throw CbuildException.from({
         errorType: ErrorType.SEMANTIC,
+        machineCode: MachineCode.NO_TARGET_FOUND,
         message: "No target found",
-        line: -1,
+        row: -1,
         column: -1,
       });
     }
@@ -76,13 +74,16 @@ export class Core {
     const flag = hasCircularDependency(rulesSubGraph);
 
     if (flag) {
-      throw cbuildException.from({
+      throw CbuildException.from({
         errorType: ErrorType.SEMANTIC,
+        machineCode: MachineCode.CIRCULAR_DEPQ,
         message: "Circular dependency detected",
+        row: -1,
+        column: -1,
       });
     }
 
-    this.buildTargetsSequentialSync(rulesSubGraph, targetRule);
+    await this.buildTargetsSequentialAsync(rulesSubGraph, targetRule);
   }
 
   public collectNormalRuleModels(baseModesl: BaseModel[]): NormalRule[] {
@@ -191,6 +192,34 @@ export class Core {
     return false;
   }
 
+  // sequuential build
+
+  public buildTargetsSequentialSync(
+    rules: NormalRule[],
+    targetRule: NormalRule,
+  ): void {
+    // should not have circular dependencies to sort
+    const sortedRules = topologicalSort(rules, targetRule);
+
+    for (let i = 0; i < sortedRules.length; i++) {
+      const current: NormalRule = sortedRules[i]!;
+      this.buildTargetSync(current);
+    }
+  }
+
+  public async buildTargetsSequentialAsync(
+    rules: NormalRule[],
+    targetRule: NormalRule,
+  ): Promise<void> {
+    // should not have circular dependencies to sort
+    const sortedRules = topologicalSort(rules, targetRule);
+
+    for (let i = 0; i < sortedRules.length; i++) {
+      const current: NormalRule = sortedRules[i]!;
+      await this.buildTargetAsync(current);
+    }
+  }
+
   public buildTargetSync(rule: NormalRule) {
     if (!this.shouldRebuildSync(rule, process.cwd())) {
       return;
@@ -236,10 +265,13 @@ export class Core {
             });
 
       if (result.exitCode == null || result.exitCode !== 0) {
-        throw new cbuildException(
-          ErrorType.PROCESS,
-          `Build failed for target '${rule.target}': ${command}, message : ${result.stderr}`,
-        );
+        throw CbuildException.from({
+          column: -1,
+          row: -1,
+          errorType: ErrorType.PROCESS,
+          machineCode: MachineCode.SHELL_COMMAND_FAILED,
+          message: `Build failed for target '${rule.target}': ${command}, message : ${result.stderr}`,
+        });
       }
 
       let normalizedStdout: string = result.stdout.trim();
@@ -253,7 +285,7 @@ export class Core {
   }
 
   public async buildTargetAsync(rule: NormalRule) {
-    if (!this.shouldRebuildAsync(rule, process.cwd())) {
+    if (!(await this.shouldRebuildAsync(rule, process.cwd()))) {
       return;
     }
 
@@ -296,10 +328,13 @@ export class Core {
           }));
 
       if (result.exitCode == null || result.exitCode !== 0) {
-        throw new cbuildException(
-          ErrorType.PROCESS,
-          `Build failed for target '${rule.target}': ${command}, message : ${result.stderr}`,
-        );
+        throw CbuildException.from({
+          column: -1,
+          row: -1,
+          errorType: ErrorType.PROCESS,
+          machineCode: MachineCode.SHELL_COMMAND_FAILED,
+          message: `Build failed for target '${rule.target}': ${command}, message : ${result.stderr}`,
+        });
       }
 
       let normalizedStdout: string = result.stdout.trim();
@@ -318,31 +353,5 @@ export class Core {
     }
   }
 
-  // sequuential build
-
-  public buildTargetsSequentialSync(
-    rules: NormalRule[],
-    targetRule: NormalRule,
-  ): void {
-    // should not have circular dependencies to sort
-    const sortedRules = topologicalSort(rules, targetRule);
-
-    for (let i = 0; i < sortedRules.length; i++) {
-      const current: NormalRule = sortedRules[i]!;
-      this.buildTargetSync(current);
-    }
-  }
-
-  public async buildTargetsSequentialAsync(
-    rules: NormalRule[],
-    targetRule: NormalRule,
-  ): Promise<void> {
-    // should not have circular dependencies to sort
-    const sortedRules = topologicalSort(rules, targetRule);
-
-    for (let i = 0; i < sortedRules.length; i++) {
-      const current: NormalRule = sortedRules[i]!;
-      await this.buildTargetAsync(current);
-    }
-  }
+  // parallel build
 }

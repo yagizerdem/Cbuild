@@ -49,6 +49,7 @@ import {
   WsContext,
   IncludeContext,
   Exprs_nestedContext,
+  HookContext,
 } from "@parser/cbuildParser.js";
 import {
   AssignmentIR,
@@ -76,6 +77,7 @@ import {
   varRefPart,
   IncludeIR,
   Include,
+  HookIR,
 } from "@compiler/ir.js";
 import {
   make_function_dispatcher,
@@ -147,16 +149,14 @@ export class CBuildCompiler
       return includeIR;
     } else if (ctx.COMMENT() != null) {
       return null; // ignore comments
+    } else if (ctx.hook() != null) {
+      const hookIR = ctx.hook()!.accept(this) as HookIR;
+      return hookIR;
     }
 
+    // should never reach here if all statement types are handled in parser correctly
     throw new Error(
-      "Unsupported statement at line " +
-        ctx.start?.line +
-        ", column " +
-        ctx.start?.column +
-        ": `" +
-        ctx.getText() +
-        "`",
+      `Unsupported statement at line ${ctx.start?.line}, column ${ctx.start?.column}: \`${ctx.getText()}\``,
     );
   }
 
@@ -879,6 +879,12 @@ export class CBuildCompiler
       return IncludeIR.sinclude(new ValueIR(parts));
 
     throw new Error("Unknown include type");
+  }
+
+  public visitHook(ctx: HookContext): HookIR {
+    const program: string = ctx.hook_program().getText().trim();
+    const hookIR = new HookIR(program);
+    return hookIR;
   }
 
   // utility

@@ -18,7 +18,11 @@ import {
   textPart,
   varRefPart,
 } from "@compiler/ir.js";
-import { cbuildException, ErrorType } from "@src/cbuild-exception.js";
+import {
+  CbuildException,
+  ErrorType,
+  MachineCode,
+} from "@src/cbuild-exception.js";
 import { make_function_dispatcher } from "@gnu-make-functions/make_function_dispatcher.js";
 import type { MakeFunction } from "@gnu-make-functions/type.js";
 import { I_compiler_base } from "@src/gnu-make-functions/compiler/Icompiler-base.js";
@@ -44,17 +48,13 @@ export class compile_fn
     const expected = func.arity();
 
     if (given !== expected) {
-      throw new cbuildException(
-        ErrorType.SEMANTIC,
-        "function '" +
-          func.getFnName() +
-          "' expects " +
-          expected +
-          " argument(s), but got " +
-          given,
-        ctx.start?.line || 0,
-        (ctx.start?.column || 0) + 1,
-      );
+      throw CbuildException.from({
+        errorType: ErrorType.SEMANTIC,
+        message: `function '${func.getFnName()}' expects ${expected} argument(s), but got ${given}`,
+        row: ctx.start?.line || 0,
+        column: (ctx.start?.column || 0) + 1,
+        machineCode: MachineCode.FUNCTION_COMPILATION_ERROR,
+      });
     }
 
     const fn = new FunctionIR(func.getFnName());

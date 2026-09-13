@@ -4,120 +4,57 @@ export enum ErrorType {
   PROCESS,
 }
 
-export class cbuildException extends Error {
-  private readonly errorType: ErrorType;
-  private readonly fileName: string | null;
-  private readonly line: number;
-  private readonly column: number;
-  private readonly rawMessage: string;
+export enum MachineCode {
+  // compilation
+  COMPILATION_ERROR,
+  FUNCTION_COMPILATION_ERROR,
 
-  public constructor(errorType: ErrorType, message: string);
+  // semantic
+  UNSUPPORTED_IR,
 
+  // process
+  FILE_NOT_FOUND,
+  DEPQ_NOT_FOUND,
+
+  // depq graph
+  NO_TARGET_FOUND,
+  CIRCULAR_DEPQ,
+
+  // command
+  SHELL_COMMAND_FAILED,
+  SHELL_COMMAND_ABORTED,
+  INVALID_SHELL_PATH,
+}
+
+export interface CbuildExceptionOptions {
+  message: string;
+  errorType: ErrorType;
+  machineCode: MachineCode;
+  row: number;
+  column: number;
+}
+
+export class CbuildException extends Error {
   public constructor(
-    errorType: ErrorType,
     message: string,
-    fileName: string,
-    line: number,
-    column: number,
-  );
-
-  public constructor(
-    errorType: ErrorType,
-    message: string,
-    line: number,
-    column: number,
-  );
-
-  public constructor(
-    errorType: ErrorType,
-    message: string,
-    fileNameOrLine?: string | number,
-    lineOrColumn = -1,
-    column = -1,
+    public readonly errorType: ErrorType,
+    public readonly machineCode: MachineCode,
+    public readonly row: number,
+    public readonly column: number,
   ) {
     super(message);
-
     this.name = "CbuildException";
-    this.errorType = errorType;
-    this.rawMessage = message;
 
-    if (typeof fileNameOrLine === "string") {
-      this.fileName = fileNameOrLine;
-      this.line = lineOrColumn;
-      this.column = column;
-    } else if (typeof fileNameOrLine === "number") {
-      this.fileName = null;
-      this.line = fileNameOrLine;
-      this.column = lineOrColumn;
-    } else {
-      this.fileName = null;
-      this.line = -1;
-      this.column = -1;
-    }
-
-    this.message = this.getFormattedMessage();
-
-    Object.setPrototypeOf(this, cbuildException.prototype);
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 
   public static from({
-    errorType,
     message,
-    fileName,
-    line = -1,
-    column = -1,
-  }: {
-    errorType: ErrorType;
-    message: string;
-    fileName?: string | null;
-    line?: number;
-    column?: number;
-  }): cbuildException {
-    if (fileName != null) {
-      return new cbuildException(errorType, message, fileName, line, column);
-    }
-
-    return new cbuildException(errorType, message, line, column);
-  }
-
-  public getErrorType(): ErrorType {
-    return this.errorType;
-  }
-
-  public getFileName(): string | null {
-    return this.fileName;
-  }
-
-  public getLine(): number {
-    return this.line;
-  }
-
-  public getColumn(): number {
-    return this.column;
-  }
-
-  public getMessage(): string {
-    return this.getFormattedMessage();
-  }
-
-  public getFormattedMessage(): string {
-    const severity = ErrorType[this.errorType].toLowerCase();
-
-    if (!this.hasSourceLocation()) {
-      return `${severity} error: ${this.rawMessage}`;
-    }
-
-    return (
-      `${this.fileName}:${this.line}:${this.column}: ` +
-      `${severity} error: ${this.rawMessage}`
-    );
-  }
-
-  public getRawMessage(): string {
-    return this.rawMessage;
-  }
-
-  private hasSourceLocation(): boolean {
-    return this.fileName !== null && this.line >= 0 && this.column >= 0;
+    errorType,
+    machineCode,
+    row,
+    column,
+  }: CbuildExceptionOptions): CbuildException {
+    return new CbuildException(message, errorType, machineCode, row, column);
   }
 }

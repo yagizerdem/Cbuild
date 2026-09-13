@@ -1,26 +1,35 @@
 import {
   AssignmentIR,
+  HookIR,
   NormalRuleIR,
   type Executor,
   type IR,
   type ValueIR,
 } from "@compiler/ir.js";
-import { cbuildException, ErrorType } from "@src/cbuild-exception.js";
+import {
+  CbuildException,
+  ErrorType,
+  MachineCode,
+} from "@src/cbuild-exception.js";
 import { Env } from "@cbuild-backend/env.js";
 import {
   ExpansionEngine,
   ValueExpansionEngine,
 } from "@cbuild-backend/expansion.js";
 import { BaseModel, NormalRule } from "@cbuild-backend/model.js";
+import globalInterpreter from "@cbuild-backend/interpreter/interpreter.js";
 
 export class GraphBuilder implements Executor {
   public readonly ruleModels: BaseModel[] = [];
 
   public constructor(public readonly context: Env) {}
 
-  public build(instructions: readonly IR[]): BaseModel[] {
+  public async buildAsync(instructions: readonly IR[]): Promise<BaseModel[]> {
     for (const instruction of instructions) {
-      this.collectModels(this.ruleModels, instruction.exec<BaseModel>(this));
+      this.collectModels(
+        this.ruleModels,
+        await instruction.execAsync<BaseModel>(this),
+      );
     }
     return this.ruleModels;
   }
@@ -36,7 +45,11 @@ export class GraphBuilder implements Executor {
     return target;
   }
 
-  public exec<T>(ir: IR): T {
+  exec<T>(node: IR): T {
+    throw new Error("Use execAsync instead");
+  }
+
+  public async execAsync<T>(ir: IR): Promise<T> {
     if (ir instanceof NormalRuleIR) {
       return this.buildNormalRule(ir) as T;
     }
@@ -44,12 +57,19 @@ export class GraphBuilder implements Executor {
       ir.exec(new ExpansionEngine(this.context));
       return null as T;
     }
-    throw new cbuildException(
-      ErrorType.SEMANTIC,
-      `Unsupported IR type for model builder: ${ir.constructor.name}`,
-      ir.row,
-      ir.col,
-    );
+
+    if (ir instanceof HookIR) {
+      await globalInterpreter.runAsync(ir.hookProgram);
+      return null as T;
+    }
+
+    throw CbuildException.from({
+      column: ir.col,
+      row: ir.row,
+      errorType: ErrorType.SEMANTIC,
+      machineCode: MachineCode.UNSUPPORTED_IR,
+      message: `buildFile: Unsupported IR type for cbuild backend. Stop`,
+    });
   }
 
   private buildNormalRule(ir: NormalRuleIR): BaseModel[] {
@@ -166,12 +186,13 @@ export function getTargetSubgraph(
   }
 
   if (hasCircularDependency(subGraph)) {
-    throw new cbuildException(
-      ErrorType.SEMANTIC,
-      "Circular dependency detected while resolving target '" +
-        activeTarget +
-        "'. Stop.",
-    );
+    throw CbuildException.from({
+      column: -1,
+      row: -1,
+      errorType: ErrorType.SEMANTIC,
+      machineCode: MachineCode.CIRCULAR_DEPQ,
+      message: `cbuild: Circular dependency detected while resolving target '${activeTarget}'. Stop.`,
+    });
   }
 
   return subGraph;
@@ -186,7 +207,13 @@ export function findTarget(rules: NormalRule[], target: string): NormalRule {
   for (const rule of rules) {
     if (rule.target === target) return rule;
   }
-  throw new cbuildException(ErrorType.PROCESS, "Target not found: " + target);
+  throw CbuildException.from({
+    column: -1,
+    row: -1,
+    errorType: ErrorType.PROCESS,
+    machineCode: MachineCode.FILE_NOT_FOUND,
+    message: `cbuild: Target not found: ${target}. Stop.`,
+  });
 }
 
 export function findTargetList(
@@ -195,8 +222,15 @@ export function findTargetList(
 ): NormalRule[] {
   const targetRules: NormalRule[] = rules.filter((r) => r.target === target);
 
-  if (targetRules.length === 0)
-    throw new cbuildException(ErrorType.PROCESS, "Target not found: " + target);
+  if (targetRules.length === 0) {
+    throw CbuildException.from({
+      column: -1,
+      row: -1,
+      errorType: ErrorType.PROCESS,
+      machineCode: MachineCode.FILE_NOT_FOUND,
+      message: `cbuild: Target not found: ${target}. Stop.`,
+    });
+  }
   return targetRules;
 }
 
@@ -273,10 +307,13 @@ function topologicalSortRecursive(
   }
 
   if (visitingTargets.has(target)) {
-    throw new cbuildException(
-      ErrorType.SEMANTIC,
-      "Circular dependency detected while sorting target '" + target + "'.",
-    );
+    throw CbuildException.from({
+      column: -1,
+      row: -1,
+      errorType: ErrorType.SEMANTIC,
+      machineCode: MachineCode.CIRCULAR_DEPQ,
+      message: `cbuild: Circular dependency detected while sorting target '${target}'. Stop.`,
+    });
   }
 
   visitingTargets.add(target);

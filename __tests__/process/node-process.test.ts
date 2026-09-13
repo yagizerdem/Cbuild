@@ -1,5 +1,6 @@
 import { expect, test, vi } from "vitest";
-import { ProcessError, ProcessRunner } from "@cbuild-backend/process.js";
+import { ProcessRunner } from "@cbuild-backend/process.js";
+import { CbuildException } from "@src/cbuild-exception.js";
 
 const runner = new ProcessRunner({
   shell: { executable: process.execPath, args: ["-e"] },
@@ -42,7 +43,7 @@ test("missing executable rejects even with ignoreErrors", async () => {
       shell: { executable: "cbuild-nonexistent-shell-82764", args: [] },
       ignoreErrors: true,
     }),
-  ).rejects.toBeInstanceOf(ProcessError);
+  ).rejects.toBeInstanceOf(CbuildException);
 });
 
 test("recipe prefixes control echo and failure handling", async () => {
@@ -72,5 +73,5 @@ test("pre-aborted command rejects", async () => {
     runner.runAsync("setInterval(() => {}, 1000)", {
       signal: controller.signal,
     }),
-  ).rejects.toBeInstanceOf(ProcessError);
+  ).rejects.toBeInstanceOf(CbuildException);
 });

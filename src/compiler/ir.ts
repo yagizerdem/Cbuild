@@ -1,23 +1,27 @@
+import { ParserRuleContext } from "antlr4ng";
+
 export interface Executor {
   exec<T>(node: IR): T;
+  execAsync<T>(node: IR): Promise<T>;
 }
 
 export interface IR {
   row: number;
   col: number;
   exec<T>(executor: Executor): T;
+  execAsync<T>(executor: Executor): Promise<T>;
 }
 
 export abstract class BaseIR implements IR {
-  constructor(
-    public row = 0,
-    public col = 0,
-  ) {
+  public row: number;
+  public col: number;
+  constructor(row = 0, col = 0) {
     this.row = row;
     this.col = col;
   }
 
   abstract exec<T>(executor: Executor): T;
+  abstract execAsync<T>(executor: Executor): Promise<T>;
 }
 
 export type ValuePart =
@@ -48,6 +52,10 @@ export class ValueIR extends BaseIR {
   exec<T>(executor: Executor): T {
     return executor.exec(this);
   }
+
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
+  }
 }
 
 export class FunctionIR extends BaseIR {
@@ -59,6 +67,10 @@ export class FunctionIR extends BaseIR {
 
   exec<T>(executor: Executor): T {
     return executor.exec(this);
+  }
+
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
   }
 }
 
@@ -141,6 +153,10 @@ export class AssignmentIR extends BaseIR {
   exec<T>(executor: Executor): T {
     return executor.exec(this);
   }
+
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
+  }
 }
 
 export const ConditionKind = {
@@ -189,6 +205,10 @@ export class ConditionalIR extends BaseIR {
 
   exec<T>(executor: Executor): T {
     return executor.exec(this);
+  }
+
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
   }
 }
 
@@ -250,6 +270,10 @@ export class NormalRuleIR extends BaseIR implements Rule {
   exec<T>(executor: Executor): T {
     return executor.exec(this);
   }
+
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
+  }
 }
 
 export interface TargetRuleOptions {
@@ -273,6 +297,10 @@ export class TargetRuleIR extends BaseIR implements Rule {
 
   exec<T>(executor: Executor): T {
     return executor.exec(this);
+  }
+
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
   }
 }
 
@@ -310,6 +338,10 @@ export class StaticPatternRuleIR extends BaseIR implements Rule {
   exec<T>(executor: Executor): T {
     return executor.exec(this);
   }
+
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
+  }
 }
 
 export type Recipe =
@@ -346,6 +378,10 @@ export class RecipeIR extends BaseIR {
   exec<T>(executor: Executor): T {
     return executor.exec(this);
   }
+
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
+  }
 }
 
 export class DefineIR extends BaseIR {
@@ -362,6 +398,10 @@ export class DefineIR extends BaseIR {
 
   exec<T>(executor: Executor): T {
     return executor.exec(this);
+  }
+
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
   }
 }
 
@@ -393,6 +433,10 @@ export class VpathIR extends BaseIR {
 
   exec<T>(executor: Executor): T {
     return executor.exec(this);
+  }
+
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
   }
 }
 
@@ -426,5 +470,25 @@ export class IncludeIR extends BaseIR {
 
   exec<T>(executor: Executor): T {
     return executor.exec(this);
+  }
+
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
+  }
+}
+
+export class HookIR extends BaseIR {
+  public readonly hookProgram: string;
+  constructor(hookProgram: string, row?: number, col?: number) {
+    super(row, col);
+    this.hookProgram = hookProgram;
+  }
+
+  exec<T>(executor: Executor): T {
+    return executor.exec(this);
+  }
+
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
   }
 }

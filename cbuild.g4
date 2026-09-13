@@ -38,6 +38,7 @@ statement
     | ws? assignment br
     | ws? function br
     | ws? rule
+    | ws? hook
     ;
 
 define
@@ -353,6 +354,8 @@ ws
     | TAB
     ;
 
+hook : HOOK ws? '{' hook_program '}' ws? ;
+hook_program : .*? ;
 
 ASSIGN_OP
     : ':::='
@@ -407,6 +410,8 @@ SLIT
     : '"'  ( '\\' . | ~["\\\r\n] )* '"'
     | '\'' ( '\\' . | ~['\\\r\n] )* '\''
     ;
+
+HOOK: 'hook';
 
 CHARS
     : ~[ \t\r\n$(){}:,=#|]+
