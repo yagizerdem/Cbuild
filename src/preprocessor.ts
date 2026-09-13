@@ -127,19 +127,22 @@ export function mergeContinuation(
   state.processedCol = 0; // antlr column number starts with 0
 
   while (Cursor.peekChar(pchars, state.current) !== Cursor.END) {
-    const pch = Cursor.peek(pchars, state.current);
-    if (Cursor.stopSet(pch, Cursor.CharMask.BackSlash)) {
-      if (
-        Cursor.stopSet(
-          Cursor.peekNext(pchars, state.current),
-          Cursor.CharMask.Newline,
-        )
-      ) {
-        state.current += 2; // consume contiunation and merge lines
-        state.processedCol = 0; // reset column after merging lines
-        state.processedRow++; // increment row after merging lines
-        continue;
-      }
+    const pch: Cursor.Pchar<Context> = Cursor.peek(
+      pchars,
+      state.current,
+    ) as Cursor.Pchar<Context>;
+    if (
+      Cursor.stopSet(pch, Cursor.CharMask.BackSlash) &&
+      Cursor.stopSet(
+        Cursor.peekNext(pchars, state.current),
+        Cursor.CharMask.Newline,
+      ) &&
+      pch.meta == "NORMAL"
+    ) {
+      state.current += 2; // consume contiunation and merge lines
+      state.processedCol = 0; // reset column after merging lines
+      state.processedRow++; // increment row after merging lines
+      continue;
     }
 
     const deepCopy = deepCopyPchar(pch);
