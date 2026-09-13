@@ -3,11 +3,16 @@ import { Env } from "@cbuild-backend/env.js";
 import { Core } from "@cbuild-backend/core.js";
 
 const buildFile = `
-NAME = fucker
-MESSAGE = "hello $(NAME)"
+NAME = yagiz
+MESSAGE = \\\\"hello $(NAME)"
 
 app:
 \t echo $(MESSAGE)
+
+hook {
+  println("hello world");
+}
+
 `;
 
 const ir = compile(buildFile);

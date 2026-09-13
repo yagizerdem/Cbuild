@@ -270,6 +270,8 @@ br : NL;
 
 char: CHARS
     | SLIT
+    | ESCAPED_QUOTE
+    | BACKSLASH
     | ASSIGN_OP
     | COLON
     | DOUBLE_DOLLAR
@@ -405,6 +407,10 @@ UNEXPORT : 'unexport';
 UNDEFINE : 'undefine';
 DEFINE : 'define';
 VPATH : 'vpath';
+ESCAPED_QUOTE
+    : '\\"'
+    | '\\\''
+    ;
 
 SLIT
     : '"'  ( '\\' . | ~["\\\r\n] )* '"'
@@ -413,8 +419,10 @@ SLIT
 
 HOOK: 'hook';
 
+BACKSLASH : '\\';
+
 CHARS
-    : ~[ \t\r\n$(){}:,=#|]+
+    : ~[ \t\r\n$(){}:,=#|\\]+
     ;
 
 NL : '\r'? '\n' ;

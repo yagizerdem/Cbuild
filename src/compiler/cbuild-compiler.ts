@@ -50,6 +50,8 @@ import {
   IncludeContext,
   Exprs_nestedContext,
   HookContext,
+  CharContext,
+  Char_nestedContext,
 } from "@parser/cbuildParser.js";
 import {
   AssignmentIR,
@@ -259,9 +261,24 @@ export class CBuildCompiler
     return parts;
   }
 
-  public visitChar_in_assign(ctx: Char_in_assignContext): unknown {
-    if (ctx.getText() === "$$") {
+  public visitChar_in_assign(ctx: Char_in_assignContext): string {
+    if (ctx.char_nested() != null && !ctx.char_nested()!.isEmpty()) {
+      return ctx.char_nested()!.accept(this) as string;
+    }
+
+    if (
+      ctx.DOUBLE_DOLLAR() != null &&
+      ctx.DOUBLE_DOLLAR()!.getText().length > 0
+    ) {
       return "$";
+    }
+
+    return ctx.getText();
+  }
+
+  public visitChar_nested(ctx: Char_nestedContext): string {
+    if (ctx.char() != null && !ctx.char()!.isEmpty()) {
+      return ctx.char()!.accept(this) as string;
     }
 
     return ctx.getText();
@@ -839,8 +856,20 @@ export class CBuildCompiler
     return parts;
   }
 
-  public visitChar_in_def(ctx: Char_in_defContext): unknown {
+  public visitChar_in_def(ctx: Char_in_defContext): ValuePart {
+    if (ctx.char() != null && ctx.char()?.getText() != null) {
+      return textPart(ctx.char()!.accept(this) as string);
+    }
+
     return textPart(ctx.getText());
+  }
+
+  public visitChar(ctx: CharContext): string {
+    if (ctx.ESCAPED_QUOTE() != null) {
+      return ctx.ESCAPED_QUOTE()!.getText().substring(1); // remove \ escape part
+    }
+
+    return ctx.getText();
   }
 
   public visitVpath(ctx: VpathContext): VpathIR {

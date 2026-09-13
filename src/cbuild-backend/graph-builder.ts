@@ -17,7 +17,7 @@ import {
   ValueExpansionEngine,
 } from "@cbuild-backend/expansion.js";
 import { BaseModel, NormalRule } from "@cbuild-backend/model.js";
-import globalInterpreter from "@cbuild-backend/interpreter/interpreter.js";
+import Interpreter from "@cbuild-backend/interpreter/interpreter.js";
 
 export class GraphBuilder implements Executor {
   public readonly ruleModels: BaseModel[] = [];
@@ -59,7 +59,9 @@ export class GraphBuilder implements Executor {
     }
 
     if (ir instanceof HookIR) {
-      await globalInterpreter.runAsync(ir.hookProgram);
+      const interpreter = new Interpreter();
+      interpreter.init(this.context);
+      await interpreter.runAsync(ir.hookProgram);
       return null as T;
     }
 
