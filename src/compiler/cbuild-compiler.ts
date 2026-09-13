@@ -78,6 +78,7 @@ import {
   IncludeIR,
   Include,
   HookIR,
+  ConditionKind,
 } from "@compiler/ir.js";
 import {
   make_function_dispatcher,
@@ -335,13 +336,14 @@ export class CBuildCompiler
   }
 
   public visitConditional(ctx: ConditionalContext): ConditionalIR {
-    const conditionalIR = new ConditionalIR();
+    let kind: ConditionKind | null = null;
+    let condition: Condition | null = null;
 
     if (ctx.if_eq_kw() != null) {
-      conditionalIR.kind = conditionKindFromKeyword(ctx.if_eq_kw()!.getText());
-      conditionalIR.condition = ctx.condition()!.accept(this) as Condition;
+      kind = conditionKindFromKeyword(ctx.if_eq_kw()!.getText());
+      condition = ctx.condition()!.accept(this) as Condition;
     } else if (ctx.if_def_kw() != null) {
-      conditionalIR.kind = conditionKindFromKeyword(ctx.if_def_kw()!.getText());
+      kind = conditionKindFromKeyword(ctx.if_def_kw()!.getText());
 
       const condition: Condition = {};
       const result = ctx.identifier()!.accept(this);
@@ -350,9 +352,9 @@ export class CBuildCompiler
 
       condition.left = new ValueIR(parts);
       condition.right = undefined;
-
-      conditionalIR.condition = condition;
     }
+
+    const conditionalIR = new ConditionalIR(kind!, condition!);
 
     if (ctx.statements_opt(0) != null) {
       const thenResult = ctx.statements_opt(0)!.accept(this);
@@ -680,15 +682,14 @@ export class CBuildCompiler
   public visitConditional_in_recipe(
     ctx: Conditional_in_recipeContext,
   ): unknown {
-    const conditionalIR = new ConditionalIR();
+    let kind: ConditionKind | null;
+    let condition: Condition = {};
 
     if (ctx.if_eq_kw() != null) {
-      conditionalIR.kind = conditionKindFromKeyword(ctx.if_eq_kw()!.getText());
-      conditionalIR.condition = ctx.condition()!.accept(this) as Condition;
+      kind = conditionKindFromKeyword(ctx.if_eq_kw()!.getText());
+      condition = ctx.condition()!.accept(this) as Condition;
     } else if (ctx.if_def_kw() != null) {
-      conditionalIR.kind = conditionKindFromKeyword(ctx.if_def_kw()!.getText());
-
-      const condition: Condition = {};
+      kind = conditionKindFromKeyword(ctx.if_def_kw()!.getText());
 
       const result = ctx.identifier()!.accept(this);
       const parts: ValuePart[] = [];
@@ -697,9 +698,9 @@ export class CBuildCompiler
 
       condition.left = new ValueIR(parts);
       condition.right = undefined;
-
-      conditionalIR.condition = condition;
     }
+
+    const conditionalIR = new ConditionalIR(kind!, condition!);
 
     if (ctx.recipes_opt(0) != null) {
       const thenResult = ctx.recipes_opt(0)!.accept(this);

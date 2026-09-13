@@ -4,7 +4,7 @@ import { Core } from "@cbuild-backend/core.js";
 
 const buildFile = `
 NAME = fucker
-MESSAGE = hello $(NAME)
+MESSAGE = "hello $(NAME)"
 
 app:
 \t echo $(MESSAGE)

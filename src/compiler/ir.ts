@@ -193,14 +193,18 @@ export interface Condition {
 export class ConditionalIR extends BaseIR {
   public thenBranch: IR[] = [];
   public elseBranch: IR[] = [];
+  public kind: ConditionKind;
+  public condition: Condition;
 
   constructor(
-    public kind?: ConditionKind,
-    public condition?: Condition,
+    kind: ConditionKind,
+    condition: Condition,
     row?: number,
     col?: number,
   ) {
     super(row, col);
+    this.kind = kind;
+    this.condition = condition;
   }
 
   exec<T>(executor: Executor): T {
@@ -351,12 +355,11 @@ export type Recipe =
   | { kind: "conditional"; conditional: ConditionalIR };
 
 export class RecipeIR extends BaseIR {
-  private constructor(
-    public readonly recipe: Recipe,
-    row?: number,
-    col?: number,
-  ) {
+  public readonly recipe: Recipe;
+
+  private constructor(recipe: Recipe, row?: number, col?: number) {
     super(row, col);
+    this.recipe = recipe;
   }
 
   static command(command: ValueIR): RecipeIR {
