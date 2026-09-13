@@ -1,16 +1,28 @@
 import { compile } from "@tests/util/compile.js";
 import { Env } from "@cbuild-backend/env.js";
 import { Core } from "@cbuild-backend/core.js";
+import { pCharBufferToString, preprocess } from "@src/preprocessor.js";
 
 const buildFile = `
-NAME = fucker
-MESSAGE = hello $(NAME)
+NAME = yagiz
+MESSAGE = \\\\"hello $(NAME)"
 
-app:
-\t echo $(MESSAGE)
-`;
+app: a \\
+b
+\techo $(MESSAGE) \\
+test
 
-const ir = compile(buildFile);
+hook {
+  println(string.toUpperCase("hello WORLD"));
+}
+  
+`.trim();
+
+const pCharBuffer = preprocess(buildFile);
+const preprocessedProgram = pCharBufferToString(pCharBuffer);
+console.log(preprocessedProgram);
+
+const ir = compile(preprocessedProgram);
 
 const context = new Env({
   buildSequential: true,

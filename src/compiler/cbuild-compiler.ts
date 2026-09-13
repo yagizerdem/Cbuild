@@ -50,6 +50,8 @@ import {
   IncludeContext,
   Exprs_nestedContext,
   HookContext,
+  CharContext,
+  Char_nestedContext,
 } from "@parser/cbuildParser.js";
 import {
   AssignmentIR,
@@ -78,6 +80,7 @@ import {
   IncludeIR,
   Include,
   HookIR,
+  ConditionKind,
 } from "@compiler/ir.js";
 import {
   make_function_dispatcher,
@@ -258,9 +261,24 @@ export class CBuildCompiler
     return parts;
   }
 
-  public visitChar_in_assign(ctx: Char_in_assignContext): unknown {
-    if (ctx.getText() === "$$") {
+  public visitChar_in_assign(ctx: Char_in_assignContext): string {
+    if (ctx.char_nested() != null && !ctx.char_nested()!.isEmpty()) {
+      return ctx.char_nested()!.accept(this) as string;
+    }
+
+    if (
+      ctx.DOUBLE_DOLLAR() != null &&
+      ctx.DOUBLE_DOLLAR()!.getText().length > 0
+    ) {
       return "$";
+    }
+
+    return ctx.getText();
+  }
+
+  public visitChar_nested(ctx: Char_nestedContext): string {
+    if (ctx.char() != null && !ctx.char()!.isEmpty()) {
+      return ctx.char()!.accept(this) as string;
     }
 
     return ctx.getText();
@@ -335,13 +353,14 @@ export class CBuildCompiler
   }
 
   public visitConditional(ctx: ConditionalContext): ConditionalIR {
-    const conditionalIR = new ConditionalIR();
+    let kind: ConditionKind | null = null;
+    let condition: Condition | null = null;
 
     if (ctx.if_eq_kw() != null) {
-      conditionalIR.kind = conditionKindFromKeyword(ctx.if_eq_kw()!.getText());
-      conditionalIR.condition = ctx.condition()!.accept(this) as Condition;
+      kind = conditionKindFromKeyword(ctx.if_eq_kw()!.getText());
+      condition = ctx.condition()!.accept(this) as Condition;
     } else if (ctx.if_def_kw() != null) {
-      conditionalIR.kind = conditionKindFromKeyword(ctx.if_def_kw()!.getText());
+      kind = conditionKindFromKeyword(ctx.if_def_kw()!.getText());
 
       const condition: Condition = {};
       const result = ctx.identifier()!.accept(this);
@@ -350,9 +369,9 @@ export class CBuildCompiler
 
       condition.left = new ValueIR(parts);
       condition.right = undefined;
-
-      conditionalIR.condition = condition;
     }
+
+    const conditionalIR = new ConditionalIR(kind!, condition!);
 
     if (ctx.statements_opt(0) != null) {
       const thenResult = ctx.statements_opt(0)!.accept(this);
@@ -680,15 +699,14 @@ export class CBuildCompiler
   public visitConditional_in_recipe(
     ctx: Conditional_in_recipeContext,
   ): unknown {
-    const conditionalIR = new ConditionalIR();
+    let kind: ConditionKind | null;
+    let condition: Condition = {};
 
     if (ctx.if_eq_kw() != null) {
-      conditionalIR.kind = conditionKindFromKeyword(ctx.if_eq_kw()!.getText());
-      conditionalIR.condition = ctx.condition()!.accept(this) as Condition;
+      kind = conditionKindFromKeyword(ctx.if_eq_kw()!.getText());
+      condition = ctx.condition()!.accept(this) as Condition;
     } else if (ctx.if_def_kw() != null) {
-      conditionalIR.kind = conditionKindFromKeyword(ctx.if_def_kw()!.getText());
-
-      const condition: Condition = {};
+      kind = conditionKindFromKeyword(ctx.if_def_kw()!.getText());
 
       const result = ctx.identifier()!.accept(this);
       const parts: ValuePart[] = [];
@@ -697,9 +715,9 @@ export class CBuildCompiler
 
       condition.left = new ValueIR(parts);
       condition.right = undefined;
-
-      conditionalIR.condition = condition;
     }
+
+    const conditionalIR = new ConditionalIR(kind!, condition!);
 
     if (ctx.recipes_opt(0) != null) {
       const thenResult = ctx.recipes_opt(0)!.accept(this);
@@ -838,8 +856,20 @@ export class CBuildCompiler
     return parts;
   }
 
-  public visitChar_in_def(ctx: Char_in_defContext): unknown {
+  public visitChar_in_def(ctx: Char_in_defContext): ValuePart {
+    if (ctx.char() != null && ctx.char()?.getText() != null) {
+      return textPart(ctx.char()!.accept(this) as string);
+    }
+
     return textPart(ctx.getText());
+  }
+
+  public visitChar(ctx: CharContext): string {
+    if (ctx.ESCAPED_QUOTE() != null) {
+      return ctx.ESCAPED_QUOTE()!.getText().substring(1); // remove \ escape part
+    }
+
+    return ctx.getText();
   }
 
   public visitVpath(ctx: VpathContext): VpathIR {
