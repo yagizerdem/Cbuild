@@ -38,7 +38,7 @@ export class Core {
     this.context = context;
   }
 
-  public run(rules: IR[], options?: RunnerOptions) {
+  public async runAsync(rules: IR[], options?: RunnerOptions) {
     const currentContext =
       options?.context ??
       this.context ??
@@ -51,7 +51,7 @@ export class Core {
     const graphBuilder = new GraphBuilder(currentContext);
 
     // contains type of relations in under single interface. ex. hooks
-    const graph: BaseModel[] = graphBuilder.build(rules);
+    const graph: BaseModel[] = await graphBuilder.buildAsync(rules);
     // contains relation only needed for build
     const normalRulesGraph = this.collectNormalRuleModels(graph);
 
@@ -83,7 +83,7 @@ export class Core {
       });
     }
 
-    this.buildTargetsSequentialSync(rulesSubGraph, targetRule);
+    await this.buildTargetsSequentialAsync(rulesSubGraph, targetRule);
   }
 
   public collectNormalRuleModels(baseModesl: BaseModel[]): NormalRule[] {
@@ -190,6 +190,34 @@ export class Core {
     }
 
     return false;
+  }
+
+  // sequuential build
+
+  public buildTargetsSequentialSync(
+    rules: NormalRule[],
+    targetRule: NormalRule,
+  ): void {
+    // should not have circular dependencies to sort
+    const sortedRules = topologicalSort(rules, targetRule);
+
+    for (let i = 0; i < sortedRules.length; i++) {
+      const current: NormalRule = sortedRules[i]!;
+      this.buildTargetSync(current);
+    }
+  }
+
+  public async buildTargetsSequentialAsync(
+    rules: NormalRule[],
+    targetRule: NormalRule,
+  ): Promise<void> {
+    // should not have circular dependencies to sort
+    const sortedRules = topologicalSort(rules, targetRule);
+
+    for (let i = 0; i < sortedRules.length; i++) {
+      const current: NormalRule = sortedRules[i]!;
+      await this.buildTargetAsync(current);
+    }
   }
 
   public buildTargetSync(rule: NormalRule) {
@@ -325,31 +353,5 @@ export class Core {
     }
   }
 
-  // sequuential build
-
-  public buildTargetsSequentialSync(
-    rules: NormalRule[],
-    targetRule: NormalRule,
-  ): void {
-    // should not have circular dependencies to sort
-    const sortedRules = topologicalSort(rules, targetRule);
-
-    for (let i = 0; i < sortedRules.length; i++) {
-      const current: NormalRule = sortedRules[i]!;
-      this.buildTargetSync(current);
-    }
-  }
-
-  public async buildTargetsSequentialAsync(
-    rules: NormalRule[],
-    targetRule: NormalRule,
-  ): Promise<void> {
-    // should not have circular dependencies to sort
-    const sortedRules = topologicalSort(rules, targetRule);
-
-    for (let i = 0; i < sortedRules.length; i++) {
-      const current: NormalRule = sortedRules[i]!;
-      await this.buildTargetAsync(current);
-    }
-  }
+  // parallel build
 }

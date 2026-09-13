@@ -12,7 +12,7 @@ b :
 \t echo b
 
 hook {
-  hook program body
+  stdio.println("hook executed")
 }
 `;
 
@@ -28,4 +28,4 @@ const context = new Env({
 
 const core = new Core(context);
 
-core.run(ir);
+await core.runAsync(ir);

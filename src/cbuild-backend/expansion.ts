@@ -23,6 +23,10 @@ export class BaseExpansionEngine implements Executor {
   public exec<T>(ir: IR | ValuePart): T {
     return null as T;
   }
+
+  public execAsync<T>(node: IR): Promise<T> {
+    return Promise.resolve(this.exec<T>(node));
+  }
 }
 
 export class ExpansionEngine extends BaseExpansionEngine {
@@ -69,10 +73,18 @@ export class ExpansionEngine extends BaseExpansionEngine {
   }
 
   public override exec<T>(ir: IR): T {
-    if (ir instanceof AssignmentIR || ir instanceof ValueIR || ir instanceof RecipeIR) {
+    if (
+      ir instanceof AssignmentIR ||
+      ir instanceof ValueIR ||
+      ir instanceof RecipeIR
+    ) {
       return this.expand<T>(ir);
     }
     throw new Error("Unsupported IR node for expansion");
+  }
+
+  public override execAsync<T>(ir: IR): Promise<T> {
+    return Promise.resolve(this.exec<T>(ir));
   }
 }
 
@@ -106,6 +118,10 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
 
   public override exec<T>(ir: ValueIR): T {
     return this.expandValueToString(ir, this.activeLookups) as T;
+  }
+
+  public override execAsync<T>(ir: ValueIR): Promise<T> {
+    return Promise.resolve(this.exec<T>(ir));
   }
 
   private expandValueToString(ir: ValueIR, activeLookups: Set<string>): string {
@@ -173,7 +189,7 @@ export class RecipeExpansionEngine extends BaseExpansionEngine {
   }
 
   public override exec<T>(ir: RecipeIR): T {
-    if (!(ir instanceof RecipeIR) || ir.recipe.kind !== "command") {
+    if (ir.recipe.kind !== "command") {
       throw new Error(
         "RecipeIR only support command recipes for cbuild backend",
       );
@@ -184,6 +200,10 @@ export class RecipeExpansionEngine extends BaseExpansionEngine {
       ir.recipe.command,
     );
     return expandedShellCommand as T;
+  }
+
+  public override execAsync<T>(node: RecipeIR): Promise<T> {
+    return Promise.resolve(this.exec<T>(node));
   }
 }
 

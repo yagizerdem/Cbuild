@@ -24,5 +24,8 @@
       "@cbuild-backend/*": ["./src/cbuild-backend/*"],
       "@tests/*": ["./__tests__/*"]
     }
+  },
+  "tstl": {
+    "luaTarget": "JIT"
   }
 }

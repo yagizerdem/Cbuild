@@ -24,9 +24,12 @@ export class GraphBuilder implements Executor {
 
   public constructor(public readonly context: Env) {}
 
-  public build(instructions: readonly IR[]): BaseModel[] {
+  public async buildAsync(instructions: readonly IR[]): Promise<BaseModel[]> {
     for (const instruction of instructions) {
-      this.collectModels(this.ruleModels, instruction.exec<BaseModel>(this));
+      this.collectModels(
+        this.ruleModels,
+        await instruction.execAsync<BaseModel>(this),
+      );
     }
     return this.ruleModels;
   }
@@ -42,7 +45,11 @@ export class GraphBuilder implements Executor {
     return target;
   }
 
-  public exec<T>(ir: IR): T {
+  exec<T>(node: IR): T {
+    throw new Error("Use execAsync instead");
+  }
+
+  public async execAsync<T>(ir: IR): Promise<T> {
     if (ir instanceof NormalRuleIR) {
       return this.buildNormalRule(ir) as T;
     }
@@ -52,7 +59,7 @@ export class GraphBuilder implements Executor {
     }
 
     if (ir instanceof HookIR) {
-      globalInterpreter.run(ir.hookProgram);
+      await globalInterpreter.runAsync(ir.hookProgram);
       return null as T;
     }
 
