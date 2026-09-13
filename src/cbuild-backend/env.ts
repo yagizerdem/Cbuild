@@ -225,10 +225,6 @@ export class Env {
     this.setVariable(name, SymbolTableVariable.deferredVariable(value));
   }
 
-  public variableNames(): IterableIterator<string> {
-    return this.symbolTable.keys();
-  }
-
   public variableEntries(): IterableIterator<[string, SymbolTableVariable]> {
     return this.symbolTable.entries();
   }

@@ -445,15 +445,16 @@ export namespace Cursor {
 
   export type CharMask = (typeof CharMask)[keyof typeof CharMask];
 
-  export class Pchar {
-    public row: number;
-    public col: number;
+  export class Pchar<T = unknown> {
+    public row: number; // src row
+    public col: number; // src col
     public processedRow: number;
     public processedCol: number;
     public c: string;
     public isEscaped: boolean;
     public escapeType: Pchar.EscapeType | undefined;
     public context: Pchar.Context | undefined;
+    public meta: T | undefined;
 
     public constructor(c: string);
     public constructor(c: string, isEscaped: boolean);
@@ -474,6 +475,7 @@ export namespace Cursor {
       isEscaped = false,
       escapeType?: Pchar.EscapeType,
       context?: Pchar.Context,
+      meta?: T,
     ) {
       if (typeof rowOrC === "string") {
         this.row = 0;
@@ -491,6 +493,7 @@ export namespace Cursor {
       this.processedCol = this.col;
       this.escapeType = escapeType;
       this.context = context;
+      this.meta = meta;
     }
 
     public toString(): string {
