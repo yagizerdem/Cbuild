@@ -5,7 +5,7 @@ import { pCharBufferToString, preprocess } from "@src/preprocessor.js";
 
 const buildFile = `
 NAME = yagiz
-MESSAGE = \\\\"hello $(NAME)"
+MESSAGE = \\"hello $(NAME)\\"
 
 app: a \\
 b
