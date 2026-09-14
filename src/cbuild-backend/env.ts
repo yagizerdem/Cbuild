@@ -1,6 +1,5 @@
 import { ValueIR } from "@compiler/ir.js";
-
-type Tbackend = "cbuild" | "declarative";
+import { Tbackend } from "@src/type/tBackend.js";
 
 export class Settings {
   public readonly buildSequential: boolean;
