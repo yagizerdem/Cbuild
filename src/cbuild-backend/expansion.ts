@@ -166,11 +166,15 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
         const valueIR = variable.getDeferredValue()!;
         activeLookups.add(identifier);
         const rawValue = this.exec<string>(valueIR);
-        activeLookups.delete(identifier);
-        this.context.replaceVariable(
-          identifier,
-          new SymbolTableVariable(rawValue, valueIR),
-        );
+
+        // do not replace with the expanded value in the symbol table
+        // shoudl reevaluate in each recursive variable call
+
+        // activeLookups.delete(identifier);
+        // this.context.replaceVariable(
+        //   identifier,
+        //   new SymbolTableVariable(rawValue, valueIR),
+        // );
         return rawValue;
       }
 

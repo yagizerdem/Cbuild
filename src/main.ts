@@ -14,10 +14,13 @@ try {
   const buildFile = `
 
 
-TEST = $(abspath tafaest)
+RESULT = The value is $(LATER)
+
+# 'LATER' is defined after 'RESULT'
+LATER = Chicken
 
 app:
-\t echo $(TEST)
+\t echo $(RESULT)
 
 `.trim();
 
