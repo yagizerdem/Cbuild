@@ -1,23 +1,25 @@
 import { ValueIR } from "@compiler/ir.js";
 
+type Tbackend = "cbuild" | "declarative";
+
 export class Settings {
   public readonly buildSequential: boolean;
   public readonly parallelJobCount: number;
   public readonly cwd: string;
-  public readonly isMinimalApi: boolean;
+  public readonly backend: Tbackend;
   public readonly silent: boolean;
 
   public constructor(
     buildSequential: boolean,
     parallelJobCount: number,
     cwd: string,
-    isMinimalApi: boolean,
+    backend: Tbackend,
     silent: boolean,
   ) {
     this.buildSequential = buildSequential;
     this.parallelJobCount = parallelJobCount;
     this.cwd = cwd;
-    this.isMinimalApi = isMinimalApi;
+    this.backend = backend;
     this.silent = silent;
   }
 
