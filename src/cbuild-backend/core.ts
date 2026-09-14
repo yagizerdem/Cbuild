@@ -192,6 +192,77 @@ export class Core {
     return false;
   }
 
+  // maps rule uuid to preq rules
+  public createTargetMap(rules: NormalRule[]): Map<string, NormalRule[]> {
+    const rulesByTarget = new Map<string, NormalRule[]>();
+
+    // merges rules with same target names into array
+    for (const rule of rules) {
+      const existing = rulesByTarget.get(rule.target);
+
+      if (existing) {
+        existing.push(rule);
+      } else {
+        rulesByTarget.set(rule.target, [rule]);
+      }
+    }
+
+    const targetMap = new Map<string, NormalRule[]>();
+
+    for (const rule of rules) {
+      const dependencies: NormalRule[] = [];
+
+      for (const prerequisite of rule.prerequisites) {
+        const matches = rulesByTarget.get(prerequisite);
+
+        if (matches) {
+          dependencies.push(...matches);
+        }
+      }
+
+      targetMap.set(rule.uuid, dependencies);
+    }
+
+    return targetMap;
+  }
+
+  public createReverseTargetMap(
+    rules: NormalRule[],
+  ): Map<string, NormalRule[]> {
+    const rulesByTarget = new Map<string, NormalRule[]>();
+
+    // merges rules with same target names into array
+    for (const rule of rules) {
+      const existing = rulesByTarget.get(rule.target);
+
+      if (existing) {
+        existing.push(rule);
+      } else {
+        rulesByTarget.set(rule.target, [rule]);
+      }
+    }
+
+    const reverseTargetMap = new Map<string, NormalRule[]>();
+
+    for (const rule of rules) {
+      for (const preq of rule.prerequisites) {
+        const preqRules = rulesByTarget.get(preq);
+        if (!preqRules) continue; // No rule produces this prerequisite; it may be a filesystem or external dependency.
+
+        for (const preqRule of preqRules) {
+          const existing = reverseTargetMap.get(preqRule.uuid);
+          if (existing) {
+            existing.push(rule);
+          } else {
+            reverseTargetMap.set(preqRule.uuid, [rule]);
+          }
+        }
+      }
+    }
+
+    return reverseTargetMap;
+  }
+
   // sequuential build
 
   public buildTargetsSequentialSync(
@@ -354,4 +425,9 @@ export class Core {
   }
 
   // parallel build
+
+  public async parallelBuildTargetAsync(
+    rule: NormalRule,
+    concurrency: number,
+  ) {}
 }
