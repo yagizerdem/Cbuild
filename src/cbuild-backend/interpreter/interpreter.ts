@@ -35,6 +35,7 @@ export default class Interpreter {
       registerFs(this.lua);
       registerString(this.lua);
       registerOs(this.lua);
+      registerOs(this.lua);
 
       await this.lua.doString(code);
     } catch (error) {
