@@ -163,6 +163,10 @@ export function mergeContinuation(
 }
 
 export function preprocess(program: string): Cursor.Pchar<Context>[] {
+  if (!program.endsWith("\n")) {
+    program += "\n";
+  }
+
   if (!program.trim().endsWith(Cursor.END)) {
     program += Cursor.END;
   }

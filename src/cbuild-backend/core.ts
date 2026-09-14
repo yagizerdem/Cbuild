@@ -52,6 +52,9 @@ export class Core {
 
     // contains type of relations in under single interface. ex. hooks
     const graph: BaseModel[] = await graphBuilder.buildAsync(rules);
+
+    // add seperate resolutino step and normalize rules
+
     // contains relation only needed for build
     const normalRulesGraph = this.collectNormalRuleModels(graph);
 
@@ -83,7 +86,7 @@ export class Core {
       });
     }
 
-    await this.buildTargetsSequentialAsync(rulesSubGraph, targetRule);
+    await this.parallelBuildTargetAsync(rulesSubGraph, 2);
   }
 
   public collectNormalRuleModels(baseModesl: BaseModel[]): NormalRule[] {
@@ -427,7 +430,111 @@ export class Core {
   // parallel build
 
   public async parallelBuildTargetAsync(
-    rule: NormalRule,
+    rules: NormalRule[],
     concurrency: number,
-  ) {}
+  ) {
+    if (concurrency <= 0) {
+      throw new Error("Concurrency must be greater than 0");
+    }
+
+    const targetMap = this.createTargetMap(rules);
+    const reverseTargetMap = this.createReverseTargetMap(rules);
+
+    const rulesByUuid = new Map<string, NormalRule>();
+    for (const rule of rules) {
+      rulesByUuid.set(rule.uuid, rule);
+    }
+
+    const targetPreqCount = new Map<string, number>();
+
+    for (const rule of rules) {
+      const targetPrerequisites = targetMap.get(rule.uuid) ?? [];
+      targetPreqCount.set(
+        rule.uuid,
+        new Set(targetPrerequisites.map((preqRule) => preqRule.uuid)).size,
+      );
+    }
+
+    const currentBuilds = new Set<string>();
+    const completedBuilds = new Set<string>();
+    const runningBuilds = new Set<Promise<void>>();
+
+    const getRulesWithNoPrerequisites = () => {
+      const rulesWithNoPrerequisites: string[] = [];
+      for (const [uuid, count] of targetPreqCount.entries()) {
+        if (
+          count === 0 &&
+          !completedBuilds.has(uuid) &&
+          !currentBuilds.has(uuid)
+        ) {
+          rulesWithNoPrerequisites.push(uuid);
+        }
+      }
+      return rulesWithNoPrerequisites;
+    };
+
+    const getNextBuilds = (count: number) => {
+      const nextBuilds: string[] = [];
+      const nextRules = getRulesWithNoPrerequisites();
+      for (let i = 0; i < count; i++) {
+        const nextRuleUuid = nextRules.pop();
+        if (!nextRuleUuid) {
+          break;
+        }
+        nextBuilds.push(nextRuleUuid);
+      }
+      return nextBuilds;
+    };
+
+    const buildRule = async (uuid: string) => {
+      const rule = rulesByUuid.get(uuid);
+      if (!rule) {
+        throw new Error(`Rule with uuid "${uuid}" does not exist`);
+      }
+      currentBuilds.add(uuid);
+      try {
+        await this.buildTargetAsync(rule);
+        completedBuilds.add(uuid);
+        const dependents = reverseTargetMap.get(uuid) ?? [];
+        for (const dependent of dependents) {
+          const count = targetPreqCount.get(dependent.uuid);
+          if (count === undefined) {
+            continue;
+          }
+          targetPreqCount.set(dependent.uuid, Math.max(0, count - 1));
+        }
+      } finally {
+        currentBuilds.delete(uuid);
+      }
+    };
+
+    while (completedBuilds.size < rules.length) {
+      if (currentBuilds.size < concurrency) {
+        const availableSlots = concurrency - currentBuilds.size;
+        const nextBuilds = getNextBuilds(availableSlots);
+
+        for (const uuid of nextBuilds) {
+          currentBuilds.add(uuid);
+          let buildPromise!: Promise<void>;
+          buildPromise = buildRule(uuid).finally(() => {
+            runningBuilds.delete(buildPromise);
+          });
+
+          runningBuilds.add(buildPromise);
+        }
+      }
+
+      if (runningBuilds.size === 0) {
+        if (completedBuilds.size < rules.length) {
+          throw new Error(
+            "Build graph is stuck. A circular dependency may exist.",
+          );
+        }
+        break;
+      }
+
+      // Wake the scheduler immediately when any build finishes.
+      await Promise.race(runningBuilds);
+    }
+  }
 }
