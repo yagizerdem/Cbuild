@@ -4,6 +4,7 @@ import registerMath from "@cbuild-backend/interpreter/natives/math.js";
 import registerContext from "@cbuild-backend/interpreter/natives/context.js";
 import registerFs from "@cbuild-backend/interpreter/natives/fs.js";
 import registerString from "@cbuild-backend/interpreter/natives/string.js";
+import registerOs from "@cbuild-backend/interpreter/natives/os.js";
 import { Env } from "@cbuild-backend/env.js";
 
 const factory = new LuaFactory();
@@ -33,6 +34,7 @@ export default class Interpreter {
       registerContext(this.lua, this.context);
       registerFs(this.lua);
       registerString(this.lua);
+      registerOs(this.lua);
 
       await this.lua.doString(code);
     } catch (error) {

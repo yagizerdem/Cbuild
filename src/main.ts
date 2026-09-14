@@ -24,6 +24,10 @@ c : x k
 x:
 \t echo x
 
+hook {
+  println(os.type());
+  }
+
 `.trim();
 
   const pCharBuffer = preprocess(buildFile);
