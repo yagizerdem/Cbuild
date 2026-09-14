@@ -4,6 +4,9 @@
   "description": "",
   "type": "module",
   "main": "main.js",
+  "bin": {
+    "cbuild": "./dist/main.js"
+  },
   "scripts": {
     "antlr4ts": "antlr4ts -visitor cbuild.g4 -o ./src/parser",
     "generate-parser": "antlr-ng  -Dlanguage=TypeScript --generate-listener true --generate-visitor true  cbuild.g4 -o ./src/parser",
@@ -27,6 +30,8 @@
   "dependencies": {
     "antlr4ng": "^3.0.16",
     "antlr4ts": "^0.5.0-alpha.4",
+    "chalk": "^6.0.0",
+    "commander": "^15.0.0",
     "vitest": "^5.0.0",
     "wasmoon": "^1.16.0"
   }

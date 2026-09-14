@@ -868,6 +868,12 @@ export class CBuildCompiler
     if (ctx.ESCAPED_QUOTE() != null) {
       return ctx.ESCAPED_QUOTE()!.getText().substring(1); // remove \ escape part
     }
+    if (ctx.SLIT() != null) {
+      return this.unquote(ctx.SLIT()!.getText());
+    }
+    if (ctx.ESCAPED_QUOTE() != null) {
+      return ctx.ESCAPED_QUOTE()!.getText().substring(1); // remove \ escape part
+    }
 
     return ctx.getText();
   }
