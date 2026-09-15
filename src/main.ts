@@ -14,13 +14,10 @@ try {
   const buildFile = `
 
 
-RESULT = The value is $(LATER)
-
-# 'LATER' is defined after 'RESULT'
-LATER = Chicken
+A = ok
 
 app:
-\t echo $(RESULT)
+\t echo $A
 
 `.trim();
 

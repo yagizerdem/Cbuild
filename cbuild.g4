@@ -263,6 +263,8 @@ identifier_atom
     | COMMA
     | LPAREN
     | RPAREN
+    | L_CURLY_BRACE
+    | R_CURLY_BRACE
     ;
 
 br : NL;
@@ -281,9 +283,10 @@ char_nested: char | ',' ;
 
 
 char_in_assign: char_nested
-    | DOUBLE_DOLLAR
     | LPAREN
     | RPAREN
+    | L_CURLY_BRACE
+    | R_CURLY_BRACE
     | keywords
     ;
 
@@ -291,6 +294,8 @@ char_in_def
     : char
     | LPAREN
     | RPAREN
+    | L_CURLY_BRACE
+    | R_CURLY_BRACE
     | COMMA
     | COMMENT
     | INCLUDE
@@ -307,7 +312,7 @@ char_in_def
     | UNDEFINE
     ;
 
-char_in_recipe: char_in_assign  | DOUBLE_DOLLAR | COMMENT | PIPE;
+char_in_recipe: char_in_assign | COMMENT | PIPE;
 
 text
     : char+

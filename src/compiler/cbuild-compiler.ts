@@ -52,6 +52,7 @@ import {
   HookContext,
   CharContext,
   Char_nestedContext,
+  Char_in_recipeContext,
 } from "@parser/cbuildParser.js";
 import {
   AssignmentIR,
@@ -264,13 +265,6 @@ export class CBuildCompiler
   public visitChar_in_assign(ctx: Char_in_assignContext): string {
     if (ctx.char_nested() != null && !ctx.char_nested()!.isEmpty()) {
       return ctx.char_nested()!.accept(this) as string;
-    }
-
-    if (
-      ctx.DOUBLE_DOLLAR() != null &&
-      ctx.DOUBLE_DOLLAR()!.getText().length > 0
-    ) {
-      return "$";
     }
 
     return ctx.getText();
@@ -680,20 +674,38 @@ export class CBuildCompiler
     return parts;
   }
 
-  public visitExpr_in_recipe_atom(ctx: Expr_in_recipe_atomContext): unknown {
+  public visitExpr_in_recipe_atom(ctx: Expr_in_recipe_atomContext): ValuePart {
     if (ctx.text_in_recipe() != null) {
-      return textPart(ctx.text_in_recipe()!.getText());
+      return this.visitText_in_recipe(ctx.text_in_recipe()!);
+    } else if (ctx.function() != null) {
+      return this.visitFunction(ctx.function()!);
     }
 
-    if (ctx.function() != null) {
-      return ctx.function()!.accept(this);
-    }
-
-    return undefined;
+    throw new Error("Unhandled condition in visitExpr_in_recipe_atom");
   }
 
-  public visitText_in_recipe(ctx: Text_in_recipeContext): unknown {
-    return textPart(ctx.getText());
+  public visitText_in_recipe(ctx: Text_in_recipeContext): ValuePart {
+    let text = "";
+
+    for (const charCtx of ctx.char_in_recipe()) {
+      text += this.visitChar_in_recipe(charCtx);
+    }
+
+    return textPart(text);
+  }
+
+  public visitChar_in_recipe(ctx: Char_in_recipeContext): string {
+    if (ctx.char_in_assign() != null) {
+      return this.visitChar_in_assign(ctx.char_in_assign()!);
+    }
+    if (ctx.COMMENT() != null) {
+      return ctx.COMMENT()!.getText();
+    }
+    if (ctx.PIPE() != null) {
+      return ctx.PIPE()!.getText();
+    }
+
+    throw new Error("Unhandled condition in visitChar_in_recipe");
   }
 
   public visitConditional_in_recipe(
@@ -865,6 +877,12 @@ export class CBuildCompiler
   }
 
   public visitChar(ctx: CharContext): string {
+    if (
+      ctx.DOUBLE_DOLLAR() != null &&
+      ctx.DOUBLE_DOLLAR()!.getText().length > 0
+    ) {
+      return "$";
+    }
     if (ctx.ESCAPED_QUOTE() != null) {
       return ctx.ESCAPED_QUOTE()!.getText().substring(1); // remove \ escape part
     }
