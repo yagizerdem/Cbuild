@@ -1,9 +1,11 @@
 import { FunctionContext } from "@parser/cbuildParser.js";
 import { FunctionIR } from "@compiler/ir.js";
 import * as type from "@gnu-make-functions/type.js";
+import { FnRunner } from "@gnu-make-functions/runner.js";
 
 export interface MakeFunctionHandler {
   compile(ctx: FunctionContext): FunctionIR;
+  resolveRunner(runner: FnRunner): (ir: FunctionIR) => string;
 }
 
 export class make_function_dispatcher {

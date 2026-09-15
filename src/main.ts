@@ -13,8 +13,7 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-
-A = ok
+A = $(abspath src)
 
 app:
 \t echo $A
