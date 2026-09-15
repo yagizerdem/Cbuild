@@ -341,7 +341,8 @@ export class CBuildCompiler
 
   private compileVarRef(ctx: FunctionContext): ValuePart {
     const raw = ctx.VAR()!.getText();
-    const part = textPart(raw);
+    const name = raw.slice(1);
+    const part = textPart(name);
     const value = new ValueIR([part]);
     return varRefPart(value);
   }
