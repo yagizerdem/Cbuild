@@ -15,7 +15,6 @@ export class compile_call extends compile_fn {
     func: MakeFunction,
   ): FunctionIR {
     const ir = super.compile(ctx, func);
-    util.cleanWS(ir);
 
     if (ir.args.length === 0) {
       throw CbuildException.from({
