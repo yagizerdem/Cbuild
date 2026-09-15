@@ -3,6 +3,7 @@ import { BaseFnRunner } from "@src/gnu-make-functions/runner.js";
 import { Env } from "@cbuild-backend/env.js";
 import AbspathRunner from "@cbuild-backend/gnu-make-functions/runner/abspath-runner.js";
 import AddprefixRunner from "@cbuild-backend/gnu-make-functions/runner/addprefix-runner.js";
+import AddsuffixRunner from "@cbuild-backend/gnu-make-functions/runner/addsuffix-runner.js";
 
 export default class CbuildFnRunner extends BaseFnRunner {
   private readonly context: Env;
@@ -25,5 +26,13 @@ export default class CbuildFnRunner extends BaseFnRunner {
       this.activeLookups,
     );
     return addprefixRunner.run(ir);
+  }
+
+  addsuffixFn(ir: FunctionIR): string {
+    const addsuffixRunner = new AddsuffixRunner(
+      this.context,
+      this.activeLookups,
+    );
+    return addsuffixRunner.run(ir);
   }
 }
