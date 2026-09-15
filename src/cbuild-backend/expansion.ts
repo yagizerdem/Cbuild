@@ -8,7 +8,7 @@ import {
 } from "@compiler/ir.js";
 import { Env } from "@src/cbuild-backend/env.js";
 import { make_function_dispatcher } from "@src/gnu-make-functions/make_function_dispatcher.js";
-import { BaseFnRunner } from "@src/gnu-make-functions/runner.js";
+import CbuildFnRunner from "@src/cbuild-backend/gnu-make-functions/fn-runner.js";
 
 type VarRefPart = Extract<ValuePart, { kind: "variable-reference" }>;
 
@@ -77,10 +77,10 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
   private readonly activeLookups: Set<string>;
   private readonly make_fn_dispatcher: make_function_dispatcher;
 
-  public constructor(context: Env) {
+  public constructor(context: Env, activeLookups = new Set<string>()) {
     super();
     this.context = context;
-    this.activeLookups = new Set<string>();
+    this.activeLookups = activeLookups;
     this.make_fn_dispatcher = new make_function_dispatcher();
   }
 
@@ -117,7 +117,10 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
         const refPart = part;
         builder += this.expandVarRefToString(refPart, activeLookups);
       } else if (part.kind === "function-call") {
-        const fnExpansionEngine = new FnExpansion();
+        const fnExpansionEngine = new CbuildFnRunner(
+          this.context,
+          activeLookups,
+        );
         const fnType = this.make_fn_dispatcher.getHandler(part.function.name);
         const resolvedExpansionFunction =
           fnType.resolveRunner(fnExpansionEngine);
@@ -140,7 +143,10 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
         const refPart = part;
         builder += this.expandVarRefToString(refPart, activeLookups);
       } else if (part.kind === "function-call") {
-        const fnExpansionEngine = new FnExpansion();
+        const fnExpansionEngine = new CbuildFnRunner(
+          this.context,
+          activeLookups,
+        );
         const fnType = this.make_fn_dispatcher.getHandler(part.function.name);
         const resolvedExpansionFunction =
           fnType.resolveRunner(fnExpansionEngine);
@@ -235,10 +241,4 @@ export function expandValue(ir: ValueIR, context: Env): string {
 export function expandRecipe(ir: RecipeIR, context: Env): string {
   const expansionEngine = new RecipeExpansionEngine(context);
   return ir.exec<string>(expansionEngine);
-}
-
-export class FnExpansion extends BaseFnRunner {
-  abspathFn(ir: FunctionIR): string {
-    return "abs expansin ";
-  }
 }

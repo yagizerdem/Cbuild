@@ -13,7 +13,8 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-A = $(abspath src)
+SRC = srcafa
+A = $(abspath $(SRC) fucker)
 
 app:
 \t echo $A
