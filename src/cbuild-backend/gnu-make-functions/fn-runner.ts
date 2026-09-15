@@ -5,6 +5,7 @@ import AbspathRunner from "@cbuild-backend/gnu-make-functions/runner/abspath-run
 import AddprefixRunner from "@cbuild-backend/gnu-make-functions/runner/addprefix-runner.js";
 import AddsuffixRunner from "@cbuild-backend/gnu-make-functions/runner/addsuffix-runner.js";
 import AndRunner from "./runner/and-runner.js";
+import BasenameRunner from "./runner/basname-runner.js";
 
 export default class CbuildFnRunner extends BaseFnRunner {
   private readonly context: Env;
@@ -40,5 +41,10 @@ export default class CbuildFnRunner extends BaseFnRunner {
   andFn(ir: FunctionIR): string {
     const andRunner = new AndRunner(this.context, this.activeLookups);
     return andRunner.run(ir);
+  }
+
+  basenameFn(ir: FunctionIR): string {
+    const basenameRunner = new BasenameRunner(this.context, this.activeLookups);
+    return basenameRunner.run(ir);
   }
 }

@@ -13,12 +13,10 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-
-RESULT := $(and test,sucker)
+RESULT := $(basename test.c.txt  test2.txt)
 
 all:
 	echo $(RESULT)
-
 `.trim();
 
   const pCharBuffer = preprocess(buildFile);
