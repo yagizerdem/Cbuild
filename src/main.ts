@@ -13,9 +13,8 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-FILES := main.c utils.c parser.c
 
-RESULT := $(addprefix src/,$(FILES) app.c)
+RESULT := $(and test,sucker)
 
 all:
 	echo $(RESULT)

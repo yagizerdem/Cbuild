@@ -43,21 +43,9 @@ export class compile_fn
   }
 
   public compile(ctx: FunctionContext, func: MakeFunction): FunctionIR {
-    const given =
-      ctx.arguments() == null ? 0 : ctx.arguments()!.argument().length;
-    const expected = func.arity();
-
-    if (given !== expected) {
-      throw CbuildException.from({
-        errorType: ErrorType.SEMANTIC,
-        message: `function '${func.getFnName()}' expects ${expected} argument(s), but got ${given}`,
-        row: ctx.start?.line || 0,
-        column: (ctx.start?.column || 0) + 1,
-        machineCode: MachineCode.FUNCTION_COMPILATION_ERROR,
-      });
-    }
-
     const fn = new FunctionIR(func.getFnName());
+
+    this.checkArity(ctx, func);
 
     for (const argCtx of ctx.arguments()!.argument()) {
       fn.args.push(this.visitArgument(argCtx));
@@ -195,5 +183,26 @@ export class compile_fn
     const val = new ValueIR();
     val.parts.push(part);
     return val;
+  }
+
+  public checkArity(ctx: FunctionContext, func: MakeFunction): void {
+    const given =
+      ctx.arguments() == null ? 0 : ctx.arguments()!.argument().length;
+    const expected = func.arity();
+
+    // variadic functions
+    if (expected === -1) {
+      return;
+    }
+
+    if (given !== expected) {
+      throw CbuildException.from({
+        errorType: ErrorType.SEMANTIC,
+        message: `function '${func.getFnName()}' expects ${expected} argument(s), but got ${given}`,
+        row: ctx.start?.line || 0,
+        column: (ctx.start?.column || 0) + 1,
+        machineCode: MachineCode.FUNCTION_COMPILATION_ERROR,
+      });
+    }
   }
 }

@@ -4,6 +4,7 @@ import { Env } from "@cbuild-backend/env.js";
 import AbspathRunner from "@cbuild-backend/gnu-make-functions/runner/abspath-runner.js";
 import AddprefixRunner from "@cbuild-backend/gnu-make-functions/runner/addprefix-runner.js";
 import AddsuffixRunner from "@cbuild-backend/gnu-make-functions/runner/addsuffix-runner.js";
+import AndRunner from "./runner/and-runner.js";
 
 export default class CbuildFnRunner extends BaseFnRunner {
   private readonly context: Env;
@@ -34,5 +35,10 @@ export default class CbuildFnRunner extends BaseFnRunner {
       this.activeLookups,
     );
     return addsuffixRunner.run(ir);
+  }
+
+  andFn(ir: FunctionIR): string {
+    const andRunner = new AndRunner(this.context, this.activeLookups);
+    return andRunner.run(ir);
   }
 }
