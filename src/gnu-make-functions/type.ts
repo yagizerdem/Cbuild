@@ -35,6 +35,7 @@ import { compile_call } from "@gnu-make-functions/compiler/overwrite/compile_cal
 import { compile_eval } from "@gnu-make-functions/compiler/overwrite/compile_eval.js";
 import { compile_file } from "@gnu-make-functions/compiler/overwrite/compile_file.js";
 import { compile_value } from "@gnu-make-functions/compiler/overwrite/compile_value.js";
+import type { FnRunner } from "@gnu-make-functions/runner.js";
 
 export interface MakeFunction extends MakeFunctionHandler {
   arity(): number;
@@ -59,6 +60,12 @@ export class substFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.substFn(ir);
+    };
+  }
 }
 
 export class patsubstFn implements MakeFunction {
@@ -78,6 +85,12 @@ export class patsubstFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.patsubstFn(ir);
+    };
   }
 }
 
@@ -99,6 +112,12 @@ export class stripFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.stripFn(ir);
+    };
+  }
 }
 
 export class findstringFn implements MakeFunction {
@@ -118,6 +137,12 @@ export class findstringFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.findstringFn(ir);
+    };
   }
 }
 
@@ -139,6 +164,12 @@ export class filterFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.filterFn(ir);
+    };
+  }
 }
 
 export class filterOutFn implements MakeFunction {
@@ -158,6 +189,12 @@ export class filterOutFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.filterOutFn(ir);
+    };
   }
 }
 
@@ -179,6 +216,12 @@ export class sortFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.sortFn(ir);
+    };
+  }
 }
 
 export class wordFn implements MakeFunction {
@@ -198,6 +241,12 @@ export class wordFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.wordFn(ir);
+    };
   }
 }
 
@@ -219,6 +268,12 @@ export class wordsFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.wordsFn(ir);
+    };
+  }
 }
 
 export class wordlistFn implements MakeFunction {
@@ -238,6 +293,12 @@ export class wordlistFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.wordlistFn(ir);
+    };
   }
 }
 
@@ -259,6 +320,12 @@ export class firstwordFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.firstwordFn(ir);
+    };
+  }
 }
 
 export class lastwordFn implements MakeFunction {
@@ -278,6 +345,12 @@ export class lastwordFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.lastwordFn(ir);
+    };
   }
 }
 
@@ -299,6 +372,12 @@ export class dirFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.dirFn(ir);
+    };
+  }
 }
 
 export class suffixFn implements MakeFunction {
@@ -318,6 +397,12 @@ export class suffixFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.suffixFn(ir);
+    };
   }
 }
 
@@ -339,6 +424,12 @@ export class basenameFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.basenameFn(ir);
+    };
+  }
 }
 
 export class addsuffixFn implements MakeFunction {
@@ -358,6 +449,12 @@ export class addsuffixFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.addsuffixFn(ir);
+    };
   }
 }
 
@@ -379,6 +476,12 @@ export class addprefixFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.addprefixFn(ir);
+    };
+  }
 }
 
 export class joinFn implements MakeFunction {
@@ -398,6 +501,12 @@ export class joinFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.joinFn(ir);
+    };
   }
 }
 
@@ -419,6 +528,12 @@ export class wildcardFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.wildcardFn(ir);
+    };
+  }
 }
 
 export class realpathFn implements MakeFunction {
@@ -438,6 +553,12 @@ export class realpathFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.realpathFn(ir);
+    };
   }
 }
 
@@ -459,6 +580,12 @@ export class abspathFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.abspathFn(ir);
+    };
+  }
 }
 
 export class errorFn implements MakeFunction {
@@ -478,6 +605,12 @@ export class errorFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.errorFn(ir);
+    };
   }
 }
 
@@ -499,6 +632,12 @@ export class warningFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.warningFn(ir);
+    };
+  }
 }
 
 export class shellFn implements MakeFunction {
@@ -518,6 +657,12 @@ export class shellFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.shellFn(ir);
+    };
   }
 }
 
@@ -539,6 +684,12 @@ export class originFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.originFn(ir);
+    };
+  }
 }
 
 export class flavorFn implements MakeFunction {
@@ -558,6 +709,12 @@ export class flavorFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.flavorFn(ir);
+    };
   }
 }
 
@@ -579,6 +736,12 @@ export class foreachFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.foreachFn(ir);
+    };
+  }
 }
 
 export class ifFn implements MakeFunction {
@@ -598,6 +761,12 @@ export class ifFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.ifFn(ir);
+    };
   }
 }
 
@@ -619,6 +788,12 @@ export class orFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.orFn(ir);
+    };
+  }
 }
 
 export class andFn implements MakeFunction {
@@ -638,6 +813,12 @@ export class andFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.andFn(ir);
+    };
   }
 }
 
@@ -659,6 +840,12 @@ export class callFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.callFn(ir);
+    };
+  }
 }
 
 export class evalFn implements MakeFunction {
@@ -678,6 +865,12 @@ export class evalFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.evalFn(ir);
+    };
   }
 }
 
@@ -699,6 +892,12 @@ export class fileFn implements MakeFunction {
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
   }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.fileFn(ir);
+    };
+  }
 }
 
 export class valueFn implements MakeFunction {
@@ -718,5 +917,11 @@ export class valueFn implements MakeFunction {
 
   public compile(ctx: FunctionContext): FunctionIR {
     return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.valueFn(ir);
+    };
   }
 }

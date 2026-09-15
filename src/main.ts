@@ -13,11 +13,12 @@ const options = cli.opts();
 try {
   const buildFile = `
 
+FILES := main.c utils.c parser.c
 
-A = ok
+RESULT := $(addprefix src/,$(FILES) app.c)
 
-app:
-\t echo $A
+all:
+	echo $(RESULT)
 
 `.trim();
 

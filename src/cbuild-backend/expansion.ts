@@ -1,13 +1,14 @@
 import {
-  AssignmentIR,
-  AssignmentType,
   Executor,
+  FunctionIR,
   IR,
   RecipeIR,
   ValueIR,
   ValuePart,
 } from "@compiler/ir.js";
-import { Env, SymbolTableVariable } from "@src/cbuild-backend/env.js";
+import { Env } from "@src/cbuild-backend/env.js";
+import { make_function_dispatcher } from "@src/gnu-make-functions/make_function_dispatcher.js";
+import CbuildFnRunner from "@src/cbuild-backend/gnu-make-functions/fn-runner.js";
 
 type VarRefPart = Extract<ValuePart, { kind: "variable-reference" }>;
 
@@ -74,11 +75,13 @@ export class ExpansionEngine extends BaseExpansionEngine {
 export class ValueExpansionEngine extends BaseExpansionEngine {
   private readonly context: Env;
   private readonly activeLookups: Set<string>;
+  private readonly make_fn_dispatcher: make_function_dispatcher;
 
-  public constructor(context: Env) {
+  public constructor(context: Env, activeLookups = new Set<string>()) {
     super();
     this.context = context;
-    this.activeLookups = new Set<string>();
+    this.activeLookups = activeLookups;
+    this.make_fn_dispatcher = new make_function_dispatcher();
   }
 
   public clearActiveLookups(): void {
@@ -113,8 +116,16 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
       if (part.kind === "variable-reference") {
         const refPart = part;
         builder += this.expandVarRefToString(refPart, activeLookups);
-      }
-      if (part.kind === "text") {
+      } else if (part.kind === "function-call") {
+        const fnExpansionEngine = new CbuildFnRunner(
+          this.context,
+          activeLookups,
+        );
+        const fnType = this.make_fn_dispatcher.getHandler(part.function.name);
+        const resolvedExpansionFunction =
+          fnType.resolveRunner(fnExpansionEngine);
+        builder += resolvedExpansionFunction(part.function); // this resolved function expands fn-ir based on the function type
+      } else if (part.kind === "text") {
         const textPart = part;
         builder += textPart.lexeme;
       }
@@ -131,8 +142,16 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
       if (part.kind === "variable-reference") {
         const refPart = part;
         builder += this.expandVarRefToString(refPart, activeLookups);
-      }
-      if (part.kind === "text") {
+      } else if (part.kind === "function-call") {
+        const fnExpansionEngine = new CbuildFnRunner(
+          this.context,
+          activeLookups,
+        );
+        const fnType = this.make_fn_dispatcher.getHandler(part.function.name);
+        const resolvedExpansionFunction =
+          fnType.resolveRunner(fnExpansionEngine);
+        builder += resolvedExpansionFunction(part.function); // this resolved function expands fn-ir based on the function type
+      } else if (part.kind === "text") {
         const textPart = part;
         builder += textPart.lexeme;
       }
