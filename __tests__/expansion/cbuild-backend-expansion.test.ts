@@ -171,8 +171,8 @@ test("deferred var-ref expansion simple", () => {
   expect(context.hasVariable("f_name")).toEqual(true);
   expect(context.getVariable("f_name")?.isDeferred()).toEqual(true);
   expect(expanded_full_name).toEqual("yagiz erdem");
-  expect(context.getRawVariable("f_name")).toEqual("yagiz");
-  expect(context.getRawVariable("l_name")).toEqual("erdem");
+  expect(context.getRawVariable("f_name")).toEqual(null);
+  expect(context.getRawVariable("l_name")).toEqual(null);
 });
 
 test("deep recursive deferred var-ref expansion", () => {
@@ -260,12 +260,16 @@ test("deep recursive deferred var-ref expansion", () => {
   const expanded_full_name = engine.expand(full_name);
 
   // after expansion
+
+  // expansion does not change deffec var to raw values
+  // recalculate defferd values in each call
   expect(expanded_full_name).toEqual("yagiz erdem");
-  expect(context.getRawVariable("first_name")).toEqual("yagiz");
-  expect(context.getRawVariable("last_name")).toEqual("erdem");
-  expect(context.getRawVariable("display_name")).toEqual("yagiz erdem");
-  expect(context.getRawVariable("profile_name")).toEqual("yagiz erdem");
-  expect(context.getRawVariable("full_name")).toEqual("yagiz erdem");
+  expect(context.getRawVariable("first_name")).toEqual(null);
+  expect(context.getRawVariable("last_name")).toEqual(null);
+  expect(context.getRawVariable("display_name")).toEqual(null);
+  expect(context.getRawVariable("profile_name")).toEqual(null);
+  expect(context.getRawVariable("full_name")).toEqual(null);
+
   expect(context.getVariable("first_name")?.isDeferred()).toEqual(true);
   expect(context.getVariable("last_name")?.isDeferred()).toEqual(true);
   expect(context.getVariable("display_name")?.isDeferred()).toEqual(true);

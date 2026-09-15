@@ -8,25 +8,16 @@ import cli from "@src/cli.js";
 
 cli.parse();
 const options = cli.opts();
-console.log(options);
+// console.log(options);
 
 try {
   const buildFile = `
-a : b c
-\t echo a
 
-b: x y
-\t echo b
 
-c : x k
-\t echo c
+A = ok
 
-x:
-\t echo x
-
-hook {
-  println(os.type());
-  }
+app:
+\t echo $A
 
 `.trim();
 
@@ -47,5 +38,9 @@ hook {
 
   await core.runAsync(ir);
 } catch (error) {
-  console.error(error);
+  if (error instanceof Error) {
+    console.error(error?.message);
+  } else {
+    console.error(error);
+  }
 }

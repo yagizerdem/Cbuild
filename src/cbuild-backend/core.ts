@@ -15,18 +15,23 @@ import {
   MachineCode,
 } from "@src/cbuild-exception.js";
 import {
+  filterModelResolverPassIr,
+  ModelResolver,
+} from "@src/cbuild-backend/model-resolver.js";
+import {
   findDefaultTarget,
   findTarget,
   getTargetSubgraph,
-  GraphBuilder,
   hasCircularDependency,
   topologicalSort,
-} from "@cbuild-backend/graph-builder.js";
+} from "@cbuild-backend/depq-graph.js";
+
 import {
   RecipeExpansionEngine,
   ValueExpansionEngine,
 } from "@cbuild-backend/expansion.js";
 import { ProcessRunner } from "@cbuild-backend/process.js";
+import firstPass, { filterFirstPassIr } from "./first-pass.js";
 
 interface RunnerOptions {
   context?: Env;
@@ -48,10 +53,14 @@ export class Core {
 
     isCompatible(rules);
 
-    const graphBuilder = new GraphBuilder(currentContext);
+    await firstPass(filterFirstPassIr(rules), this.context);
+
+    const modelResolver = new ModelResolver(currentContext);
 
     // contains type of relations in under single interface. ex. hooks
-    const graph: BaseModel[] = await graphBuilder.buildAsync(rules);
+    const graph: BaseModel[] = await modelResolver.buildAsync(
+      filterModelResolverPassIr(rules),
+    );
 
     // add seperate resolutino step and normalize rules
 
@@ -91,48 +100,6 @@ export class Core {
 
   public collectNormalRuleModels(baseModesl: BaseModel[]): NormalRule[] {
     return baseModesl.filter((model) => model instanceof NormalRule);
-  }
-
-  public buildTargetDependencyMap(rules: NormalRule[]): Map<string, string[]> {
-    const targetMap = new Map<string, string[]>(); // target -> prerequisites
-
-    rules.forEach((rule) => {
-      if (!targetMap.has(rule.target)) {
-        targetMap.set(rule.target, []);
-      }
-
-      targetMap.get(rule.target)!.push(...rule.prerequisites);
-    });
-
-    return targetMap;
-  }
-
-  public buildTargetDependencyReverseMap(
-    rules: NormalRule[],
-  ): Map<string, string[]> {
-    const preq = new Set(rules.map((r) => r.target));
-
-    const reverseTargetMap = new Map<string, string[]>(); //  preq -> targets that depend on this prerequisite
-
-    preq.forEach((p) => {
-      if (!reverseTargetMap.has(p)) {
-        reverseTargetMap.set(p, []);
-      }
-
-      reverseTargetMap
-        .get(p)!
-        .push(
-          ...Array.from(
-            new Set(
-              rules
-                .filter((rule) => rule.prerequisites.includes(p))
-                .map((r) => r.target),
-            ),
-          ),
-        );
-    });
-
-    return reverseTargetMap;
   }
 
   public async shouldRebuildAsync(

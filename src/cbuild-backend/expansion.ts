@@ -39,20 +39,7 @@ export class ExpansionEngine extends BaseExpansionEngine {
     this.context = context;
   }
 
-  public expand<T>(ir: AssignmentIR | ValueIR | ValuePart | RecipeIR): T {
-    if (ir instanceof AssignmentIR) {
-      const identifier = ir.left!.exec<string>(this.valueExpansionEngine);
-      if (ir.type == AssignmentType.SIMPLE) {
-        const value = ir.right!.exec<string>(this.valueExpansionEngine);
-        this.context.setRawVariable(identifier, value);
-        return null as T;
-      }
-      if (ir.type == AssignmentType.RECURSIVE) {
-        this.context.setDeferredVariable(identifier, ir.right!);
-        return null as T;
-      }
-    }
-
+  public expand<T>(ir: ValueIR | ValuePart | RecipeIR): T {
     if (ir instanceof RecipeIR) {
       return ir.exec<T>(new RecipeExpansionEngine(this.context));
     }
@@ -73,11 +60,7 @@ export class ExpansionEngine extends BaseExpansionEngine {
   }
 
   public override exec<T>(ir: IR): T {
-    if (
-      ir instanceof AssignmentIR ||
-      ir instanceof ValueIR ||
-      ir instanceof RecipeIR
-    ) {
+    if (ir instanceof ValueIR || ir instanceof RecipeIR) {
       return this.expand<T>(ir);
     }
     throw new Error("Unsupported IR node for expansion");
@@ -167,10 +150,14 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
         activeLookups.add(identifier);
         const rawValue = this.exec<string>(valueIR);
         activeLookups.delete(identifier);
-        this.context.replaceVariable(
-          identifier,
-          new SymbolTableVariable(rawValue, valueIR),
-        );
+
+        // do not replace with the expanded value in the symbol table
+        // shoudl reevaluate in each recursive variable call
+
+        // this.context.replaceVariable(
+        //   identifier,
+        //   new SymbolTableVariable(rawValue, valueIR),
+        // );
         return rawValue;
       }
 

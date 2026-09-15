@@ -128,15 +128,16 @@ function validateNormalRule(normalRuleIR: NormalRuleIR): void {
 
 function validateParts(parts: ValuePart[], owner: IR, context: string): void {
   for (const part of parts) {
-    if ("kind" in part && part.kind === "function-call") {
-      throw CbuildException.from({
-        column: owner.col,
-        row: owner.row,
-        errorType: ErrorType.SEMANTIC,
-        machineCode: MachineCode.UNSUPPORTED_IR,
-        message: `${context} contains an unsupported function call: ${part}`,
-      });
-    }
+    // function calls are now allowed
+    // if ("kind" in part && part.kind === "function-call") {
+    //   throw CbuildException.from({
+    //     column: owner.col,
+    //     row: owner.row,
+    //     errorType: ErrorType.SEMANTIC,
+    //     machineCode: MachineCode.UNSUPPORTED_IR,
+    //     message: `${context} contains an unsupported function call: ${part}`,
+    //   });
+    // }
   }
 }
 
