@@ -15,18 +15,20 @@ import {
   MachineCode,
 } from "@src/cbuild-exception.js";
 import {
+  filterModelResolverPassIr,
   findDefaultTarget,
   findTarget,
   getTargetSubgraph,
-  GraphBuilder,
   hasCircularDependency,
+  ModelResolver,
   topologicalSort,
-} from "@cbuild-backend/graph-builder.js";
+} from "@src/cbuild-backend/model-resolver.js";
 import {
   RecipeExpansionEngine,
   ValueExpansionEngine,
 } from "@cbuild-backend/expansion.js";
 import { ProcessRunner } from "@cbuild-backend/process.js";
+import firstPass, { filterFirstPassIr } from "./first-pass.js";
 
 interface RunnerOptions {
   context?: Env;
@@ -48,10 +50,14 @@ export class Core {
 
     isCompatible(rules);
 
-    const graphBuilder = new GraphBuilder(currentContext);
+    await firstPass(filterFirstPassIr(rules), this.context);
+
+    const modelResolver = new ModelResolver(currentContext);
 
     // contains type of relations in under single interface. ex. hooks
-    const graph: BaseModel[] = await graphBuilder.buildAsync(rules);
+    const graph: BaseModel[] = await modelResolver.buildAsync(
+      filterModelResolverPassIr(rules),
+    );
 
     // add seperate resolutino step and normalize rules
 

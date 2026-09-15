@@ -1,6 +1,4 @@
 import {
-  AssignmentIR,
-  HookIR,
   NormalRuleIR,
   type Executor,
   type IR,
@@ -12,14 +10,19 @@ import {
   MachineCode,
 } from "@src/cbuild-exception.js";
 import { Env } from "@cbuild-backend/env.js";
-import {
-  ExpansionEngine,
-  ValueExpansionEngine,
-} from "@cbuild-backend/expansion.js";
+import { ValueExpansionEngine } from "@cbuild-backend/expansion.js";
 import { BaseModel, NormalRule } from "@cbuild-backend/model.js";
-import Interpreter from "@cbuild-backend/interpreter/interpreter.js";
 
-export class GraphBuilder implements Executor {
+export function filterModelResolverPassIr(irs: IR[]): IR[] {
+  const result: IR[] = [];
+  for (const ir of irs) {
+    if (ir instanceof NormalRuleIR) result.push(ir);
+  }
+
+  return result;
+}
+
+export class ModelResolver implements Executor {
   public readonly ruleModels: BaseModel[] = [];
 
   public constructor(public readonly context: Env) {}
@@ -49,29 +52,8 @@ export class GraphBuilder implements Executor {
     throw new Error("Use execAsync instead");
   }
 
-  public async execAsync<T>(ir: IR): Promise<T> {
-    if (ir instanceof NormalRuleIR) {
-      return this.buildNormalRule(ir) as T;
-    }
-    if (ir instanceof AssignmentIR) {
-      ir.exec(new ExpansionEngine(this.context));
-      return null as T;
-    }
-
-    if (ir instanceof HookIR) {
-      const interpreter = new Interpreter();
-      interpreter.init(this.context);
-      await interpreter.runAsync(ir.hookProgram);
-      return null as T;
-    }
-
-    throw CbuildException.from({
-      column: ir.col,
-      row: ir.row,
-      errorType: ErrorType.SEMANTIC,
-      machineCode: MachineCode.UNSUPPORTED_IR,
-      message: `buildFile: Unsupported IR type for cbuild backend. Stop`,
-    });
+  public async execAsync<T>(ir: NormalRuleIR): Promise<T> {
+    return this.buildNormalRule(ir) as T;
   }
 
   private buildNormalRule(ir: NormalRuleIR): BaseModel[] {
