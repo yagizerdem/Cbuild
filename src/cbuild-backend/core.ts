@@ -16,13 +16,16 @@ import {
 } from "@src/cbuild-exception.js";
 import {
   filterModelResolverPassIr,
+  ModelResolver,
+} from "@src/cbuild-backend/model-resolver.js";
+import {
   findDefaultTarget,
   findTarget,
   getTargetSubgraph,
   hasCircularDependency,
-  ModelResolver,
   topologicalSort,
-} from "@src/cbuild-backend/model-resolver.js";
+} from "@cbuild-backend/depq-graph.js";
+
 import {
   RecipeExpansionEngine,
   ValueExpansionEngine,
@@ -97,48 +100,6 @@ export class Core {
 
   public collectNormalRuleModels(baseModesl: BaseModel[]): NormalRule[] {
     return baseModesl.filter((model) => model instanceof NormalRule);
-  }
-
-  public buildTargetDependencyMap(rules: NormalRule[]): Map<string, string[]> {
-    const targetMap = new Map<string, string[]>(); // target -> prerequisites
-
-    rules.forEach((rule) => {
-      if (!targetMap.has(rule.target)) {
-        targetMap.set(rule.target, []);
-      }
-
-      targetMap.get(rule.target)!.push(...rule.prerequisites);
-    });
-
-    return targetMap;
-  }
-
-  public buildTargetDependencyReverseMap(
-    rules: NormalRule[],
-  ): Map<string, string[]> {
-    const preq = new Set(rules.map((r) => r.target));
-
-    const reverseTargetMap = new Map<string, string[]>(); //  preq -> targets that depend on this prerequisite
-
-    preq.forEach((p) => {
-      if (!reverseTargetMap.has(p)) {
-        reverseTargetMap.set(p, []);
-      }
-
-      reverseTargetMap
-        .get(p)!
-        .push(
-          ...Array.from(
-            new Set(
-              rules
-                .filter((rule) => rule.prerequisites.includes(p))
-                .map((r) => r.target),
-            ),
-          ),
-        );
-    });
-
-    return reverseTargetMap;
   }
 
   public async shouldRebuildAsync(
