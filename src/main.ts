@@ -13,11 +13,12 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-SRC = srcafa
-A = $(abspath $(SRC) fucker)
+FILES := main.c utils.c parser.c
 
-app:
-\t echo $A
+RESULT := $(addprefix src/,$(FILES) app.c)
+
+all:
+	echo $(RESULT)
 
 `.trim();
 
