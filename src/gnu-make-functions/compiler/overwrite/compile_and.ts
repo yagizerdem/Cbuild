@@ -1,10 +1,5 @@
 import { FunctionIR } from "@compiler/ir.js";
 import { FunctionContext } from "@parser/cbuildParser.js";
-import {
-  CbuildException,
-  ErrorType,
-  MachineCode,
-} from "@src/cbuild-exception.js";
 import type { MakeFunction } from "@gnu-make-functions/type.js";
 import { compile_fn } from "@gnu-make-functions/compiler/compile_fn.js";
 import { util } from "@gnu-make-functions/compiler/util.js";
@@ -16,17 +11,6 @@ export class compile_and extends compile_fn {
   ): FunctionIR {
     const ir = super.compile(ctx, func);
     util.cleanWS(ir);
-
-    if (ir.args.length === 0) {
-      throw CbuildException.from({
-        column: ctx.start?.column || 0,
-        row: ctx.start?.line || 0,
-        errorType: ErrorType.SYNTAX,
-        machineCode: MachineCode.FUNCTION_COMPILATION_ERROR,
-        message:
-          "buildFile: and: expected at least 1 argument: cond1[, cond2...]",
-      });
-    }
 
     return ir;
   }
