@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { compile } from "@tests/util/compile.js";
 import { Env, Settings } from "@src/cbuild-backend/env.js";
-import firstPass from "@src/cbuild-backend/first-pass.js";
+import { evaluateBuildFile } from "@src/cbuild-backend/buildfile-evaluator.js";
 import { expandRecipe } from "@src/cbuild-backend/expansion.js";
 import { NormalRuleIR } from "@src/compiler/ir.js";
 
@@ -19,7 +19,7 @@ test.each([
     `A = ok\nRESULT = $(A)$(A)\nDOLLARS := $$$$\napp:\n\t ${command}\n`,
   );
   const context = new Env(new Settings(true, 1, ".", "cbuild", true));
-  await firstPass(program.slice(0, 3), context);
+  await evaluateBuildFile(program.slice(0, 3), context);
   expect(program[3]).toBeInstanceOf(NormalRuleIR);
   const rule = program[3] as NormalRuleIR;
   expect(expandRecipe(rule.recipes[0]!, context)).toBe(expected);

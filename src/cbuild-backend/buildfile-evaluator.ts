@@ -1,25 +1,20 @@
 import { AssignmentIR, AssignmentType, HookIR, IR } from "@src/compiler/ir.js";
-import { Env } from "./env.js";
-import { ValueExpansionEngine } from "./expansion.js";
-import Interpreter from "./interpreter/interpreter.js";
-
-// filter based on cbuild backend
-export function filterFirstPassIr(irs: IR[]): IR[] {
-  const result: IR[] = [];
-  for (const ir of irs) {
-    if (ir instanceof AssignmentIR) result.push(ir);
-    else if (ir instanceof HookIR) result.push(ir);
-  }
-
-  return result;
-}
+import { Env } from "@cbuild-backend/env.js";
+import { ValueExpansionEngine } from "@cbuild-backend/expansion.js";
+import Interpreter from "@cbuild-backend/interpreter/interpreter.js";
+import { allowedIR } from "@cbuild-backend/semantic.js";
 
 export function unsupported(ir: IR) {
   // programmatic error should never send invalid irtype to cbuild backend
   throw new Error("Unsupported IR type");
 }
 
-export default async function firstPass(irs: IR[], context: Env) {
+export async function evaluateBuildFile(
+  irs: IR[],
+  context: Env,
+): Promise<IR[]> {
+  const evaluatedIRs: IR[] = [];
+
   const valueExpansionEngine = new ValueExpansionEngine(context);
 
   for (const ir of irs) {
@@ -36,8 +31,11 @@ export default async function firstPass(irs: IR[], context: Env) {
       const interpreter = new Interpreter();
       interpreter.init(context);
       await interpreter.runAsync(ir.hookProgram);
+    } else if (allowedIR(ir)) {
+      evaluatedIRs.push(ir);
     } else {
       unsupported(ir);
     }
   }
+  return evaluatedIRs;
 }

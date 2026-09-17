@@ -145,7 +145,7 @@ function validateAssignmentFlavor(type: AssignmentType): boolean {
   return type === AssignmentType.RECURSIVE || type === AssignmentType.SIMPLE;
 }
 
-function allowedIR(ir: IR): boolean {
+export function allowedIR(ir: IR): boolean {
   return (
     ir instanceof AssignmentIR ||
     ir instanceof NormalRuleIR ||

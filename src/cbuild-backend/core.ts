@@ -31,7 +31,7 @@ import {
   ValueExpansionEngine,
 } from "@cbuild-backend/expansion.js";
 import { ProcessRunner } from "@cbuild-backend/process.js";
-import firstPass, { filterFirstPassIr } from "./first-pass.js";
+import { evaluateBuildFile } from "./buildfile-evaluator.js";
 
 interface RunnerOptions {
   context?: Env;
@@ -53,13 +53,13 @@ export class Core {
 
     isCompatible(rules);
 
-    await firstPass(filterFirstPassIr(rules), this.context);
+    const evaluatedIr = await evaluateBuildFile(rules, currentContext);
 
     const modelResolver = new ModelResolver(currentContext);
 
     // contains type of relations in under single interface. ex. hooks
     const graph: BaseModel[] = await modelResolver.buildAsync(
-      filterModelResolverPassIr(rules),
+      filterModelResolverPassIr(evaluatedIr),
     );
 
     // add seperate resolutino step and normalize rules
