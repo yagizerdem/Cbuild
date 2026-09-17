@@ -10,19 +10,20 @@ conditional
     : if_eq_kw ws? condition   statements_opt ENDIF comment_opt br
     | if_eq_kw ws? condition   statements_opt ELSE statements_opt ENDIF comment_opt br
     | if_eq_kw ws? condition   statements_opt ELSE conditional
-    | if_def_kw ws? identifier  statements_opt ENDIF comment_opt br
-    | if_def_kw ws? identifier  statements_opt ELSE statements_opt ENDIF comment_opt br
-    | if_def_kw ws? identifier  statements_opt ELSE conditional
+    | if_def_kw ws? pattern  statements_opt ENDIF comment_opt br
+    | if_def_kw ws? pattern  statements_opt ELSE statements_opt ENDIF comment_opt br
+    | if_def_kw ws? pattern  statements_opt ELSE conditional
     ;
 
 conditional_in_recipe
     : if_eq_kw ws? condition NL recipes_opt  ENDIF comment_opt
     | if_eq_kw ws? condition  NL recipes_opt  ELSE NL recipes_opt  ENDIF comment_opt
     | if_eq_kw ws? condition  NL recipes_opt  ELSE NL conditional_in_recipe
-    | if_def_kw ws? identifier NL recipes_opt  ENDIF comment_opt
-    | if_def_kw ws? identifier NL recipes_opt  ELSE NL recipes_opt  ENDIF comment_opt
-    | if_def_kw ws? identifier NL recipes_opt  ELSE NL conditional_in_recipe
+    | if_def_kw ws? pattern NL recipes_opt  ENDIF comment_opt
+    | if_def_kw ws? pattern NL recipes_opt  ELSE NL recipes_opt  ENDIF comment_opt
+    | if_def_kw ws? pattern NL recipes_opt  ELSE NL conditional_in_recipe
     ;
+
 
 statements_opt
     : comment_opt br statements

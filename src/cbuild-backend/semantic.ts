@@ -6,6 +6,7 @@ import {
 import {
   AssignmentIR,
   AssignmentType,
+  ConditionalIR,
   HookIR,
   IR,
   NormalRuleIR,
@@ -149,6 +150,7 @@ export function allowedIR(ir: IR): boolean {
   return (
     ir instanceof AssignmentIR ||
     ir instanceof NormalRuleIR ||
-    ir instanceof HookIR
+    ir instanceof HookIR ||
+    ir instanceof ConditionalIR
   );
 }

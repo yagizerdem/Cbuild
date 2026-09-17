@@ -1,4 +1,10 @@
-import { AssignmentIR, AssignmentType, HookIR, IR } from "@src/compiler/ir.js";
+import {
+  AssignmentIR,
+  AssignmentType,
+  ConditionalIR,
+  HookIR,
+  IR,
+} from "@src/compiler/ir.js";
 import { Env } from "@cbuild-backend/env.js";
 import { ValueExpansionEngine } from "@cbuild-backend/expansion.js";
 import Interpreter from "@cbuild-backend/interpreter/interpreter.js";
@@ -31,6 +37,14 @@ export async function evaluateBuildFile(
       const interpreter = new Interpreter();
       interpreter.init(context);
       await interpreter.runAsync(ir.hookProgram);
+    } else if (ir instanceof ConditionalIR) {
+      const activeBranch: IR[] = evaluateActiveBranch(
+        ir,
+        valueExpansionEngine,
+        context,
+      );
+      const evaluatedIR = await evaluateBuildFile(activeBranch, context);
+      evaluatedIRs.push(...evaluatedIR);
     } else if (allowedIR(ir)) {
       evaluatedIRs.push(ir);
     } else {
@@ -38,4 +52,61 @@ export async function evaluateBuildFile(
     }
   }
   return evaluatedIRs;
+}
+
+function evaluateActiveBranch(
+  ir: ConditionalIR,
+  valueExpansionEngine: ValueExpansionEngine,
+  context: Env,
+): IR[] {
+  // identififer names
+  const expandedLeftCondition =
+    ir.condition?.left?.exec<string>(valueExpansionEngine) ?? "";
+  const expandedRightCondition =
+    ir.condition?.right?.exec<string>(valueExpansionEngine) ?? undefined;
+  // if right condition is undefined it must be ifdef kw
+
+  const leftValue = context.hasVariable(expandedLeftCondition)
+    ? (context.getVariable(expandedLeftCondition)?.getRawValue() ?? "")
+    : "";
+
+  const rightValue = expandedRightCondition
+    ? context.hasVariable(expandedRightCondition ?? "")
+      ? (context.getVariable(expandedRightCondition ?? "")?.getRawValue() ?? "")
+      : ""
+    : "";
+
+  if (ir.kind == "ifeq") {
+    if (leftValue === rightValue) {
+      return ir.thenBranch;
+    } else {
+      return ir.elseBranch;
+    }
+  }
+
+  if (ir.kind == "ifneq") {
+    if (leftValue !== rightValue) {
+      return ir.thenBranch;
+    } else {
+      return ir.elseBranch;
+    }
+  }
+
+  if (ir.kind == "ifdef") {
+    if (leftValue) {
+      return ir.thenBranch;
+    } else {
+      return ir.elseBranch;
+    }
+  }
+
+  if (ir.kind == "ifndef") {
+    if (!leftValue) {
+      return ir.thenBranch;
+    } else {
+      return ir.elseBranch;
+    }
+  }
+
+  return [];
 }

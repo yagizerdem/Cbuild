@@ -396,7 +396,7 @@ export class cbuildParser extends antlr.Parser {
                 }
 
                 this.state = 182;
-                this.identifier();
+                this.pattern();
                 this.state = 183;
                 this.statements_opt();
                 this.state = 184;
@@ -423,7 +423,7 @@ export class cbuildParser extends antlr.Parser {
                 }
 
                 this.state = 192;
-                this.identifier();
+                this.pattern();
                 this.state = 193;
                 this.statements_opt();
                 this.state = 194;
@@ -454,7 +454,7 @@ export class cbuildParser extends antlr.Parser {
                 }
 
                 this.state = 204;
-                this.identifier();
+                this.pattern();
                 this.state = 205;
                 this.statements_opt();
                 this.state = 206;
@@ -591,7 +591,7 @@ export class cbuildParser extends antlr.Parser {
                 }
 
                 this.state = 249;
-                this.identifier();
+                this.pattern();
                 this.state = 250;
                 this.match(cbuildParser.NL);
                 this.state = 251;
@@ -618,7 +618,7 @@ export class cbuildParser extends antlr.Parser {
                 }
 
                 this.state = 259;
-                this.identifier();
+                this.pattern();
                 this.state = 260;
                 this.match(cbuildParser.NL);
                 this.state = 261;
@@ -651,7 +651,7 @@ export class cbuildParser extends antlr.Parser {
                 }
 
                 this.state = 272;
-                this.identifier();
+                this.pattern();
                 this.state = 273;
                 this.match(cbuildParser.NL);
                 this.state = 274;
@@ -4445,13 +4445,13 @@ export class cbuildParser extends antlr.Parser {
         64,0,171,170,1,0,0,0,171,172,1,0,0,0,172,173,1,0,0,0,173,174,3,34,
         17,0,174,175,3,8,4,0,175,176,5,24,0,0,176,177,3,4,2,0,177,210,1,
         0,0,0,178,180,3,30,15,0,179,181,3,128,64,0,180,179,1,0,0,0,180,181,
-        1,0,0,0,181,182,1,0,0,0,182,183,3,98,49,0,183,184,3,8,4,0,184,185,
+        1,0,0,0,181,182,1,0,0,0,182,183,3,82,41,0,183,184,3,8,4,0,184,185,
         5,25,0,0,185,186,3,126,63,0,186,187,3,102,51,0,187,210,1,0,0,0,188,
         190,3,30,15,0,189,191,3,128,64,0,190,189,1,0,0,0,190,191,1,0,0,0,
-        191,192,1,0,0,0,192,193,3,98,49,0,193,194,3,8,4,0,194,195,5,24,0,
+        191,192,1,0,0,0,192,193,3,82,41,0,193,194,3,8,4,0,194,195,5,24,0,
         0,195,196,3,8,4,0,196,197,5,25,0,0,197,198,3,126,63,0,198,199,3,
         102,51,0,199,210,1,0,0,0,200,202,3,30,15,0,201,203,3,128,64,0,202,
-        201,1,0,0,0,202,203,1,0,0,0,203,204,1,0,0,0,204,205,3,98,49,0,205,
+        201,1,0,0,0,202,203,1,0,0,0,203,204,1,0,0,0,204,205,3,82,41,0,205,
         206,3,8,4,0,206,207,5,24,0,0,207,208,3,4,2,0,208,210,1,0,0,0,209,
         147,1,0,0,0,209,157,1,0,0,0,209,169,1,0,0,0,209,178,1,0,0,0,209,
         188,1,0,0,0,209,200,1,0,0,0,210,5,1,0,0,0,211,213,3,28,14,0,212,
@@ -4465,14 +4465,14 @@ export class cbuildParser extends antlr.Parser {
         0,0,0,236,237,1,0,0,0,237,238,1,0,0,0,238,239,3,34,17,0,239,240,
         5,37,0,0,240,241,3,92,46,0,241,242,5,24,0,0,242,243,5,37,0,0,243,
         244,3,6,3,0,244,280,1,0,0,0,245,247,3,30,15,0,246,248,3,128,64,0,
-        247,246,1,0,0,0,247,248,1,0,0,0,248,249,1,0,0,0,249,250,3,98,49,
+        247,246,1,0,0,0,247,248,1,0,0,0,248,249,1,0,0,0,249,250,3,82,41,
         0,250,251,5,37,0,0,251,252,3,92,46,0,252,253,5,25,0,0,253,254,3,
         126,63,0,254,280,1,0,0,0,255,257,3,30,15,0,256,258,3,128,64,0,257,
-        256,1,0,0,0,257,258,1,0,0,0,258,259,1,0,0,0,259,260,3,98,49,0,260,
+        256,1,0,0,0,257,258,1,0,0,0,258,259,1,0,0,0,259,260,3,82,41,0,260,
         261,5,37,0,0,261,262,3,92,46,0,262,263,5,24,0,0,263,264,5,37,0,0,
         264,265,3,92,46,0,265,266,5,25,0,0,266,267,3,126,63,0,267,280,1,
         0,0,0,268,270,3,30,15,0,269,271,3,128,64,0,270,269,1,0,0,0,270,271,
-        1,0,0,0,271,272,1,0,0,0,272,273,3,98,49,0,273,274,5,37,0,0,274,275,
+        1,0,0,0,271,272,1,0,0,0,272,273,3,82,41,0,273,274,5,37,0,0,274,275,
         3,92,46,0,275,276,5,24,0,0,276,277,5,37,0,0,277,278,3,6,3,0,278,
         280,1,0,0,0,279,211,1,0,0,0,279,221,1,0,0,0,279,234,1,0,0,0,279,
         245,1,0,0,0,279,255,1,0,0,0,279,268,1,0,0,0,280,7,1,0,0,0,281,282,
@@ -4829,8 +4829,8 @@ export class ConditionalContext extends antlr.ParserRuleContext {
     public if_def_kw(): If_def_kwContext | null {
         return this.getRuleContext(0, If_def_kwContext);
     }
-    public identifier(): IdentifierContext | null {
-        return this.getRuleContext(0, IdentifierContext);
+    public pattern(): PatternContext | null {
+        return this.getRuleContext(0, PatternContext);
     }
     public override get ruleIndex(): number {
         return cbuildParser.RULE_conditional;
@@ -4901,8 +4901,8 @@ export class Conditional_in_recipeContext extends antlr.ParserRuleContext {
     public if_def_kw(): If_def_kwContext | null {
         return this.getRuleContext(0, If_def_kwContext);
     }
-    public identifier(): IdentifierContext | null {
-        return this.getRuleContext(0, IdentifierContext);
+    public pattern(): PatternContext | null {
+        return this.getRuleContext(0, PatternContext);
     }
     public override get ruleIndex(): number {
         return cbuildParser.RULE_conditional_in_recipe;

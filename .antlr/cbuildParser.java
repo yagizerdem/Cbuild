@@ -313,8 +313,8 @@ public class cbuildParser extends Parser {
 		public If_def_kwContext if_def_kw() {
 			return getRuleContext(If_def_kwContext.class,0);
 		}
-		public IdentifierContext identifier() {
-			return getRuleContext(IdentifierContext.class,0);
+		public PatternContext pattern() {
+			return getRuleContext(PatternContext.class,0);
 		}
 		public ConditionalContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -429,7 +429,7 @@ public class cbuildParser extends Parser {
 				}
 
 				setState(182);
-				identifier();
+				pattern();
 				setState(183);
 				statements_opt();
 				setState(184);
@@ -456,7 +456,7 @@ public class cbuildParser extends Parser {
 				}
 
 				setState(192);
-				identifier();
+				pattern();
 				setState(193);
 				statements_opt();
 				setState(194);
@@ -487,7 +487,7 @@ public class cbuildParser extends Parser {
 				}
 
 				setState(204);
-				identifier();
+				pattern();
 				setState(205);
 				statements_opt();
 				setState(206);
@@ -541,8 +541,8 @@ public class cbuildParser extends Parser {
 		public If_def_kwContext if_def_kw() {
 			return getRuleContext(If_def_kwContext.class,0);
 		}
-		public IdentifierContext identifier() {
-			return getRuleContext(IdentifierContext.class,0);
+		public PatternContext pattern() {
+			return getRuleContext(PatternContext.class,0);
 		}
 		public Conditional_in_recipeContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -663,7 +663,7 @@ public class cbuildParser extends Parser {
 				}
 
 				setState(249);
-				identifier();
+				pattern();
 				setState(250);
 				match(NL);
 				setState(251);
@@ -690,7 +690,7 @@ public class cbuildParser extends Parser {
 				}
 
 				setState(259);
-				identifier();
+				pattern();
 				setState(260);
 				match(NL);
 				setState(261);
@@ -723,7 +723,7 @@ public class cbuildParser extends Parser {
 				}
 
 				setState(272);
-				identifier();
+				pattern();
 				setState(273);
 				match(NL);
 				setState(274);
@@ -5568,17 +5568,17 @@ public class cbuildParser extends Parser {
 		"\u0001\u0000\u0000\u0000\u00b2\u00b4\u0003\u001e\u000f\u0000\u00b3\u00b5"+
 		"\u0003\u0080@\u0000\u00b4\u00b3\u0001\u0000\u0000\u0000\u00b4\u00b5\u0001"+
 		"\u0000\u0000\u0000\u00b5\u00b6\u0001\u0000\u0000\u0000\u00b6\u00b7\u0003"+
-		"b1\u0000\u00b7\u00b8\u0003\b\u0004\u0000\u00b8\u00b9\u0005\u0019\u0000"+
+		"R)\u0000\u00b7\u00b8\u0003\b\u0004\u0000\u00b8\u00b9\u0005\u0019\u0000"+
 		"\u0000\u00b9\u00ba\u0003~?\u0000\u00ba\u00bb\u0003f3\u0000\u00bb\u00d2"+
 		"\u0001\u0000\u0000\u0000\u00bc\u00be\u0003\u001e\u000f\u0000\u00bd\u00bf"+
 		"\u0003\u0080@\u0000\u00be\u00bd\u0001\u0000\u0000\u0000\u00be\u00bf\u0001"+
 		"\u0000\u0000\u0000\u00bf\u00c0\u0001\u0000\u0000\u0000\u00c0\u00c1\u0003"+
-		"b1\u0000\u00c1\u00c2\u0003\b\u0004\u0000\u00c2\u00c3\u0005\u0018\u0000"+
+		"R)\u0000\u00c1\u00c2\u0003\b\u0004\u0000\u00c2\u00c3\u0005\u0018\u0000"+
 		"\u0000\u00c3\u00c4\u0003\b\u0004\u0000\u00c4\u00c5\u0005\u0019\u0000\u0000"+
 		"\u00c5\u00c6\u0003~?\u0000\u00c6\u00c7\u0003f3\u0000\u00c7\u00d2\u0001"+
 		"\u0000\u0000\u0000\u00c8\u00ca\u0003\u001e\u000f\u0000\u00c9\u00cb\u0003"+
 		"\u0080@\u0000\u00ca\u00c9\u0001\u0000\u0000\u0000\u00ca\u00cb\u0001\u0000"+
-		"\u0000\u0000\u00cb\u00cc\u0001\u0000\u0000\u0000\u00cc\u00cd\u0003b1\u0000"+
+		"\u0000\u0000\u00cb\u00cc\u0001\u0000\u0000\u0000\u00cc\u00cd\u0003R)\u0000"+
 		"\u00cd\u00ce\u0003\b\u0004\u0000\u00ce\u00cf\u0005\u0018\u0000\u0000\u00cf"+
 		"\u00d0\u0003\u0004\u0002\u0000\u00d0\u00d2\u0001\u0000\u0000\u0000\u00d1"+
 		"\u0093\u0001\u0000\u0000\u0000\u00d1\u009d\u0001\u0000\u0000\u0000\u00d1"+
@@ -5604,18 +5604,18 @@ public class cbuildParser extends Parser {
 		"\u00f4\u0118\u0001\u0000\u0000\u0000\u00f5\u00f7\u0003\u001e\u000f\u0000"+
 		"\u00f6\u00f8\u0003\u0080@\u0000\u00f7\u00f6\u0001\u0000\u0000\u0000\u00f7"+
 		"\u00f8\u0001\u0000\u0000\u0000\u00f8\u00f9\u0001\u0000\u0000\u0000\u00f9"+
-		"\u00fa\u0003b1\u0000\u00fa\u00fb\u0005%\u0000\u0000\u00fb\u00fc\u0003"+
+		"\u00fa\u0003R)\u0000\u00fa\u00fb\u0005%\u0000\u0000\u00fb\u00fc\u0003"+
 		"\\.\u0000\u00fc\u00fd\u0005\u0019\u0000\u0000\u00fd\u00fe\u0003~?\u0000"+
 		"\u00fe\u0118\u0001\u0000\u0000\u0000\u00ff\u0101\u0003\u001e\u000f\u0000"+
 		"\u0100\u0102\u0003\u0080@\u0000\u0101\u0100\u0001\u0000\u0000\u0000\u0101"+
 		"\u0102\u0001\u0000\u0000\u0000\u0102\u0103\u0001\u0000\u0000\u0000\u0103"+
-		"\u0104\u0003b1\u0000\u0104\u0105\u0005%\u0000\u0000\u0105\u0106\u0003"+
+		"\u0104\u0003R)\u0000\u0104\u0105\u0005%\u0000\u0000\u0105\u0106\u0003"+
 		"\\.\u0000\u0106\u0107\u0005\u0018\u0000\u0000\u0107\u0108\u0005%\u0000"+
 		"\u0000\u0108\u0109\u0003\\.\u0000\u0109\u010a\u0005\u0019\u0000\u0000"+
 		"\u010a\u010b\u0003~?\u0000\u010b\u0118\u0001\u0000\u0000\u0000\u010c\u010e"+
 		"\u0003\u001e\u000f\u0000\u010d\u010f\u0003\u0080@\u0000\u010e\u010d\u0001"+
 		"\u0000\u0000\u0000\u010e\u010f\u0001\u0000\u0000\u0000\u010f\u0110\u0001"+
-		"\u0000\u0000\u0000\u0110\u0111\u0003b1\u0000\u0111\u0112\u0005%\u0000"+
+		"\u0000\u0000\u0000\u0110\u0111\u0003R)\u0000\u0111\u0112\u0005%\u0000"+
 		"\u0000\u0112\u0113\u0003\\.\u0000\u0113\u0114\u0005\u0018\u0000\u0000"+
 		"\u0114\u0115\u0005%\u0000\u0000\u0115\u0116\u0003\u0006\u0003\u0000\u0116"+
 		"\u0118\u0001\u0000\u0000\u0000\u0117\u00d3\u0001\u0000\u0000\u0000\u0117"+

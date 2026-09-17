@@ -216,7 +216,7 @@ export class CBuildCompiler
     return pair;
   }
 
-  public visitPattern(ctx: PatternContext): unknown {
+  public visitPattern(ctx: PatternContext): ValuePart[] {
     const parts: ValuePart[] = [];
 
     for (const ast_node of ctx.children ?? []) {
@@ -353,17 +353,30 @@ export class CBuildCompiler
 
     if (ctx.if_eq_kw() != null) {
       kind = conditionKindFromKeyword(ctx.if_eq_kw()!.getText());
-      condition = ctx.condition()!.accept(this) as Condition;
+      if (ctx.condition() != null) {
+        condition = ctx.condition()!.accept(this) as Condition;
+      }
+
+      // should not have both a condition and an ifdef name this is most likely unreachable
+      if (ctx.pattern() != null) {
+        const leftSideConditional = new ValueIR(
+          this.visitPattern(ctx.pattern()!),
+        );
+        condition = { left: leftSideConditional, right: undefined };
+      }
     } else if (ctx.if_def_kw() != null) {
       kind = conditionKindFromKeyword(ctx.if_def_kw()!.getText());
+      // should not have conditional in ifdef_kw most likely unreachable
+      if (ctx.condition() != null) {
+        condition = ctx.condition()!.accept(this) as Condition;
+      }
 
-      const condition: Condition = {};
-      const result = ctx.identifier()!.accept(this);
-      const parts: ValuePart[] = [];
-      this.collectValueParts(parts, result);
-
-      condition.left = new ValueIR(parts);
-      condition.right = undefined;
+      if (ctx.pattern() != null) {
+        const leftSideConditional = new ValueIR(
+          this.visitPattern(ctx.pattern()!),
+        );
+        condition = { left: leftSideConditional, right: undefined };
+      }
     }
 
     const conditionalIR = new ConditionalIR(kind!, condition!);
@@ -402,14 +415,14 @@ export class CBuildCompiler
   }
 
   public visitCondition(ctx: ConditionContext): Condition {
-    const condition: Condition = {};
+    let condition: Condition | null = null;
 
     if (ctx.expressions_opt().length === 2) {
       if (ctx.expressions_opt(0)?.expressions() != null) {
         const leftParts = ctx.expressions_opt(0)!.accept(this) as ValuePart[];
-        condition.left = new ValueIR(leftParts);
+        condition = { left: new ValueIR(leftParts), right: undefined };
       } else {
-        condition.left = new ValueIR();
+        condition = { left: new ValueIR(), right: undefined };
       }
 
       if (ctx.expressions_opt(1)?.expressions() != null) {
@@ -425,10 +438,10 @@ export class CBuildCompiler
     const left = this.unquote(ctx.SLIT(0)?.getText() || "");
     const right = this.unquote(ctx.SLIT(1)?.getText() || "");
 
-    condition.left = new ValueIR([textPart(left)]);
-
-    condition.right = new ValueIR([textPart(right)]);
-
+    condition = {
+      left: new ValueIR([textPart(left)]),
+      right: new ValueIR([textPart(right)]),
+    };
     return condition;
   }
 
@@ -713,21 +726,34 @@ export class CBuildCompiler
     ctx: Conditional_in_recipeContext,
   ): unknown {
     let kind: ConditionKind | null;
-    let condition: Condition = {};
+    let condition: Condition | null = null;
 
     if (ctx.if_eq_kw() != null) {
       kind = conditionKindFromKeyword(ctx.if_eq_kw()!.getText());
-      condition = ctx.condition()!.accept(this) as Condition;
+
+      if (ctx.condition() != null) {
+        condition = this.visitCondition(ctx.condition()!);
+      }
+
+      if (ctx.pattern() != null) {
+        const leftSideValue = new ValueIR(
+          ctx.pattern()!.accept(this) as ValuePart[],
+        );
+        condition = { left: leftSideValue, right: undefined };
+      }
     } else if (ctx.if_def_kw() != null) {
       kind = conditionKindFromKeyword(ctx.if_def_kw()!.getText());
 
-      const result = ctx.identifier()!.accept(this);
-      const parts: ValuePart[] = [];
+      if (ctx.condition() != null) {
+        condition = this.visitCondition(ctx.condition()!);
+      }
 
-      this.collectValueParts(parts, result);
-
-      condition.left = new ValueIR(parts);
-      condition.right = undefined;
+      if (ctx.pattern() != null) {
+        const leftSideValue = new ValueIR(
+          ctx.pattern()!.accept(this) as ValuePart[],
+        );
+        condition = { left: leftSideValue, right: undefined };
+      }
     }
 
     const conditionalIR = new ConditionalIR(kind!, condition!);

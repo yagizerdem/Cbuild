@@ -5,6 +5,7 @@ import { Env } from "@cbuild-backend/env.js";
 import { Core } from "@cbuild-backend/core.js";
 import { pCharBufferToString, preprocess } from "@src/preprocessor.js";
 import cli from "@src/cli.js";
+import { parseBuildFile } from "@src/test-util/parse.js";
 
 cli.parse();
 const options = cli.opts();
@@ -13,10 +14,15 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-RESULT := $(basename test.c.txt  test2.txt)
+foo =
+ifdef foo
+frobozz = yes
+else
+frobozz = no
+endif
 
 all:
-	echo $(RESULT)
+	echo $(frobozz)
 `.trim();
 
   const pCharBuffer = preprocess(buildFile);
@@ -37,7 +43,7 @@ all:
   await core.runAsync(ir);
 } catch (error) {
   if (error instanceof Error) {
-    console.error(error?.message);
+    console.error(error);
   } else {
     console.error(error);
   }
