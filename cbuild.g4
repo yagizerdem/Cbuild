@@ -97,7 +97,6 @@ include_kw
 
 condition
     : LPAREN expressions_opt  COMMA expressions_opt RPAREN
-    | SLIT ws? SLIT
     ;
 
 expressions_opt
@@ -274,8 +273,6 @@ br : NL;
 
 
 char: CHARS
-    | SLIT
-    | ESCAPED_QUOTE
     | BACKSLASH
     | ASSIGN_OP
     | COLON
@@ -293,6 +290,7 @@ char_in_assign: char_nested
     | RPAREN
     | L_CURLY_BRACE
     | R_CURLY_BRACE
+    | PIPE
     | keywords
     ;
 
@@ -401,6 +399,10 @@ L_CURLY_BRACE: '{';
 R_CURLY_BRACE: '}';
 COMMA  : ',';
 PIPE: '|';
+BACKSLASH : '\\';
+PLUS     : '+';
+QUESTION : '?';
+BANG     : '!';
 
 INCLUDE  : 'include';
 DASH_INCLUDE  : '-include';
@@ -418,23 +420,10 @@ UNEXPORT : 'unexport';
 UNDEFINE : 'undefine';
 DEFINE : 'define';
 VPATH : 'vpath';
-ESCAPED_QUOTE
-    : '\\"'
-    | '\\\''
-    ;
 
-SLIT
-    : '"'  ( '\\' . | ~["\\\r\n] )* '"'
-    | '\'' ( '\\' . | ~['\\\r\n] )* '\''
-    ;
 
 HOOK: 'hook';
 
-BACKSLASH : '\\';
-
-PLUS     : '+';
-QUESTION : '?';
-BANG     : '!';
 
 CHARS
     : ~[ \t\r\n$(){}:,=#|\\+?!]+

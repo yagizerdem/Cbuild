@@ -436,14 +436,7 @@ export class CBuildCompiler
       return condition;
     }
 
-    const left = this.unquote(ctx.SLIT(0)?.getText() || "");
-    const right = this.unquote(ctx.SLIT(1)?.getText() || "");
-
-    condition = {
-      left: new ValueIR([textPart(left)]),
-      right: new ValueIR([textPart(right)]),
-    };
-    return condition;
+    throw new Error("Invalid condition context");
   }
 
   public visitIdentifier(ctx: IdentifierContext): ValuePart {
@@ -925,15 +918,6 @@ export class CBuildCompiler
       ctx.DOUBLE_DOLLAR()!.getText().length > 0
     ) {
       return "$";
-    }
-    if (ctx.ESCAPED_QUOTE() != null) {
-      return ctx.ESCAPED_QUOTE()!.getText().substring(1); // remove \ escape part
-    }
-    if (ctx.SLIT() != null) {
-      return this.unquote(ctx.SLIT()!.getText());
-    }
-    if (ctx.ESCAPED_QUOTE() != null) {
-      return ctx.ESCAPED_QUOTE()!.getText().substring(1); // remove \ escape part
     }
 
     return ctx.getText();

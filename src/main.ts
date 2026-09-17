@@ -11,14 +11,12 @@ const options = cli.opts();
 // console.log(options);
 
 try {
-  const buildFile = `
-
-a = hello
-a+= world
+  const buildFile = String.raw`
+b=fucker
+a = "test $(b)"
 
 app:
-\t echo $(a)
-
+	echo $(a)
 `.trim();
   const pCharBuffer = preprocess(buildFile);
   const preprocessedProgram = pCharBufferToString(pCharBuffer);
