@@ -43,8 +43,10 @@ statement
     ;
 
 define
-    : specifiers? DEFINE ws pattern ws? ASSIGN_OP? ws? definition ENDEF br
+    : specifiers? DEFINE ws pattern ws? ASSIGN_OP? ws? define_body ENDEF br
     ;
+
+define_body: (define | definition)*;
 
 definition
     : comment_opt br

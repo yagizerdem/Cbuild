@@ -12,59 +12,21 @@ const options = cli.opts();
 
 try {
   const buildFile = `
-FEATURE_NAME = FEATURE_ENABLED
-FEATURE_ENABLED = yes
 
-DEBUG_VAR = 1
-PROFILE = dev
-
-ifdef $(FEATURE_NAME)
-
-  ifdef DEBUG_VAR
-    BUILD_MODE = debug
-  else
-    BUILD_MODE = release
-  endif
-
-  ifeq ($(PROFILE),dev)
-    BUILD_TARGET = development
-  else
-    BUILD_TARGET = production
-  endif
-
-else ifdef FALLBACK_FEATURE
-
-  BUILD_MODE = fallback
-  BUILD_TARGET = fallback
-
-else
-
-  BUILD_MODE = disabled
-  BUILD_TARGET = unavailable
-
-endif
+bar =fucker
 
 
-ifdef BUILD_MODE
+define two-lines
+echo foo
+echo $(bar)
+define another-line
+echo baz
+endef
+endef
 
-all: build info
+app:
+\t echo $(two-lines)
 
-build:
-\t echo \\"build target\\"
-\t echo \\"mode: $(BUILD_MODE)\\"
-\t echo \\"target: $(BUILD_TARGET)\\"
-
-info:
-\t echo \\"feature name: $(FEATURE_NAME)\\"
-\t echo \\"feature value: $(FEATURE_ENABLED)\\"
-\t echo \\"profile: $(PROFILE)\\"
-
-else
-
-all:
-\t echo "BUILD_MODE is not defined"
-
-endif
 `.trim();
   const pCharBuffer = preprocess(buildFile);
   const preprocessedProgram = pCharBufferToString(pCharBuffer);

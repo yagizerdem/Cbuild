@@ -9,6 +9,7 @@ import { Conditional_in_recipeContext } from "./cbuildParser.js";
 import { Statements_optContext } from "./cbuildParser.js";
 import { StatementContext } from "./cbuildParser.js";
 import { DefineContext } from "./cbuildParser.js";
+import { Define_bodyContext } from "./cbuildParser.js";
 import { DefinitionContext } from "./cbuildParser.js";
 import { IncludeContext } from "./cbuildParser.js";
 import { ExportContext } from "./cbuildParser.js";
@@ -146,6 +147,16 @@ export class cbuildListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitDefine?: (ctx: DefineContext) => void;
+    /**
+     * Enter a parse tree produced by `cbuildParser.define_body`.
+     * @param ctx the parse tree
+     */
+    enterDefine_body?: (ctx: Define_bodyContext) => void;
+    /**
+     * Exit a parse tree produced by `cbuildParser.define_body`.
+     * @param ctx the parse tree
+     */
+    exitDefine_body?: (ctx: Define_bodyContext) => void;
     /**
      * Enter a parse tree produced by `cbuildParser.definition`.
      * @param ctx the parse tree

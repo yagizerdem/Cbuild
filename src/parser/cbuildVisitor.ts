@@ -9,6 +9,7 @@ import { Conditional_in_recipeContext } from "./cbuildParser.js";
 import { Statements_optContext } from "./cbuildParser.js";
 import { StatementContext } from "./cbuildParser.js";
 import { DefineContext } from "./cbuildParser.js";
+import { Define_bodyContext } from "./cbuildParser.js";
 import { DefinitionContext } from "./cbuildParser.js";
 import { IncludeContext } from "./cbuildParser.js";
 import { ExportContext } from "./cbuildParser.js";
@@ -121,6 +122,12 @@ export class cbuildVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitDefine?: (ctx: DefineContext) => Result;
+    /**
+     * Visit a parse tree produced by `cbuildParser.define_body`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitDefine_body?: (ctx: Define_bodyContext) => Result;
     /**
      * Visit a parse tree produced by `cbuildParser.definition`.
      * @param ctx the parse tree

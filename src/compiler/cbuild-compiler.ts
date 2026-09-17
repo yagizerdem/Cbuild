@@ -53,6 +53,7 @@ import {
   CharContext,
   Char_nestedContext,
   Char_in_recipeContext,
+  Define_bodyContext,
 } from "@parser/cbuildParser.js";
 import {
   AssignmentIR,
@@ -848,21 +849,36 @@ export class CBuildCompiler
       );
     }
 
-    const valueParts = ctx.definition().accept(this) as ValuePart[];
-    defineIR.value = new ValueIR(valueParts);
+    const body: ValueIR = this.visitDefine_body(ctx.define_body()!);
+    defineIR.value = body;
 
     return defineIR;
   }
 
-  public visitDefinition(ctx: DefinitionContext): unknown {
+  public visitDefine_body(ctx: Define_bodyContext): ValueIR {
+    const parts: ValuePart[] = [];
+
+    for (const astNode of ctx.children ?? []) {
+      if (astNode.constructor.name === "DefineContext") {
+        parts.push({ kind: "text", lexeme: astNode.getText() });
+      } else {
+        const result = astNode.accept(this);
+        this.collectValueParts(parts, result);
+      }
+    }
+
+    return new ValueIR(parts);
+  }
+
+  public visitDefinition(ctx: DefinitionContext): ValuePart[] {
     if (ctx.exprs_in_def() == null) {
       return [] as ValuePart[];
     }
 
-    return ctx.exprs_in_def()!.accept(this);
+    return this.visitExprs_in_def(ctx.exprs_in_def()!);
   }
 
-  public visitExprs_in_def(ctx: Exprs_in_defContext): unknown {
+  public visitExprs_in_def(ctx: Exprs_in_defContext): ValuePart[] {
     const parts: ValuePart[] = [];
 
     if (ctx.br().length > 0 && ctx.first_expr_in_def().length === 0) {
@@ -883,7 +899,7 @@ export class CBuildCompiler
     return parts;
   }
 
-  public visitFirst_expr_in_def(ctx: First_expr_in_defContext): unknown {
+  public visitFirst_expr_in_def(ctx: First_expr_in_defContext): ValuePart[] {
     const parts: ValuePart[] = [];
 
     for (const astNode of ctx.children ?? []) {

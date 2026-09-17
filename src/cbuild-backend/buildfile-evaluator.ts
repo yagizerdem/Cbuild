@@ -2,6 +2,7 @@ import {
   AssignmentIR,
   AssignmentType,
   ConditionalIR,
+  DefineIR,
   HookIR,
   IR,
 } from "@src/compiler/ir.js";
@@ -45,6 +46,10 @@ export async function evaluateBuildFile(
       );
       const evaluatedIR = await evaluateBuildFile(activeBranch, context);
       evaluatedIRs.push(...evaluatedIR);
+    } else if (ir instanceof DefineIR) {
+      const expandedValue = ir.value?.exec<string>(valueExpansionEngine) ?? "";
+      const identifier = ir.name?.exec<string>(valueExpansionEngine) ?? "";
+      context.setRawVariable(identifier, expandedValue);
     } else if (allowedIR(ir)) {
       evaluatedIRs.push(ir);
     } else {
