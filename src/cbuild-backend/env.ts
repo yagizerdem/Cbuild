@@ -27,21 +27,29 @@ export class Settings {
   // }
 }
 
+type VariableFlavor = "raw" | "recursive";
+
 export class SymbolTableVariable {
   public readonly rawValue: string | null;
   public readonly deferredValue: ValueIR | null;
+  public readonly flavor: VariableFlavor;
 
-  public constructor(rawValue: string | null, deferredValue: ValueIR | null) {
+  public constructor(
+    rawValue: string | null,
+    deferredValue: ValueIR | null,
+    flavor: VariableFlavor,
+  ) {
     this.rawValue = rawValue;
     this.deferredValue = deferredValue;
+    this.flavor = flavor;
   }
 
   public static rawVariable(rawValue: string): SymbolTableVariable {
-    return new SymbolTableVariable(rawValue, null);
+    return new SymbolTableVariable(rawValue, null, "raw");
   }
 
   public static deferredVariable(deferredValue: ValueIR): SymbolTableVariable {
-    return new SymbolTableVariable(null, deferredValue);
+    return new SymbolTableVariable(null, deferredValue, "recursive");
   }
 
   public getRawValue(): string | null {
@@ -53,7 +61,7 @@ export class SymbolTableVariable {
   }
 
   public isDeferred(): boolean {
-    return this.deferredValue !== null;
+    return this.deferredValue !== null && this.flavor === "recursive";
   }
 
   public toString(): string {

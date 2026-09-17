@@ -5,6 +5,7 @@ import {
   DefineIR,
   HookIR,
   IR,
+  ValueIR,
 } from "@src/compiler/ir.js";
 import { Env } from "@cbuild-backend/env.js";
 import { ValueExpansionEngine } from "@cbuild-backend/expansion.js";
@@ -30,8 +31,17 @@ export async function evaluateBuildFile(
       if (ir.type == AssignmentType.SIMPLE) {
         const value = ir.right!.exec<string>(valueExpansionEngine);
         context.setRawVariable(identifier, value);
-      }
-      if (ir.type == AssignmentType.RECURSIVE) {
+      } else if (ir.type === AssignmentType.POSIX_SIMPLE) {
+        const value = ir.right!.exec<string>(valueExpansionEngine);
+        context.setRawVariable(identifier, value);
+      } else if (ir.type === AssignmentType.CONDITIONAL) {
+        if (!context.hasVariable(identifier)) {
+          context.setDeferredVariable(
+            identifier,
+            ir.right ?? new ValueIR([{ kind: "text", lexeme: "" }]),
+          );
+        }
+      } else if (ir.type == AssignmentType.RECURSIVE) {
         context.setDeferredVariable(identifier, ir.right!);
       }
     } else if (ir instanceof HookIR) {

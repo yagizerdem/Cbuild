@@ -13,21 +13,10 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-bar =fucker
-
- 
-
-
-define two-lines
-echo foo
-echo $(bar)
-define another-line
-echo baz
-endef
-endef
-
+bar = fucker
+bar = baz
 app:
-\t echo $(two-lines)
+\t echo $(bar)
 
 `.trim();
   const pCharBuffer = preprocess(buildFile);

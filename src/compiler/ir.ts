@@ -75,11 +75,8 @@ export class FunctionIR extends BaseIR {
 }
 
 export const AssignmentType = {
-  // cbuilc backend only
   RECURSIVE: "=",
   SIMPLE: ":=",
-
-  // full api
   POSIX_SIMPLE: "::=",
   IMMEDIATE_ESCAPED: ":::=",
   CONDITIONAL: "?=",

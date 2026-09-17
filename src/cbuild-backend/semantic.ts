@@ -144,7 +144,7 @@ function validateParts(parts: ValuePart[], owner: IR, context: string): void {
 }
 
 function validateAssignmentFlavor(type: AssignmentType): boolean {
-  return type === AssignmentType.RECURSIVE || type === AssignmentType.SIMPLE;
+  return true; // All assignment flavors are considered valid for the cbuild backend
 }
 
 export function allowedIR(ir: IR): boolean {
