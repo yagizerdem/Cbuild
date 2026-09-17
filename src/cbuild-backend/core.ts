@@ -1,6 +1,10 @@
 import { BaseModel, NormalRule } from "@cbuild-backend/model.js";
 
-import { Env } from "@cbuild-backend/env.js";
+import {
+  compareVarPriority,
+  Env,
+  SymbolTableVariable,
+} from "@cbuild-backend/env.js";
 import { IR } from "@src/compiler/ir.js";
 import { isCompatible } from "@cbuild-backend/semantic.js";
 import {
@@ -22,8 +26,20 @@ import {
 import { evaluateBuildFile } from "./buildfile-evaluator.js";
 import { Build } from "./build.js";
 
-interface RunnerOptions {
+export interface CliVar {
+  key: string;
+  value: string;
+}
+
+export interface EnvVar {
+  key: string;
+  value: string;
+}
+
+export interface RunnerOptions {
   context?: Env;
+  cliVars?: CliVar[];
+  envVars?: EnvVar[];
 }
 
 export class Core {
@@ -41,6 +57,9 @@ export class Core {
       })();
 
     isCompatible(rules);
+
+    this.mergeEnvVars(options?.envVars ?? []);
+    this.mergeCliVars(options?.cliVars ?? []);
 
     const evaluatedIr = await evaluateBuildFile(rules, currentContext);
 
@@ -90,5 +109,35 @@ export class Core {
 
   public collectNormalRuleModels(baseModesl: BaseModel[]): NormalRule[] {
     return baseModesl.filter((model) => model instanceof NormalRule);
+  }
+
+  public mergeEnvVars(envVars: EnvVar[]) {
+    for (const envVar of envVars) {
+      if (this.context.hasVariable(envVar.key)) {
+        const symbolTableVar: SymbolTableVariable = this.context.getVariable(
+          envVar.key,
+        )!;
+        if (compareVarPriority(symbolTableVar.origin, "environment") < 0) {
+          this.context.setRawVariable(envVar.key, envVar.value, "environment");
+        }
+      } else {
+        this.context.setRawVariable(envVar.key, envVar.value, "environment");
+      }
+    }
+  }
+
+  public mergeCliVars(cliVars: CliVar[]) {
+    for (const cliVar of cliVars) {
+      if (this.context.hasVariable(cliVar.key)) {
+        const symbolTableVar: SymbolTableVariable = this.context.getVariable(
+          cliVar.key,
+        )!;
+        if (compareVarPriority(symbolTableVar.origin, "command-line") < 0) {
+          this.context.setRawVariable(cliVar.key, cliVar.value, "command-line");
+        }
+      } else {
+        this.context.setRawVariable(cliVar.key, cliVar.value, "command-line");
+      }
+    }
   }
 }

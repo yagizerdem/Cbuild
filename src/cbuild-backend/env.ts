@@ -27,8 +27,8 @@ export class Settings {
   // }
 }
 
-type VariableFlavor = "raw" | "recursive";
-type VariableOrigin =
+export type VariableFlavor = "raw" | "recursive";
+export type VariableOrigin =
   | "undefined"
   | "default"
   | "environment"
@@ -37,6 +37,17 @@ type VariableOrigin =
   | "command-line"
   | "override"
   | "automatic";
+
+export const variableOriginPriorityMap: Record<VariableOrigin, number> = {
+  undefined: 0,
+  default: 2,
+  environment: 3,
+  file: 4,
+  "environment-overridden": 5,
+  "command-line": 6,
+  override: 7,
+  automatic: 1,
+};
 
 export class SymbolTableVariable {
   public rawValue: string | null;
@@ -250,12 +261,16 @@ export class Env {
     return value;
   }
 
-  public setRawVariable(name: string, value: string): void {
+  public setRawVariable(
+    name: string,
+    value: string,
+    origin: VariableOrigin,
+  ): void {
     if (value == null) {
       throw new TypeError(`Raw value cannot be null or undefined: ${name}`);
     }
 
-    this.setVariable(name, SymbolTableVariable.rawVariable(value));
+    this.setVariable(name, SymbolTableVariable.rawVariable(value, origin));
   }
 
   public setDeferredVariable(name: string, value: ValueIR): void {
@@ -295,4 +310,14 @@ export class Env {
       throw new TypeError(`Variable cannot be null or undefined: ${name}`);
     }
   }
+}
+
+export function compareVarPriority(
+  origin1: VariableOrigin,
+  origin2: VariableOrigin,
+): number {
+  const result =
+    (variableOriginPriorityMap[origin1] ?? 0) -
+    (variableOriginPriorityMap[origin2] ?? 0);
+  return result > 0 ? 1 : result == 0 ? 0 : -1;
 }
