@@ -66,15 +66,25 @@ function evaluateActiveBranch(
     ir.condition?.right?.exec<string>(valueExpansionEngine) ?? undefined;
   // if right condition is undefined it must be ifdef kw
 
-  const leftValue = context.hasVariable(expandedLeftCondition)
-    ? (context.getVariable(expandedLeftCondition)?.getRawValue() ?? "")
-    : "";
+  let leftValue = "";
+  if (context.hasVariable(expandedLeftCondition)) {
+    const symbolTableVar = context.getVariable(expandedLeftCondition);
+    if (symbolTableVar?.isDeferred() && symbolTableVar.deferredValue) {
+      leftValue = valueExpansionEngine.exec(symbolTableVar.deferredValue);
+    } else {
+      leftValue = context.getRawVariable(expandedLeftCondition) ?? "";
+    }
+  }
 
-  const rightValue = expandedRightCondition
-    ? context.hasVariable(expandedRightCondition ?? "")
-      ? (context.getVariable(expandedRightCondition ?? "")?.getRawValue() ?? "")
-      : ""
-    : "";
+  let rightValue = "";
+  if (expandedRightCondition && context.hasVariable(expandedRightCondition)) {
+    const symbolTableVar = context.getVariable(expandedRightCondition);
+    if (symbolTableVar?.isDeferred() && symbolTableVar.deferredValue) {
+      rightValue = valueExpansionEngine.exec(symbolTableVar.deferredValue);
+    } else {
+      rightValue = context.getRawVariable(expandedRightCondition) ?? "";
+    }
+  }
 
   if (ir.kind == "ifeq") {
     if (leftValue === rightValue) {

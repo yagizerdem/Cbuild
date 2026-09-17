@@ -7,12 +7,12 @@ cbuildfile: statements EOF
 statements: (statement | br)* ;
 
 conditional
-    : if_eq_kw ws? condition   statements_opt ENDIF comment_opt br
-    | if_eq_kw ws? condition   statements_opt ELSE statements_opt ENDIF comment_opt br
-    | if_eq_kw ws? condition   statements_opt ELSE conditional
-    | if_def_kw ws? pattern  statements_opt ENDIF comment_opt br
-    | if_def_kw ws? pattern  statements_opt ELSE statements_opt ENDIF comment_opt br
-    | if_def_kw ws? pattern  statements_opt ELSE conditional
+    : if_eq_kw ws? condition  ws? statements_opt ws? ENDIF ws? comment_opt br
+    | if_eq_kw ws? condition  ws? statements_opt ws? ELSE ws? statements_opt ws? ENDIF comment_opt br
+    | if_eq_kw ws? condition  ws? statements_opt ws? ELSE ws? conditional
+    | if_def_kw ws? pattern  ws? statements_opt ws? ENDIF ws? comment_opt br
+    | if_def_kw ws? pattern  ws? statements_opt ws? ELSE ws? statements_opt ws? ENDIF comment_opt br
+    | if_def_kw ws? pattern  ws? statements_opt ws? ELSE ws? conditional
     ;
 
 conditional_in_recipe
