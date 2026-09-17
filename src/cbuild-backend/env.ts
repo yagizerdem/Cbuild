@@ -28,28 +28,46 @@ export class Settings {
 }
 
 type VariableFlavor = "raw" | "recursive";
+type VariableOrigin =
+  | "undefined"
+  | "default"
+  | "environment"
+  | "environment-overridden"
+  | "file"
+  | "command-line"
+  | "override"
+  | "automatic";
 
 export class SymbolTableVariable {
   public rawValue: string | null;
   public deferredValue: ValueIR | null;
   public readonly flavor: VariableFlavor;
+  public readonly origin: VariableOrigin;
 
   public constructor(
     rawValue: string | null,
     deferredValue: ValueIR | null,
     flavor: VariableFlavor,
+    origin: VariableOrigin = "file",
   ) {
     this.rawValue = rawValue;
     this.deferredValue = deferredValue;
     this.flavor = flavor;
+    this.origin = origin;
   }
 
-  public static rawVariable(rawValue: string): SymbolTableVariable {
-    return new SymbolTableVariable(rawValue, null, "raw");
+  public static rawVariable(
+    rawValue: string,
+    origin: VariableOrigin = "file",
+  ): SymbolTableVariable {
+    return new SymbolTableVariable(rawValue, null, "raw", origin);
   }
 
-  public static deferredVariable(deferredValue: ValueIR): SymbolTableVariable {
-    return new SymbolTableVariable(null, deferredValue, "recursive");
+  public static deferredVariable(
+    deferredValue: ValueIR,
+    origin: VariableOrigin = "file",
+  ): SymbolTableVariable {
+    return new SymbolTableVariable(null, deferredValue, "recursive", origin);
   }
 
   public getRawValue(): string | null {
