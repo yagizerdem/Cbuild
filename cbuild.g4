@@ -261,7 +261,6 @@ identifier
 
 identifier_atom
     : CHARS
-    | keywords
     | COMMA
     | LPAREN
     | RPAREN
@@ -280,6 +279,7 @@ char: CHARS
     | PLUS
     | QUESTION
     | BANG
+    | keywords
     ;
 
 char_nested: char | ',' ;
