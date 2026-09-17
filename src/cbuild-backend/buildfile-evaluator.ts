@@ -11,6 +11,7 @@ import { Env } from "@cbuild-backend/env.js";
 import { ValueExpansionEngine } from "@cbuild-backend/expansion.js";
 import Interpreter from "@cbuild-backend/interpreter/interpreter.js";
 import { allowedIR } from "@cbuild-backend/semantic.js";
+import { ProcessRunner } from "./process.js";
 
 export function unsupported(ir: IR) {
   // programmatic error should never send invalid irtype to cbuild backend
@@ -60,6 +61,43 @@ export async function evaluateBuildFile(
             .getVariable(identifier)!
             .appendValues(new ValueIR([{ kind: "text", lexeme: value }]));
         }
+      } else if (ir.type === AssignmentType.IMMEDIATE_ESCAPED) {
+        const value = ir.right?.exec<string>(valueExpansionEngine) ?? "";
+
+        // temporaory solution , wirte seperate immedaite expansion engine instaed of valueExpansionEngine
+        const escapedValue = value.replace(/\$/g, "$$");
+
+        context.setDeferredVariable(
+          identifier,
+          new ValueIR([
+            {
+              kind: "text",
+              lexeme: escapedValue,
+            },
+          ]),
+        );
+      } else if (ir.type === AssignmentType.SHELL) {
+        const command = ir.right?.exec<string>(valueExpansionEngine) ?? "";
+
+        const runner = new ProcessRunner();
+        const result = await runner.runAsync(command, {
+          output: "capture",
+        });
+
+        const value = result.stdout
+          .replace(/\r\n/g, "\n")
+          .replace(/\n+$/, "")
+          .replace(/\n/g, " ");
+
+        context.setDeferredVariable(
+          identifier,
+          new ValueIR([
+            {
+              kind: "text",
+              lexeme: value,
+            },
+          ]),
+        );
       } else if (ir.type == AssignmentType.RECURSIVE) {
         context.setDeferredVariable(identifier, ir.right!);
       }
