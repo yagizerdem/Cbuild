@@ -4,7 +4,7 @@ cbuildfile: statements EOF
 | EOF
 ;
 
-statements: (statement | br)* ;
+statements: (statement | br | ws)* ;
 
 conditional
     : if_eq_kw ws? condition  ws? statements_opt ws? ENDIF ws? comment_opt br
