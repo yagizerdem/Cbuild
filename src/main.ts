@@ -13,10 +13,11 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-bar = fucker
-bar = baz
+a = hello
+a+= world
+
 app:
-\t echo $(bar)
+\t echo $(a)
 
 `.trim();
   const pCharBuffer = preprocess(buildFile);

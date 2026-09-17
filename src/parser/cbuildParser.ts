@@ -46,12 +46,15 @@ export class cbuildParser extends antlr.Parser {
     public static readonly SLIT = 33;
     public static readonly HOOK = 34;
     public static readonly BACKSLASH = 35;
-    public static readonly CHARS = 36;
-    public static readonly NL = 37;
-    public static readonly LEADING_TAB = 38;
-    public static readonly WS = 39;
-    public static readonly TAB = 40;
-    public static readonly COMMENT = 41;
+    public static readonly PLUS = 36;
+    public static readonly QUESTION = 37;
+    public static readonly BANG = 38;
+    public static readonly CHARS = 39;
+    public static readonly NL = 40;
+    public static readonly LEADING_TAB = 41;
+    public static readonly WS = 42;
+    public static readonly TAB = 43;
+    public static readonly COMMENT = 44;
     public static readonly RULE_cbuildfile = 0;
     public static readonly RULE_statements = 1;
     public static readonly RULE_conditional = 2;
@@ -126,8 +129,8 @@ export class cbuildParser extends antlr.Parser {
         "':'", "'('", "')'", "'{'", "'}'", "','", "'|'", "'include'", "'-include'", 
         "'sinclude'", "'endef'", "'ifdef'", "'ifndef'", "'ifeq'", "'ifneq'", 
         "'else'", "'endif'", "'override'", "'export'", "'unexport'", "'undefine'", 
-        "'define'", "'vpath'", null, null, "'hook'", "'\\'", null, null, 
-        null, null, "'\\t'"
+        "'define'", "'vpath'", null, null, "'hook'", "'\\'", "'+'", "'?'", 
+        "'!'", null, null, null, null, "'\\t'"
     ];
 
     public static readonly symbolicNames = [
@@ -137,8 +140,8 @@ export class cbuildParser extends antlr.Parser {
         "PIPE", "INCLUDE", "DASH_INCLUDE", "SINCLUDE", "ENDEF", "IFDEF", 
         "IFNDEF", "IFEQ", "IFNEQ", "ELSE", "ENDIF", "OVERRIDE", "EXPORT", 
         "UNEXPORT", "UNDEFINE", "DEFINE", "VPATH", "ESCAPED_QUOTE", "SLIT", 
-        "HOOK", "BACKSLASH", "CHARS", "NL", "LEADING_TAB", "WS", "TAB", 
-        "COMMENT"
+        "HOOK", "BACKSLASH", "PLUS", "QUESTION", "BANG", "CHARS", "NL", 
+        "LEADING_TAB", "WS", "TAB", "COMMENT"
     ];
     public static readonly ruleNames = [
         "cbuildfile", "statements", "conditional", "conditional_in_recipe", 
@@ -282,7 +285,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 152;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 151;
                     this.ws();
@@ -294,7 +297,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 156;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 155;
                     this.ws();
@@ -306,7 +309,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 160;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 159;
                     this.ws();
@@ -318,7 +321,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 164;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 163;
                     this.ws();
@@ -339,7 +342,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 171;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 170;
                     this.ws();
@@ -351,7 +354,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 175;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 174;
                     this.ws();
@@ -363,7 +366,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 179;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 178;
                     this.ws();
@@ -375,7 +378,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 183;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 182;
                     this.ws();
@@ -387,7 +390,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 187;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 186;
                     this.ws();
@@ -410,7 +413,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 195;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 194;
                     this.ws();
@@ -422,7 +425,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 199;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 198;
                     this.ws();
@@ -434,7 +437,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 203;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 202;
                     this.ws();
@@ -446,7 +449,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 207;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 206;
                     this.ws();
@@ -465,7 +468,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 213;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 212;
                     this.ws();
@@ -477,7 +480,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 217;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 216;
                     this.ws();
@@ -489,7 +492,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 221;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 220;
                     this.ws();
@@ -501,7 +504,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 225;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 224;
                     this.ws();
@@ -522,7 +525,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 232;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 231;
                     this.ws();
@@ -534,7 +537,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 236;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 235;
                     this.ws();
@@ -546,7 +549,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 240;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 239;
                     this.ws();
@@ -558,7 +561,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 244;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 243;
                     this.ws();
@@ -570,7 +573,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 248;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 247;
                     this.ws();
@@ -593,7 +596,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 256;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 255;
                     this.ws();
@@ -605,7 +608,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 260;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 259;
                     this.ws();
@@ -617,7 +620,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 264;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 263;
                     this.ws();
@@ -629,7 +632,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 268;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 267;
                     this.ws();
@@ -671,7 +674,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 276;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 275;
                     this.ws();
@@ -698,7 +701,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 286;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 285;
                     this.ws();
@@ -731,7 +734,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 299;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 298;
                     this.ws();
@@ -760,7 +763,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 310;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 309;
                     this.ws();
@@ -787,7 +790,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 320;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 319;
                     this.ws();
@@ -820,7 +823,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 333;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 332;
                     this.ws();
@@ -897,7 +900,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 349;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 348;
                     this.ws();
@@ -914,7 +917,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 353;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 352;
                     this.ws();
@@ -931,7 +934,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 357;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 356;
                     this.ws();
@@ -948,7 +951,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 361;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 360;
                     this.ws();
@@ -965,7 +968,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 365;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 364;
                     this.ws();
@@ -984,7 +987,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 371;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 370;
                     this.ws();
@@ -1001,7 +1004,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 375;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 374;
                     this.ws();
@@ -1020,7 +1023,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 381;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 380;
                     this.ws();
@@ -1039,7 +1042,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 387;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 386;
                     this.ws();
@@ -1056,7 +1059,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 391;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 390;
                     this.ws();
@@ -1128,7 +1131,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 409;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 39 || _la === 40) {
+            if (_la === 42 || _la === 43) {
                 {
                 this.state = 408;
                 this.ws();
@@ -1166,7 +1169,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 419;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            while (((((_la - 26)) & ~0x1F) === 0 && ((1 << (_la - 26)) & 34847) !== 0)) {
+            while (((((_la - 26)) & ~0x1F) === 0 && ((1 << (_la - 26)) & 278559) !== 0)) {
                 {
                 this.state = 417;
                 this.errorHandler.sync(this);
@@ -1312,7 +1315,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 442;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 439;
                     this.ws();
@@ -1350,7 +1353,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 448;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 39 || _la === 40) {
+            if (_la === 42 || _la === 43) {
                 {
                 this.state = 447;
                 this.vpath_args();
@@ -1390,7 +1393,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 458;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 39 || _la === 40) {
+            if (_la === 42 || _la === 43) {
                 {
                 this.state = 455;
                 this.ws();
@@ -1430,7 +1433,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 462;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 461;
                     this.ws();
@@ -1461,7 +1464,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 472;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 471;
                     this.ws();
@@ -1650,7 +1653,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 500;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 499;
                     this.ws();
@@ -1688,7 +1691,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 506;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 1598) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 411) !== 0)) {
+            if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 1598) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 3323) !== 0)) {
                 {
                 this.state = 505;
                 this.expressions();
@@ -1721,7 +1724,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 509;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 39 || _la === 40) {
+            if (_la === 42 || _la === 43) {
                 {
                 this.state = 508;
                 this.ws();
@@ -1761,7 +1764,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 524;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 39 || _la === 40) {
+            if (_la === 42 || _la === 43) {
                 {
                 this.state = 523;
                 this.ws();
@@ -1794,7 +1797,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 527;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 39 || _la === 40) {
+            if (_la === 42 || _la === 43) {
                 {
                 this.state = 526;
                 this.ws();
@@ -1834,7 +1837,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 542;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 39 || _la === 40) {
+            if (_la === 42 || _la === 43) {
                 {
                 this.state = 541;
                 this.ws();
@@ -1867,7 +1870,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 545;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 39 || _la === 40) {
+            if (_la === 42 || _la === 43) {
                 {
                 this.state = 544;
                 this.ws();
@@ -1940,7 +1943,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 563;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 39 || _la === 40) {
+            if (_la === 42 || _la === 43) {
                 {
                 this.state = 562;
                 this.ws();
@@ -1980,7 +1983,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 578;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 39 || _la === 40) {
+            if (_la === 42 || _la === 43) {
                 {
                 this.state = 577;
                 this.ws();
@@ -2024,7 +2027,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 582;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 37) {
+                if (_la === 40) {
                     {
                     this.state = 581;
                     this.br();
@@ -2127,6 +2130,9 @@ export class cbuildParser extends antlr.Parser {
             case cbuildParser.ESCAPED_QUOTE:
             case cbuildParser.SLIT:
             case cbuildParser.BACKSLASH:
+            case cbuildParser.PLUS:
+            case cbuildParser.QUESTION:
+            case cbuildParser.BANG:
             case cbuildParser.CHARS:
             case cbuildParser.COMMENT:
                 {
@@ -2148,7 +2154,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 604;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294573630) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 539) !== 0)) {
+            if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294573630) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4347) !== 0)) {
                 {
                 this.state = 603;
                 this.expr_in_recipe();
@@ -2190,7 +2196,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 609;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-            } while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 1598) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 27) !== 0));
+            } while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 1598) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 251) !== 0));
             }
         }
         catch (re) {
@@ -2219,6 +2225,9 @@ export class cbuildParser extends antlr.Parser {
             case cbuildParser.ESCAPED_QUOTE:
             case cbuildParser.SLIT:
             case cbuildParser.BACKSLASH:
+            case cbuildParser.PLUS:
+            case cbuildParser.QUESTION:
+            case cbuildParser.BANG:
             case cbuildParser.CHARS:
                 this.enterOuterAlt(localContext, 1);
                 {
@@ -2283,7 +2292,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 622;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-            } while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 17982) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 27) !== 0));
+            } while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 17982) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 251) !== 0));
             }
         }
         catch (re) {
@@ -2313,6 +2322,9 @@ export class cbuildParser extends antlr.Parser {
             case cbuildParser.ESCAPED_QUOTE:
             case cbuildParser.SLIT:
             case cbuildParser.BACKSLASH:
+            case cbuildParser.PLUS:
+            case cbuildParser.QUESTION:
+            case cbuildParser.BANG:
             case cbuildParser.CHARS:
                 this.enterOuterAlt(localContext, 1);
                 {
@@ -2377,7 +2389,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 635;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-            } while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294540862) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 27) !== 0));
+            } while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294540862) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 251) !== 0));
             }
         }
         catch (re) {
@@ -2425,6 +2437,9 @@ export class cbuildParser extends antlr.Parser {
             case cbuildParser.ESCAPED_QUOTE:
             case cbuildParser.SLIT:
             case cbuildParser.BACKSLASH:
+            case cbuildParser.PLUS:
+            case cbuildParser.QUESTION:
+            case cbuildParser.BANG:
             case cbuildParser.CHARS:
                 this.enterOuterAlt(localContext, 1);
                 {
@@ -2478,7 +2493,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 644;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-            } while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294573630) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 539) !== 0));
+            } while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294573630) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 4347) !== 0));
             }
         }
         catch (re) {
@@ -2527,6 +2542,9 @@ export class cbuildParser extends antlr.Parser {
             case cbuildParser.ESCAPED_QUOTE:
             case cbuildParser.SLIT:
             case cbuildParser.BACKSLASH:
+            case cbuildParser.PLUS:
+            case cbuildParser.QUESTION:
+            case cbuildParser.BANG:
             case cbuildParser.CHARS:
             case cbuildParser.COMMENT:
                 this.enterOuterAlt(localContext, 1);
@@ -2752,7 +2770,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 712;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-            } while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 28) !== 0) || _la === 36);
+            } while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 28) !== 0) || _la === 39);
             }
         }
         catch (re) {
@@ -2818,7 +2836,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 719;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 1598) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 411) !== 0)) {
+            if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 1598) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 3323) !== 0)) {
                 {
                 this.state = 718;
                 this.argument();
@@ -2836,7 +2854,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 723;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 1598) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 411) !== 0)) {
+                if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 1598) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 3323) !== 0)) {
                     {
                     this.state = 722;
                     this.argument();
@@ -2910,7 +2928,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 735;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 734;
                     this.ws();
@@ -2939,7 +2957,7 @@ export class cbuildParser extends antlr.Parser {
                     this.state = 743;
                     this.errorHandler.sync(this);
                     _la = this.tokenStream.LA(1);
-                    if (_la === 39 || _la === 40) {
+                    if (_la === 42 || _la === 43) {
                         {
                         this.state = 742;
                         this.ws();
@@ -2966,7 +2984,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 753;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 752;
                     this.ws();
@@ -2995,7 +3013,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 761;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 760;
                     this.ws();
@@ -3007,7 +3025,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 765;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 764;
                     this.ws();
@@ -3019,7 +3037,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 769;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 768;
                     this.ws();
@@ -3057,7 +3075,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 777;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 39 || _la === 40) {
+            if (_la === 42 || _la === 43) {
                 {
                 this.state = 776;
                 this.ws();
@@ -3069,7 +3087,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 781;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 39 || _la === 40) {
+            if (_la === 42 || _la === 43) {
                 {
                 this.state = 780;
                 this.ws();
@@ -3081,7 +3099,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 785;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 39 || _la === 40) {
+            if (_la === 42 || _la === 43) {
                 {
                 this.state = 784;
                 this.ws();
@@ -3110,7 +3128,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 793;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 792;
                     this.ws();
@@ -3137,7 +3155,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 803;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 39 || _la === 40) {
+            if (_la === 42 || _la === 43) {
                 {
                 this.state = 802;
                 this.ws();
@@ -3281,7 +3299,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 818;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294540316) !== 0) || _la === 36) {
+            if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294540316) !== 0) || _la === 39) {
                 {
                 this.state = 817;
                 this.targets();
@@ -3313,7 +3331,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 821;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294540316) !== 0) || _la === 36) {
+            if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 4294540316) !== 0) || _la === 39) {
                 {
                 this.state = 820;
                 this.targets();
@@ -3431,7 +3449,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 839;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (((((_la - 20)) & ~0x1F) === 0 && ((1 << (_la - 20)) & 4063247) !== 0)) {
+            if (((((_la - 20)) & ~0x1F) === 0 && ((1 << (_la - 20)) & 32505871) !== 0)) {
                 {
                 this.state = 838;
                 this.recipes();
@@ -3490,7 +3508,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 850;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 849;
                     this.ws();
@@ -3509,7 +3527,7 @@ export class cbuildParser extends antlr.Parser {
                 this.state = 855;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 39 || _la === 40) {
+                if (_la === 42 || _la === 43) {
                     {
                     this.state = 854;
                     this.ws();
@@ -3805,7 +3823,7 @@ export class cbuildParser extends antlr.Parser {
             {
             this.state = 901;
             _la = this.tokenStream.LA(1);
-            if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 546) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 27) !== 0))) {
+            if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 546) !== 0) || ((((_la - 32)) & ~0x1F) === 0 && ((1 << (_la - 32)) & 251) !== 0))) {
             this.errorHandler.recoverInline(this);
             }
             else {
@@ -3840,6 +3858,9 @@ export class cbuildParser extends antlr.Parser {
             case cbuildParser.ESCAPED_QUOTE:
             case cbuildParser.SLIT:
             case cbuildParser.BACKSLASH:
+            case cbuildParser.PLUS:
+            case cbuildParser.QUESTION:
+            case cbuildParser.BANG:
             case cbuildParser.CHARS:
                 this.enterOuterAlt(localContext, 1);
                 {
@@ -3885,6 +3906,9 @@ export class cbuildParser extends antlr.Parser {
             case cbuildParser.ESCAPED_QUOTE:
             case cbuildParser.SLIT:
             case cbuildParser.BACKSLASH:
+            case cbuildParser.PLUS:
+            case cbuildParser.QUESTION:
+            case cbuildParser.BANG:
             case cbuildParser.CHARS:
                 this.enterOuterAlt(localContext, 1);
                 {
@@ -3970,6 +3994,9 @@ export class cbuildParser extends antlr.Parser {
             case cbuildParser.ESCAPED_QUOTE:
             case cbuildParser.SLIT:
             case cbuildParser.BACKSLASH:
+            case cbuildParser.PLUS:
+            case cbuildParser.QUESTION:
+            case cbuildParser.BANG:
             case cbuildParser.CHARS:
                 this.enterOuterAlt(localContext, 1);
                 {
@@ -4152,6 +4179,9 @@ export class cbuildParser extends antlr.Parser {
             case cbuildParser.ESCAPED_QUOTE:
             case cbuildParser.SLIT:
             case cbuildParser.BACKSLASH:
+            case cbuildParser.PLUS:
+            case cbuildParser.QUESTION:
+            case cbuildParser.BANG:
             case cbuildParser.CHARS:
                 this.enterOuterAlt(localContext, 1);
                 {
@@ -4460,7 +4490,7 @@ export class cbuildParser extends antlr.Parser {
             {
             this.state = 968;
             _la = this.tokenStream.LA(1);
-            if(!(_la === 39 || _la === 40)) {
+            if(!(_la === 42 || _la === 43)) {
             this.errorHandler.recoverInline(this);
             }
             else {
@@ -4494,7 +4524,7 @@ export class cbuildParser extends antlr.Parser {
             this.state = 972;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 39 || _la === 40) {
+            if (_la === 42 || _la === 43) {
                 {
                 this.state = 971;
                 this.ws();
@@ -4572,7 +4602,7 @@ export class cbuildParser extends antlr.Parser {
     }
 
     public static readonly _serializedATN: number[] = [
-        4,1,41,987,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        4,1,44,987,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
         6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,
         2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,2,19,7,19,2,20,
         7,20,2,21,7,21,2,22,7,22,2,23,7,23,2,24,7,24,2,25,7,25,2,26,7,26,
@@ -4658,8 +4688,8 @@ export class cbuildParser extends antlr.Parser {
         18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,
         62,64,66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,102,
         104,106,108,110,112,114,116,118,120,122,124,126,128,130,132,134,
-        0,7,1,0,22,23,1,0,20,21,1,0,16,18,5,0,1,1,5,5,9,9,32,33,35,36,2,
-        0,16,16,19,31,1,0,6,9,1,0,39,40,1134,0,140,1,0,0,0,2,147,1,0,0,0,
+        0,7,1,0,22,23,1,0,20,21,1,0,16,18,5,0,1,1,5,5,9,9,32,33,35,39,2,
+        0,16,16,19,31,1,0,6,9,1,0,42,43,1134,0,140,1,0,0,0,2,147,1,0,0,0,
         4,272,1,0,0,0,6,342,1,0,0,0,8,344,1,0,0,0,10,394,1,0,0,0,12,397,
         1,0,0,0,14,419,1,0,0,0,16,430,1,0,0,0,18,432,1,0,0,0,20,444,1,0,
         0,0,22,446,1,0,0,0,24,453,1,0,0,0,26,480,1,0,0,0,28,482,1,0,0,0,
@@ -4721,29 +4751,29 @@ export class cbuildParser extends antlr.Parser {
         3,4,2,0,271,273,1,0,0,0,272,150,1,0,0,0,272,169,1,0,0,0,272,193,
         1,0,0,0,272,211,1,0,0,0,272,230,1,0,0,0,272,254,1,0,0,0,273,5,1,
         0,0,0,274,276,3,30,15,0,275,277,3,130,65,0,276,275,1,0,0,0,276,277,
-        1,0,0,0,277,278,1,0,0,0,278,279,3,36,18,0,279,280,5,37,0,0,280,281,
+        1,0,0,0,277,278,1,0,0,0,278,279,3,36,18,0,279,280,5,40,0,0,280,281,
         3,94,47,0,281,282,5,25,0,0,282,283,3,128,64,0,283,343,1,0,0,0,284,
         286,3,30,15,0,285,287,3,130,65,0,286,285,1,0,0,0,286,287,1,0,0,0,
-        287,288,1,0,0,0,288,289,3,36,18,0,289,290,5,37,0,0,290,291,3,94,
-        47,0,291,292,5,24,0,0,292,293,5,37,0,0,293,294,3,94,47,0,294,295,
+        287,288,1,0,0,0,288,289,3,36,18,0,289,290,5,40,0,0,290,291,3,94,
+        47,0,291,292,5,24,0,0,292,293,5,40,0,0,293,294,3,94,47,0,294,295,
         5,25,0,0,295,296,3,128,64,0,296,343,1,0,0,0,297,299,3,30,15,0,298,
         300,3,130,65,0,299,298,1,0,0,0,299,300,1,0,0,0,300,301,1,0,0,0,301,
-        302,3,36,18,0,302,303,5,37,0,0,303,304,3,94,47,0,304,305,5,24,0,
-        0,305,306,5,37,0,0,306,307,3,6,3,0,307,343,1,0,0,0,308,310,3,32,
+        302,3,36,18,0,302,303,5,40,0,0,303,304,3,94,47,0,304,305,5,24,0,
+        0,305,306,5,40,0,0,306,307,3,6,3,0,307,343,1,0,0,0,308,310,3,32,
         16,0,309,311,3,130,65,0,310,309,1,0,0,0,310,311,1,0,0,0,311,312,
-        1,0,0,0,312,313,3,84,42,0,313,314,5,37,0,0,314,315,3,94,47,0,315,
+        1,0,0,0,312,313,3,84,42,0,313,314,5,40,0,0,314,315,3,94,47,0,315,
         316,5,25,0,0,316,317,3,128,64,0,317,343,1,0,0,0,318,320,3,32,16,
         0,319,321,3,130,65,0,320,319,1,0,0,0,320,321,1,0,0,0,321,322,1,0,
-        0,0,322,323,3,84,42,0,323,324,5,37,0,0,324,325,3,94,47,0,325,326,
-        5,24,0,0,326,327,5,37,0,0,327,328,3,94,47,0,328,329,5,25,0,0,329,
+        0,0,322,323,3,84,42,0,323,324,5,40,0,0,324,325,3,94,47,0,325,326,
+        5,24,0,0,326,327,5,40,0,0,327,328,3,94,47,0,328,329,5,25,0,0,329,
         330,3,128,64,0,330,343,1,0,0,0,331,333,3,32,16,0,332,334,3,130,65,
         0,333,332,1,0,0,0,333,334,1,0,0,0,334,335,1,0,0,0,335,336,3,84,42,
-        0,336,337,5,37,0,0,337,338,3,94,47,0,338,339,5,24,0,0,339,340,5,
-        37,0,0,340,341,3,6,3,0,341,343,1,0,0,0,342,274,1,0,0,0,342,284,1,
+        0,336,337,5,40,0,0,337,338,3,94,47,0,338,339,5,24,0,0,339,340,5,
+        40,0,0,340,341,3,6,3,0,341,343,1,0,0,0,342,274,1,0,0,0,342,284,1,
         0,0,0,342,297,1,0,0,0,342,308,1,0,0,0,342,318,1,0,0,0,342,331,1,
         0,0,0,343,7,1,0,0,0,344,345,3,128,64,0,345,346,3,104,52,0,346,347,
         3,2,1,0,347,9,1,0,0,0,348,350,3,130,65,0,349,348,1,0,0,0,349,350,
-        1,0,0,0,350,351,1,0,0,0,351,395,5,41,0,0,352,354,3,130,65,0,353,
+        1,0,0,0,350,351,1,0,0,0,351,395,5,44,0,0,352,354,3,130,65,0,353,
         352,1,0,0,0,353,354,1,0,0,0,354,355,1,0,0,0,355,395,3,4,2,0,356,
         358,3,130,65,0,357,356,1,0,0,0,357,358,1,0,0,0,358,359,1,0,0,0,359,
         395,3,12,6,0,360,362,3,130,65,0,361,360,1,0,0,0,361,362,1,0,0,0,
@@ -4857,7 +4887,7 @@ export class cbuildParser extends antlr.Parser {
         707,661,1,0,0,0,707,667,1,0,0,0,707,673,1,0,0,0,707,679,1,0,0,0,
         707,683,1,0,0,0,707,689,1,0,0,0,707,695,1,0,0,0,707,701,1,0,0,0,
         708,69,1,0,0,0,709,711,3,72,36,0,710,709,1,0,0,0,711,712,1,0,0,0,
-        712,710,1,0,0,0,712,713,1,0,0,0,713,71,1,0,0,0,714,717,5,36,0,0,
+        712,710,1,0,0,0,712,713,1,0,0,0,713,71,1,0,0,0,714,717,5,39,0,0,
         715,717,3,68,34,0,716,714,1,0,0,0,716,715,1,0,0,0,717,73,1,0,0,0,
         718,720,3,76,38,0,719,718,1,0,0,0,719,720,1,0,0,0,720,727,1,0,0,
         0,721,723,5,14,0,0,722,724,3,76,38,0,723,722,1,0,0,0,723,724,1,0,
@@ -4870,13 +4900,13 @@ export class cbuildParser extends antlr.Parser {
         743,744,1,0,0,0,744,745,1,0,0,0,745,747,5,15,0,0,746,748,3,130,65,
         0,747,746,1,0,0,0,747,748,1,0,0,0,748,749,1,0,0,0,749,751,3,88,44,
         0,750,743,1,0,0,0,750,751,1,0,0,0,751,753,1,0,0,0,752,754,3,130,
-        65,0,753,752,1,0,0,0,753,754,1,0,0,0,754,755,1,0,0,0,755,757,5,37,
+        65,0,753,752,1,0,0,0,753,754,1,0,0,0,754,755,1,0,0,0,755,757,5,40,
         0,0,756,758,3,92,46,0,757,756,1,0,0,0,757,758,1,0,0,0,758,774,1,
         0,0,0,759,761,3,90,45,0,760,762,3,130,65,0,761,760,1,0,0,0,761,762,
         1,0,0,0,762,763,1,0,0,0,763,765,3,126,63,0,764,766,3,130,65,0,765,
         764,1,0,0,0,765,766,1,0,0,0,766,767,1,0,0,0,767,769,3,26,13,0,768,
         770,3,130,65,0,769,768,1,0,0,0,769,770,1,0,0,0,770,771,1,0,0,0,771,
-        772,5,37,0,0,772,774,1,0,0,0,773,732,1,0,0,0,773,733,1,0,0,0,773,
+        772,5,40,0,0,772,774,1,0,0,0,773,732,1,0,0,0,773,733,1,0,0,0,773,
         759,1,0,0,0,774,79,1,0,0,0,775,777,3,90,45,0,776,778,3,130,65,0,
         777,776,1,0,0,0,777,778,1,0,0,0,778,779,1,0,0,0,779,781,3,126,63,
         0,780,782,3,130,65,0,781,780,1,0,0,0,781,782,1,0,0,0,782,783,1,0,
@@ -4887,7 +4917,7 @@ export class cbuildParser extends antlr.Parser {
         797,5,15,0,0,796,798,3,130,65,0,797,796,1,0,0,0,797,798,1,0,0,0,
         798,799,1,0,0,0,799,801,3,88,44,0,800,793,1,0,0,0,800,801,1,0,0,
         0,801,803,1,0,0,0,802,804,3,130,65,0,803,802,1,0,0,0,803,804,1,0,
-        0,0,804,805,1,0,0,0,805,807,5,37,0,0,806,808,3,92,46,0,807,806,1,
+        0,0,804,805,1,0,0,0,805,807,5,40,0,0,806,808,3,92,46,0,807,806,1,
         0,0,0,807,808,1,0,0,0,808,81,1,0,0,0,809,810,3,84,42,0,810,83,1,
         0,0,0,811,814,3,100,50,0,812,814,3,68,34,0,813,811,1,0,0,0,813,812,
         1,0,0,0,814,815,1,0,0,0,815,813,1,0,0,0,815,816,1,0,0,0,816,85,1,
@@ -4898,13 +4928,13 @@ export class cbuildParser extends antlr.Parser {
         830,1,0,0,0,830,91,1,0,0,0,831,829,1,0,0,0,832,834,3,96,48,0,833,
         832,1,0,0,0,834,835,1,0,0,0,835,833,1,0,0,0,835,836,1,0,0,0,836,
         93,1,0,0,0,837,839,3,128,64,0,838,840,3,92,46,0,839,838,1,0,0,0,
-        839,840,1,0,0,0,840,95,1,0,0,0,841,843,5,38,0,0,842,844,3,130,65,
+        839,840,1,0,0,0,840,95,1,0,0,0,841,843,5,41,0,0,842,844,3,130,65,
         0,843,842,1,0,0,0,843,844,1,0,0,0,844,845,1,0,0,0,845,846,3,46,23,
-        0,846,847,5,37,0,0,847,862,1,0,0,0,848,850,5,38,0,0,849,851,3,130,
-        65,0,850,849,1,0,0,0,850,851,1,0,0,0,851,852,1,0,0,0,852,853,5,41,
-        0,0,853,862,5,37,0,0,854,856,3,130,65,0,855,854,1,0,0,0,855,856,
-        1,0,0,0,856,857,1,0,0,0,857,858,5,41,0,0,858,862,5,37,0,0,859,862,
-        3,6,3,0,860,862,5,37,0,0,861,841,1,0,0,0,861,848,1,0,0,0,861,855,
+        0,846,847,5,40,0,0,847,862,1,0,0,0,848,850,5,41,0,0,849,851,3,130,
+        65,0,850,849,1,0,0,0,850,851,1,0,0,0,851,852,1,0,0,0,852,853,5,44,
+        0,0,853,862,5,40,0,0,854,856,3,130,65,0,855,854,1,0,0,0,855,856,
+        1,0,0,0,856,857,1,0,0,0,857,858,5,44,0,0,858,862,5,40,0,0,859,862,
+        3,6,3,0,860,862,5,40,0,0,861,841,1,0,0,0,861,848,1,0,0,0,861,855,
         1,0,0,0,861,859,1,0,0,0,861,860,1,0,0,0,862,97,1,0,0,0,863,884,5,
         26,0,0,864,884,5,27,0,0,865,884,5,28,0,0,866,867,5,26,0,0,867,868,
         3,130,65,0,868,869,5,27,0,0,869,884,1,0,0,0,870,871,5,27,0,0,871,
@@ -4915,10 +4945,10 @@ export class cbuildParser extends antlr.Parser {
         1,0,0,0,883,870,1,0,0,0,883,874,1,0,0,0,883,875,1,0,0,0,883,879,
         1,0,0,0,884,99,1,0,0,0,885,887,3,102,51,0,886,885,1,0,0,0,887,888,
         1,0,0,0,888,886,1,0,0,0,888,889,1,0,0,0,889,101,1,0,0,0,890,898,
-        5,36,0,0,891,898,3,124,62,0,892,898,5,14,0,0,893,898,5,10,0,0,894,
+        5,39,0,0,891,898,3,124,62,0,892,898,5,14,0,0,893,898,5,10,0,0,894,
         898,5,11,0,0,895,898,5,12,0,0,896,898,5,13,0,0,897,890,1,0,0,0,897,
         891,1,0,0,0,897,892,1,0,0,0,897,893,1,0,0,0,897,894,1,0,0,0,897,
-        895,1,0,0,0,897,896,1,0,0,0,898,103,1,0,0,0,899,900,5,37,0,0,900,
+        895,1,0,0,0,897,896,1,0,0,0,898,103,1,0,0,0,899,900,5,40,0,0,900,
         105,1,0,0,0,901,902,7,3,0,0,902,107,1,0,0,0,903,906,3,106,53,0,904,
         906,5,14,0,0,905,903,1,0,0,0,905,904,1,0,0,0,906,109,1,0,0,0,907,
         914,3,108,54,0,908,914,5,10,0,0,909,914,5,11,0,0,910,914,5,12,0,
@@ -4926,7 +4956,7 @@ export class cbuildParser extends antlr.Parser {
         0,0,0,913,909,1,0,0,0,913,910,1,0,0,0,913,911,1,0,0,0,913,912,1,
         0,0,0,914,111,1,0,0,0,915,935,3,106,53,0,916,935,5,10,0,0,917,935,
         5,11,0,0,918,935,5,12,0,0,919,935,5,13,0,0,920,935,5,14,0,0,921,
-        935,5,41,0,0,922,935,5,16,0,0,923,935,5,26,0,0,924,935,5,27,0,0,
+        935,5,44,0,0,922,935,5,16,0,0,923,935,5,26,0,0,924,935,5,27,0,0,
         925,935,5,28,0,0,926,935,5,20,0,0,927,935,5,21,0,0,928,935,5,22,
         0,0,929,935,5,23,0,0,930,935,5,24,0,0,931,935,5,25,0,0,932,935,5,
         30,0,0,933,935,5,29,0,0,934,915,1,0,0,0,934,916,1,0,0,0,934,917,
@@ -4934,7 +4964,7 @@ export class cbuildParser extends antlr.Parser {
         1,0,0,0,934,922,1,0,0,0,934,923,1,0,0,0,934,924,1,0,0,0,934,925,
         1,0,0,0,934,926,1,0,0,0,934,927,1,0,0,0,934,928,1,0,0,0,934,929,
         1,0,0,0,934,930,1,0,0,0,934,931,1,0,0,0,934,932,1,0,0,0,934,933,
-        1,0,0,0,935,113,1,0,0,0,936,940,3,110,55,0,937,940,5,41,0,0,938,
+        1,0,0,0,935,113,1,0,0,0,936,940,3,110,55,0,937,940,5,44,0,0,938,
         940,5,15,0,0,939,936,1,0,0,0,939,937,1,0,0,0,939,938,1,0,0,0,940,
         115,1,0,0,0,941,943,3,106,53,0,942,941,1,0,0,0,943,944,1,0,0,0,944,
         942,1,0,0,0,944,945,1,0,0,0,945,117,1,0,0,0,946,948,3,108,54,0,947,
@@ -4943,7 +4973,7 @@ export class cbuildParser extends antlr.Parser {
         952,1,0,0,0,954,955,1,0,0,0,955,121,1,0,0,0,956,958,3,114,57,0,957,
         956,1,0,0,0,958,959,1,0,0,0,959,957,1,0,0,0,959,960,1,0,0,0,960,
         123,1,0,0,0,961,962,7,4,0,0,962,125,1,0,0,0,963,964,7,5,0,0,964,
-        127,1,0,0,0,965,967,5,41,0,0,966,965,1,0,0,0,966,967,1,0,0,0,967,
+        127,1,0,0,0,965,967,5,44,0,0,966,965,1,0,0,0,966,967,1,0,0,0,967,
         129,1,0,0,0,968,969,7,6,0,0,969,131,1,0,0,0,970,972,5,34,0,0,971,
         973,3,130,65,0,972,971,1,0,0,0,972,973,1,0,0,0,973,974,1,0,0,0,974,
         975,5,12,0,0,975,976,3,134,67,0,976,978,5,13,0,0,977,979,3,130,65,
@@ -7266,6 +7296,15 @@ export class CharContext extends antlr.ParserRuleContext {
     }
     public DOUBLE_DOLLAR(): antlr.TerminalNode | null {
         return this.getToken(cbuildParser.DOUBLE_DOLLAR, 0);
+    }
+    public PLUS(): antlr.TerminalNode | null {
+        return this.getToken(cbuildParser.PLUS, 0);
+    }
+    public QUESTION(): antlr.TerminalNode | null {
+        return this.getToken(cbuildParser.QUESTION, 0);
+    }
+    public BANG(): antlr.TerminalNode | null {
+        return this.getToken(cbuildParser.BANG, 0);
     }
     public override get ruleIndex(): number {
         return cbuildParser.RULE_char;

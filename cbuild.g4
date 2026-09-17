@@ -280,6 +280,9 @@ char: CHARS
     | ASSIGN_OP
     | COLON
     | DOUBLE_DOLLAR
+    | PLUS
+    | QUESTION
+    | BANG
     ;
 
 char_nested: char | ',' ;
@@ -429,8 +432,12 @@ HOOK: 'hook';
 
 BACKSLASH : '\\';
 
+PLUS     : '+';
+QUESTION : '?';
+BANG     : '!';
+
 CHARS
-    : ~[ \t\r\n$(){}:,=#|\\]+
+    : ~[ \t\r\n$(){}:,=#|\\+?!]+
     ;
 
 NL : '\r'? '\n' ;

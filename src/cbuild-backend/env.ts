@@ -1,4 +1,4 @@
-import { ValueIR } from "@compiler/ir.js";
+import { ValueIR, ValuePart } from "@compiler/ir.js";
 import { Tbackend } from "@src/type/tBackend.js";
 
 export class Settings {
@@ -30,8 +30,8 @@ export class Settings {
 type VariableFlavor = "raw" | "recursive";
 
 export class SymbolTableVariable {
-  public readonly rawValue: string | null;
-  public readonly deferredValue: ValueIR | null;
+  public rawValue: string | null;
+  public deferredValue: ValueIR | null;
   public readonly flavor: VariableFlavor;
 
   public constructor(
@@ -62,6 +62,22 @@ export class SymbolTableVariable {
 
   public isDeferred(): boolean {
     return this.deferredValue !== null && this.flavor === "recursive";
+  }
+
+  public appendValues(
+    value: ValueIR | ValuePart | ValuePart[],
+  ): SymbolTableVariable {
+    this.deferredValue =
+      this.deferredValue ?? new ValueIR([{ kind: "text", lexeme: "" }]);
+    this.deferredValue = new ValueIR([
+      ...(this.deferredValue as ValueIR).parts,
+      ...(value instanceof ValueIR
+        ? value.parts
+        : Array.isArray(value)
+          ? value
+          : [value]),
+    ]);
+    return this;
   }
 
   public toString(): string {

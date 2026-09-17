@@ -41,6 +41,25 @@ export async function evaluateBuildFile(
             ir.right ?? new ValueIR([{ kind: "text", lexeme: "" }]),
           );
         }
+      } else if (ir.type === AssignmentType.APPEND) {
+        const right = ir.right ?? new ValueIR([{ kind: "text", lexeme: "" }]);
+
+        if (!context.hasVariable(identifier)) {
+          context.setDeferredVariable(identifier, right);
+        } else if (context.getVariable(identifier)!.isDeferred()) {
+          context
+            .getVariable(identifier)!
+            .appendValues(new ValueIR([{ kind: "text", lexeme: " " }]));
+          context.getVariable(identifier)!.appendValues(right);
+        } else {
+          const value = right.exec<string>(valueExpansionEngine);
+          context
+            .getVariable(identifier)!
+            .appendValues(new ValueIR([{ kind: "text", lexeme: " " }]));
+          context
+            .getVariable(identifier)!
+            .appendValues(new ValueIR([{ kind: "text", lexeme: value }]));
+        }
       } else if (ir.type == AssignmentType.RECURSIVE) {
         context.setDeferredVariable(identifier, ir.right!);
       }
