@@ -11,14 +11,14 @@ const options = cli.opts();
 // console.log(options);
 
 try {
-  const buildFile = `
+  const buildFile = String.raw`
 
-RESULT := $(basename test.c.txt  test2.txt)
+b= ahmet
+a :::= merhaba $(b) $b
 
-all:
-	echo $(RESULT)
+app:
+	echo $(a)
 `.trim();
-
   const pCharBuffer = preprocess(buildFile);
   const preprocessedProgram = pCharBufferToString(pCharBuffer);
 
@@ -37,7 +37,7 @@ all:
   await core.runAsync(ir);
 } catch (error) {
   if (error instanceof Error) {
-    console.error(error?.message);
+    console.error(error);
   } else {
     console.error(error);
   }

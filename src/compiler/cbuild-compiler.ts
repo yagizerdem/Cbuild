@@ -53,6 +53,7 @@ import {
   CharContext,
   Char_nestedContext,
   Char_in_recipeContext,
+  Define_bodyContext,
 } from "@parser/cbuildParser.js";
 import {
   AssignmentIR,
@@ -216,7 +217,7 @@ export class CBuildCompiler
     return pair;
   }
 
-  public visitPattern(ctx: PatternContext): unknown {
+  public visitPattern(ctx: PatternContext): ValuePart[] {
     const parts: ValuePart[] = [];
 
     for (const ast_node of ctx.children ?? []) {
@@ -353,17 +354,30 @@ export class CBuildCompiler
 
     if (ctx.if_eq_kw() != null) {
       kind = conditionKindFromKeyword(ctx.if_eq_kw()!.getText());
-      condition = ctx.condition()!.accept(this) as Condition;
+      if (ctx.condition() != null) {
+        condition = ctx.condition()!.accept(this) as Condition;
+      }
+
+      // should not have both a condition and an ifdef name this is most likely unreachable
+      if (ctx.pattern() != null) {
+        const leftSideConditional = new ValueIR(
+          this.visitPattern(ctx.pattern()!),
+        );
+        condition = { left: leftSideConditional, right: undefined };
+      }
     } else if (ctx.if_def_kw() != null) {
       kind = conditionKindFromKeyword(ctx.if_def_kw()!.getText());
+      // should not have conditional in ifdef_kw most likely unreachable
+      if (ctx.condition() != null) {
+        condition = ctx.condition()!.accept(this) as Condition;
+      }
 
-      const condition: Condition = {};
-      const result = ctx.identifier()!.accept(this);
-      const parts: ValuePart[] = [];
-      this.collectValueParts(parts, result);
-
-      condition.left = new ValueIR(parts);
-      condition.right = undefined;
+      if (ctx.pattern() != null) {
+        const leftSideConditional = new ValueIR(
+          this.visitPattern(ctx.pattern()!),
+        );
+        condition = { left: leftSideConditional, right: undefined };
+      }
     }
 
     const conditionalIR = new ConditionalIR(kind!, condition!);
@@ -402,14 +416,14 @@ export class CBuildCompiler
   }
 
   public visitCondition(ctx: ConditionContext): Condition {
-    const condition: Condition = {};
+    let condition: Condition | null = null;
 
     if (ctx.expressions_opt().length === 2) {
       if (ctx.expressions_opt(0)?.expressions() != null) {
         const leftParts = ctx.expressions_opt(0)!.accept(this) as ValuePart[];
-        condition.left = new ValueIR(leftParts);
+        condition = { left: new ValueIR(leftParts), right: undefined };
       } else {
-        condition.left = new ValueIR();
+        condition = { left: new ValueIR(), right: undefined };
       }
 
       if (ctx.expressions_opt(1)?.expressions() != null) {
@@ -422,14 +436,7 @@ export class CBuildCompiler
       return condition;
     }
 
-    const left = this.unquote(ctx.SLIT(0)?.getText() || "");
-    const right = this.unquote(ctx.SLIT(1)?.getText() || "");
-
-    condition.left = new ValueIR([textPart(left)]);
-
-    condition.right = new ValueIR([textPart(right)]);
-
-    return condition;
+    throw new Error("Invalid condition context");
   }
 
   public visitIdentifier(ctx: IdentifierContext): ValuePart {
@@ -713,21 +720,34 @@ export class CBuildCompiler
     ctx: Conditional_in_recipeContext,
   ): unknown {
     let kind: ConditionKind | null;
-    let condition: Condition = {};
+    let condition: Condition | null = null;
 
     if (ctx.if_eq_kw() != null) {
       kind = conditionKindFromKeyword(ctx.if_eq_kw()!.getText());
-      condition = ctx.condition()!.accept(this) as Condition;
+
+      if (ctx.condition() != null) {
+        condition = this.visitCondition(ctx.condition()!);
+      }
+
+      if (ctx.pattern() != null) {
+        const leftSideValue = new ValueIR(
+          ctx.pattern()!.accept(this) as ValuePart[],
+        );
+        condition = { left: leftSideValue, right: undefined };
+      }
     } else if (ctx.if_def_kw() != null) {
       kind = conditionKindFromKeyword(ctx.if_def_kw()!.getText());
 
-      const result = ctx.identifier()!.accept(this);
-      const parts: ValuePart[] = [];
+      if (ctx.condition() != null) {
+        condition = this.visitCondition(ctx.condition()!);
+      }
 
-      this.collectValueParts(parts, result);
-
-      condition.left = new ValueIR(parts);
-      condition.right = undefined;
+      if (ctx.pattern() != null) {
+        const leftSideValue = new ValueIR(
+          ctx.pattern()!.accept(this) as ValuePart[],
+        );
+        condition = { left: leftSideValue, right: undefined };
+      }
     }
 
     const conditionalIR = new ConditionalIR(kind!, condition!);
@@ -822,21 +842,36 @@ export class CBuildCompiler
       );
     }
 
-    const valueParts = ctx.definition().accept(this) as ValuePart[];
-    defineIR.value = new ValueIR(valueParts);
+    const body: ValueIR = this.visitDefine_body(ctx.define_body()!);
+    defineIR.value = body;
 
     return defineIR;
   }
 
-  public visitDefinition(ctx: DefinitionContext): unknown {
+  public visitDefine_body(ctx: Define_bodyContext): ValueIR {
+    const parts: ValuePart[] = [];
+
+    for (const astNode of ctx.children ?? []) {
+      if (astNode.constructor.name === "DefineContext") {
+        parts.push({ kind: "text", lexeme: astNode.getText() });
+      } else {
+        const result = astNode.accept(this);
+        this.collectValueParts(parts, result);
+      }
+    }
+
+    return new ValueIR(parts);
+  }
+
+  public visitDefinition(ctx: DefinitionContext): ValuePart[] {
     if (ctx.exprs_in_def() == null) {
       return [] as ValuePart[];
     }
 
-    return ctx.exprs_in_def()!.accept(this);
+    return this.visitExprs_in_def(ctx.exprs_in_def()!);
   }
 
-  public visitExprs_in_def(ctx: Exprs_in_defContext): unknown {
+  public visitExprs_in_def(ctx: Exprs_in_defContext): ValuePart[] {
     const parts: ValuePart[] = [];
 
     if (ctx.br().length > 0 && ctx.first_expr_in_def().length === 0) {
@@ -857,7 +892,7 @@ export class CBuildCompiler
     return parts;
   }
 
-  public visitFirst_expr_in_def(ctx: First_expr_in_defContext): unknown {
+  public visitFirst_expr_in_def(ctx: First_expr_in_defContext): ValuePart[] {
     const parts: ValuePart[] = [];
 
     for (const astNode of ctx.children ?? []) {
@@ -883,15 +918,6 @@ export class CBuildCompiler
       ctx.DOUBLE_DOLLAR()!.getText().length > 0
     ) {
       return "$";
-    }
-    if (ctx.ESCAPED_QUOTE() != null) {
-      return ctx.ESCAPED_QUOTE()!.getText().substring(1); // remove \ escape part
-    }
-    if (ctx.SLIT() != null) {
-      return this.unquote(ctx.SLIT()!.getText());
-    }
-    if (ctx.ESCAPED_QUOTE() != null) {
-      return ctx.ESCAPED_QUOTE()!.getText().substring(1); // remove \ escape part
     }
 
     return ctx.getText();

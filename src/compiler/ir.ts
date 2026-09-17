@@ -75,11 +75,8 @@ export class FunctionIR extends BaseIR {
 }
 
 export const AssignmentType = {
-  // cbuilc backend only
   RECURSIVE: "=",
   SIMPLE: ":=",
-
-  // full api
   POSIX_SIMPLE: "::=",
   IMMEDIATE_ESCAPED: ":::=",
   CONDITIONAL: "?=",
@@ -186,7 +183,7 @@ export function conditionKindFromKeyword(keyword: string): ConditionKind {
 }
 
 export interface Condition {
-  left?: ValueIR;
+  left: ValueIR; // left must be present even in ifdef identifier
   right?: ValueIR;
 }
 
@@ -194,7 +191,7 @@ export class ConditionalIR extends BaseIR {
   public thenBranch: IR[] = [];
   public elseBranch: IR[] = [];
   public kind: ConditionKind;
-  public condition: Condition;
+  public condition: Condition | null = null;
 
   constructor(
     kind: ConditionKind,

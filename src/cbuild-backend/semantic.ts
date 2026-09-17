@@ -6,6 +6,8 @@ import {
 import {
   AssignmentIR,
   AssignmentType,
+  ConditionalIR,
+  DefineIR,
   HookIR,
   IR,
   NormalRuleIR,
@@ -142,13 +144,15 @@ function validateParts(parts: ValuePart[], owner: IR, context: string): void {
 }
 
 function validateAssignmentFlavor(type: AssignmentType): boolean {
-  return type === AssignmentType.RECURSIVE || type === AssignmentType.SIMPLE;
+  return true; // All assignment flavors are considered valid for the cbuild backend
 }
 
-function allowedIR(ir: IR): boolean {
+export function allowedIR(ir: IR): boolean {
   return (
     ir instanceof AssignmentIR ||
     ir instanceof NormalRuleIR ||
-    ir instanceof HookIR
+    ir instanceof HookIR ||
+    ir instanceof ConditionalIR ||
+    ir instanceof DefineIR
   );
 }

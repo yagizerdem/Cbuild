@@ -4,25 +4,26 @@ cbuildfile: statements EOF
 | EOF
 ;
 
-statements: (statement | br)* ;
+statements: (statement | br | ws)* ;
 
 conditional
-    : if_eq_kw ws? condition   statements_opt ENDIF comment_opt br
-    | if_eq_kw ws? condition   statements_opt ELSE statements_opt ENDIF comment_opt br
-    | if_eq_kw ws? condition   statements_opt ELSE conditional
-    | if_def_kw ws? identifier  statements_opt ENDIF comment_opt br
-    | if_def_kw ws? identifier  statements_opt ELSE statements_opt ENDIF comment_opt br
-    | if_def_kw ws? identifier  statements_opt ELSE conditional
+    : if_eq_kw ws? condition  ws? statements_opt ws? ENDIF ws? comment_opt br
+    | if_eq_kw ws? condition  ws? statements_opt ws? ELSE ws? statements_opt ws? ENDIF comment_opt br
+    | if_eq_kw ws? condition  ws? statements_opt ws? ELSE ws? conditional
+    | if_def_kw ws? pattern  ws? statements_opt ws? ENDIF ws? comment_opt br
+    | if_def_kw ws? pattern  ws? statements_opt ws? ELSE ws? statements_opt ws? ENDIF comment_opt br
+    | if_def_kw ws? pattern  ws? statements_opt ws? ELSE ws? conditional
     ;
 
 conditional_in_recipe
     : if_eq_kw ws? condition NL recipes_opt  ENDIF comment_opt
     | if_eq_kw ws? condition  NL recipes_opt  ELSE NL recipes_opt  ENDIF comment_opt
     | if_eq_kw ws? condition  NL recipes_opt  ELSE NL conditional_in_recipe
-    | if_def_kw ws? identifier NL recipes_opt  ENDIF comment_opt
-    | if_def_kw ws? identifier NL recipes_opt  ELSE NL recipes_opt  ENDIF comment_opt
-    | if_def_kw ws? identifier NL recipes_opt  ELSE NL conditional_in_recipe
+    | if_def_kw ws? pattern NL recipes_opt  ENDIF comment_opt
+    | if_def_kw ws? pattern NL recipes_opt  ELSE NL recipes_opt  ENDIF comment_opt
+    | if_def_kw ws? pattern NL recipes_opt  ELSE NL conditional_in_recipe
     ;
+
 
 statements_opt
     : comment_opt br statements
@@ -42,8 +43,10 @@ statement
     ;
 
 define
-    : specifiers? DEFINE ws pattern ws? ASSIGN_OP? ws? definition ENDEF br
+    : specifiers? DEFINE ws pattern ws? ASSIGN_OP? ws? define_body ENDEF br
     ;
+
+define_body: (define | definition)*;
 
 definition
     : comment_opt br
@@ -94,7 +97,6 @@ include_kw
 
 condition
     : LPAREN expressions_opt  COMMA expressions_opt RPAREN
-    | SLIT ws? SLIT
     ;
 
 expressions_opt
@@ -259,7 +261,6 @@ identifier
 
 identifier_atom
     : CHARS
-    | keywords
     | COMMA
     | LPAREN
     | RPAREN
@@ -271,12 +272,14 @@ br : NL;
 
 
 char: CHARS
-    | SLIT
-    | ESCAPED_QUOTE
     | BACKSLASH
     | ASSIGN_OP
     | COLON
     | DOUBLE_DOLLAR
+    | PLUS
+    | QUESTION
+    | BANG
+    | keywords
     ;
 
 char_nested: char | ',' ;
@@ -287,6 +290,7 @@ char_in_assign: char_nested
     | RPAREN
     | L_CURLY_BRACE
     | R_CURLY_BRACE
+    | PIPE
     | keywords
     ;
 
@@ -395,6 +399,10 @@ L_CURLY_BRACE: '{';
 R_CURLY_BRACE: '}';
 COMMA  : ',';
 PIPE: '|';
+BACKSLASH : '\\';
+PLUS     : '+';
+QUESTION : '?';
+BANG     : '!';
 
 INCLUDE  : 'include';
 DASH_INCLUDE  : '-include';
@@ -412,22 +420,13 @@ UNEXPORT : 'unexport';
 UNDEFINE : 'undefine';
 DEFINE : 'define';
 VPATH : 'vpath';
-ESCAPED_QUOTE
-    : '\\"'
-    | '\\\''
-    ;
 
-SLIT
-    : '"'  ( '\\' . | ~["\\\r\n] )* '"'
-    | '\'' ( '\\' . | ~['\\\r\n] )* '\''
-    ;
 
 HOOK: 'hook';
 
-BACKSLASH : '\\';
 
 CHARS
-    : ~[ \t\r\n$(){}:,=#|\\]+
+    : ~[ \t\r\n$(){}:,=#|\\+?!]+
     ;
 
 NL : '\r'? '\n' ;

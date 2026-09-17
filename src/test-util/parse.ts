@@ -59,7 +59,7 @@ class SyntaxErrorCollector implements ANTLRErrorListener {
   ): void {}
 }
 
-export function runBuildFile(buildFile: string): CbuildfileContext {
+export function parseBuildFile(buildFile: string): CbuildfileContext {
   const charStream = CharStream.fromString(buildFile);
   const lexer = new cbuildLexer(charStream);
   const lexerErrors = new SyntaxErrorCollector();

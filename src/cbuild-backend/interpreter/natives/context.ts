@@ -23,8 +23,9 @@ function _export(
     ? new SymbolTableVariable(
         null,
         new ValueIR([{ kind: "text", lexeme: value }]),
+        "recursive",
       )
-    : new SymbolTableVariable(value, null);
+    : new SymbolTableVariable(value, null, "raw");
 
   if (defineIfAbsent) {
     context.defineVariableIfAbsent(identifier, entry);
