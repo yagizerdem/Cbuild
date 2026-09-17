@@ -21,11 +21,13 @@ function _export(
 
   const entry = isDeferred
     ? new SymbolTableVariable(
-        null,
         new ValueIR([{ kind: "text", lexeme: value }]),
         "recursive",
       )
-    : new SymbolTableVariable(value, null, "raw");
+    : new SymbolTableVariable(
+        new ValueIR([{ kind: "text", lexeme: value }]),
+        "raw",
+      );
 
   if (defineIfAbsent) {
     context.defineVariableIfAbsent(identifier, entry);

@@ -73,16 +73,6 @@ function validateAssignment(assignmentIR: AssignmentIR): void {
 
   const prefix = assignmentIR.prefix?.trim() || null;
 
-  if (prefix != null && prefix.trim().length > 0) {
-    throw CbuildException.from({
-      column: assignmentIR.col,
-      row: assignmentIR.row,
-      errorType: ErrorType.SEMANTIC,
-      machineCode: MachineCode.UNSUPPORTED_IR,
-      message: `Assignment prefixes are not supported by the cbuild backend: ${prefix}`,
-    });
-  }
-
   if (!validateAssignmentFlavor(assignmentIR.type)) {
     throw CbuildException.from({
       column: assignmentIR.col,

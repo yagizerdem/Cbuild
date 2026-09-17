@@ -240,7 +240,7 @@ export class Build {
 
       let normalizedStdout: string = result.stdout.trim();
 
-      if (!this.context.setting.silent) {
+      if (!this.context.settings.silent) {
         console.log(`${command}\n${normalizedStdout}`);
       } else {
         console.log(normalizedStdout);
@@ -309,7 +309,7 @@ export class Build {
         );
       }
 
-      if (!this.context.setting.silent) {
+      if (!this.context.settings.silent) {
         console.log(`${command}\n${normalizedStdout}`);
       } else {
         console.log(normalizedStdout);
