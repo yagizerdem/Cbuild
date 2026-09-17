@@ -13,8 +13,7 @@ const options = cli.opts();
 try {
   const buildFile = String.raw`
 
-b= ahmet
-a :::= merhaba $(b) $b
+a := $(wildcard *)
 
 app:
 	echo $(a)
