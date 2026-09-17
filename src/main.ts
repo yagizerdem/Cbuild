@@ -13,7 +13,7 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-override a := ahmet
+export a := ahmet
 
 app:
 \t  echo $(b)
