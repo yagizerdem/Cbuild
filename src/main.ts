@@ -12,13 +12,12 @@ const options = cli.opts();
 
 try {
   const buildFile = String.raw`
-foo := $(if this-is-not-empty,then!,else!)
-empty :=
-bar := $(if $(empty),then!,else!)
 
-all:
-	@echo $(foo)
-	@echo $(bar)
+b= ahmet
+a :::= merhaba $(b) $b
+
+app:
+	echo $(a)
 `.trim();
   const pCharBuffer = preprocess(buildFile);
   const preprocessedProgram = pCharBufferToString(pCharBuffer);

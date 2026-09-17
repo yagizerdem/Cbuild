@@ -63,16 +63,12 @@ export async function evaluateBuildFile(
         }
       } else if (ir.type === AssignmentType.IMMEDIATE_ESCAPED) {
         const value = ir.right?.exec<string>(valueExpansionEngine) ?? "";
-
-        // temporaory solution , wirte seperate immedaite expansion engine instaed of valueExpansionEngine
-        const escapedValue = value.replace(/\$/g, "$$");
-
         context.setDeferredVariable(
           identifier,
           new ValueIR([
             {
               kind: "text",
-              lexeme: escapedValue,
+              lexeme: value,
             },
           ]),
         );
