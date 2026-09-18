@@ -29,7 +29,6 @@ export class Settings {
 
 export type VariableFlavor = "raw" | "recursive";
 export type VariableOrigin =
-  | "undefined"
   | "default"
   | "environment"
   | "environment-overridden"
@@ -39,7 +38,6 @@ export type VariableOrigin =
   | "automatic";
 
 export const variableOriginPriorityMap: Record<VariableOrigin, number> = {
-  undefined: 0,
   default: 2,
   environment: 3,
   file: 4,

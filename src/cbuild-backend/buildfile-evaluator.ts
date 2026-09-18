@@ -142,6 +142,14 @@ class AssignmentIREvaluator {
       this.valueExpansionEngine,
     );
 
+    const prefix: AssignmentPrefix | undefined =
+      this.assignmentIR.prefix ?? undefined;
+
+    if (prefix == "undefine" || prefix == "override undefine") {
+      this.undefineVariable(identifier, prefix);
+      return;
+    }
+
     if (this.assignmentIR.type == AssignmentType.SIMPLE) {
       const value = this.assignmentIR.right!.exec<string>(
         this.valueExpansionEngine,
@@ -317,5 +325,34 @@ class AssignmentIREvaluator {
       default:
         return variableOriginPriorityMap["file"];
     }
+  }
+
+  private undefineVariable(
+    identifier: string,
+    prefix: Extract<AssignmentPrefix, "undefine" | "override undefine">,
+  ) {
+    if (!this.context.hasVariable(identifier)) return;
+
+    const symbolTableVar = this.context.getVariable(identifier)!;
+    if (prefix === "override undefine") {
+      this.context.removeVariable(identifier);
+    }
+
+    if (
+      prefix === "undefine" &&
+      this.canUndefineVariable(symbolTableVar.origin, "undefine")
+    ) {
+      this.context.removeVariable(identifier);
+    }
+  }
+
+  private canUndefineVariable(
+    origin: VariableOrigin,
+    prefix: "undefine" | "override undefine",
+  ): boolean {
+    if (prefix === "override undefine") return true;
+
+    // only allow undefine for non-command-line and non-override origins
+    return origin !== "command-line" && origin !== "override";
   }
 }
