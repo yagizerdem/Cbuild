@@ -106,9 +106,6 @@ export const AssignmentPrefix = {
   UNEXPORT: "unexport",
   OVERRIDE_EXPORT: "override export",
   EXPORT_OVERRIDE: "export override",
-  UNDEFINE: "undefine",
-  OVERRIDE_UNDEFINE: "override undefine",
-  UNDEFINE_OVERRIDE: "undefine override",
 } as const;
 
 export type AssignmentPrefix =
@@ -482,6 +479,31 @@ export class HookIR extends BaseIR {
   constructor(hookProgram: string, row?: number, col?: number) {
     super(row, col);
     this.hookProgram = hookProgram;
+  }
+
+  exec<T>(executor: Executor): T {
+    return executor.exec(this);
+  }
+
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
+  }
+}
+
+export type UndefineSpecifier = "undefine" | "override undefine";
+
+export class UndefineIR extends BaseIR {
+  public readonly prefix: UndefineSpecifier;
+  public readonly identifier: ValueIR;
+  constructor(
+    identifier: ValueIR,
+    prefix: UndefineSpecifier,
+    row?: number,
+    col?: number,
+  ) {
+    super(row, col);
+    this.prefix = prefix;
+    this.identifier = identifier;
   }
 
   exec<T>(executor: Executor): T {

@@ -11,6 +11,7 @@ import {
   HookIR,
   IR,
   NormalRuleIR,
+  UndefineIR,
   ValuePart,
 } from "@src/compiler/ir.js";
 
@@ -143,6 +144,7 @@ export function allowedIR(ir: IR): boolean {
     ir instanceof NormalRuleIR ||
     ir instanceof HookIR ||
     ir instanceof ConditionalIR ||
-    ir instanceof DefineIR
+    ir instanceof DefineIR ||
+    ir instanceof UndefineIR
   );
 }

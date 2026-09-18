@@ -13,7 +13,7 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-export a := ahmet
+a := ahmet
 
 app:
 \t  echo $(b)
@@ -45,10 +45,10 @@ app:
     },
   ];
   const cliVars: CliVar[] = [
-    {
-      key: "a",
-      value: "fucker",
-    },
+    // {
+    //   key: "a",
+    //   value: "fucker",
+    // },
   ];
 
   const core = new Core(context);

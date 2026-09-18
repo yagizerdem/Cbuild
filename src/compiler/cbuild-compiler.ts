@@ -54,6 +54,7 @@ import {
   Char_nestedContext,
   Char_in_recipeContext,
   Define_bodyContext,
+  UndefineContext,
 } from "@parser/cbuildParser.js";
 import {
   AssignmentIR,
@@ -83,6 +84,8 @@ import {
   Include,
   HookIR,
   ConditionKind,
+  UndefineIR,
+  UndefineSpecifier,
 } from "@compiler/ir.js";
 import {
   make_function_dispatcher,
@@ -157,6 +160,9 @@ export class CBuildCompiler
     } else if (ctx.hook() != null) {
       const hookIR = ctx.hook()!.accept(this) as HookIR;
       return hookIR;
+    } else if (ctx.undefine() != null) {
+      const undefineIR = ctx.undefine()!.accept(this) as UndefineIR;
+      return undefineIR;
     }
 
     // should never reach here if all statement types are handled in parser correctly
@@ -966,6 +972,15 @@ export class CBuildCompiler
     const program: string = ctx.hook_program().getText().trim();
     const hookIR = new HookIR(program);
     return hookIR;
+  }
+
+  public visitUndefine(ctx: UndefineContext): UndefineIR {
+    const identifier = new ValueIR(this.visitPattern(ctx.pattern()));
+    const prefix: UndefineSpecifier =
+      ctx.OVERRIDE() != null && ctx.UNDEFINE() != null
+        ? "override undefine"
+        : "undefine";
+    return new UndefineIR(identifier, prefix);
   }
 
   // utility

@@ -6,6 +6,8 @@ import {
   DefineIR,
   HookIR,
   IR,
+  UndefineIR,
+  UndefineSpecifier,
   ValueIR,
 } from "@src/compiler/ir.js";
 import {
@@ -35,6 +37,9 @@ export async function evaluateBuildFile(
     if (ir instanceof AssignmentIR) {
       const assignmentIREvaluator = new AssignmentIREvaluator(context, ir);
       await assignmentIREvaluator.evaluate();
+    } else if (ir instanceof UndefineIR) {
+      const undefineIREvaluator = new UndefineIREvaluator(context, ir);
+      undefineIREvaluator.execute();
     } else if (ir instanceof HookIR) {
       const interpreter = new Interpreter();
       interpreter.init(context);
@@ -144,11 +149,6 @@ class AssignmentIREvaluator {
 
     const prefix: AssignmentPrefix | undefined =
       this.assignmentIR.prefix ?? undefined;
-
-    if (prefix == "undefine" || prefix == "override undefine") {
-      this.undefineVariable(identifier, prefix);
-      return;
-    }
 
     if (this.assignmentIR.type == AssignmentType.SIMPLE) {
       const value = this.assignmentIR.right!.exec<string>(
@@ -326,11 +326,24 @@ class AssignmentIREvaluator {
         return variableOriginPriorityMap["file"];
     }
   }
+}
 
-  private undefineVariable(
-    identifier: string,
-    prefix: Extract<AssignmentPrefix, "undefine" | "override undefine">,
-  ) {
+class UndefineIREvaluator {
+  private readonly context: Env;
+  private readonly valueExpansionEngine: ValueExpansionEngine;
+  private readonly ir: UndefineIR;
+  constructor(context: Env, ir: UndefineIR) {
+    this.context = context;
+    this.ir = ir;
+    this.valueExpansionEngine = new ValueExpansionEngine(context);
+  }
+
+  public execute() {
+    const identifier = this.valueExpansionEngine.expand(this.ir.identifier);
+    this.undefineVariable(identifier, this.ir.prefix);
+  }
+
+  private undefineVariable(identifier: string, prefix: UndefineSpecifier) {
     if (!this.context.hasVariable(identifier)) return;
 
     const symbolTableVar = this.context.getVariable(identifier)!;

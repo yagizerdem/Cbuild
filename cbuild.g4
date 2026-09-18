@@ -40,6 +40,7 @@ statement
     | ws? function br
     | ws? rule
     | ws? hook
+    | ws? undefine
     ;
 
 define
@@ -244,15 +245,17 @@ recipe
     | NL
     ;
 
+undefine
+    : UNDEFINE ws pattern
+    | OVERRIDE ws UNDEFINE ws pattern
+    ;
+
 specifiers
     : OVERRIDE
     | EXPORT
     | UNEXPORT
     | OVERRIDE ws EXPORT
     | EXPORT ws OVERRIDE
-    | UNDEFINE
-    | OVERRIDE ws UNDEFINE
-    | UNDEFINE ws OVERRIDE
     ;
 
 identifier
