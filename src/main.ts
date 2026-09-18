@@ -13,13 +13,9 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-a := yagiz
-export a += erdem
+%.o : %c
+\t echo hit
 
-
-app:
-\t  echo $a
-\t  echo $$a
 
 `.trim();
 

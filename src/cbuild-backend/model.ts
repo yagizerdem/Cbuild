@@ -17,6 +17,7 @@ export interface NormalRuleOptions {
   normalRuleIR: NormalRuleIR;
 }
 
+// pattern rule
 export class NormalRule extends BaseModel {
   public target: string;
   public prerequisites: string[];
@@ -42,5 +43,20 @@ export class NormalRule extends BaseModel {
   recipeIRS=${JSON.stringify(this.recipeIRS)},
   normalRuleIR=${JSON.stringify(this.normalRuleIR)}
 }`;
+  }
+}
+
+export interface ImplicitPatternRuleOptions {
+  recipeIRS: RecipeIR[];
+}
+
+// implicit pattern rule
+export class ImplicitPatterRule extends BaseModel {
+  public recipeIRS: RecipeIR[];
+
+  public constructor(options: ImplicitPatternRuleOptions) {
+    super();
+
+    this.recipeIRS = options.recipeIRS;
   }
 }
