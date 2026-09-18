@@ -8,9 +8,11 @@ import {
   AssignmentType,
   ConditionalIR,
   DefineIR,
+  ExportIR,
   HookIR,
   IR,
   NormalRuleIR,
+  UndefineIR,
   ValuePart,
 } from "@src/compiler/ir.js";
 
@@ -72,16 +74,6 @@ function validateAssignment(assignmentIR: AssignmentIR): void {
   );
 
   const prefix = assignmentIR.prefix?.trim() || null;
-
-  if (prefix != null && prefix.trim().length > 0) {
-    throw CbuildException.from({
-      column: assignmentIR.col,
-      row: assignmentIR.row,
-      errorType: ErrorType.SEMANTIC,
-      machineCode: MachineCode.UNSUPPORTED_IR,
-      message: `Assignment prefixes are not supported by the cbuild backend: ${prefix}`,
-    });
-  }
 
   if (!validateAssignmentFlavor(assignmentIR.type)) {
     throw CbuildException.from({
@@ -153,6 +145,8 @@ export function allowedIR(ir: IR): boolean {
     ir instanceof NormalRuleIR ||
     ir instanceof HookIR ||
     ir instanceof ConditionalIR ||
-    ir instanceof DefineIR
+    ir instanceof DefineIR ||
+    ir instanceof UndefineIR ||
+    ir instanceof ExportIR
   );
 }

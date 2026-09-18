@@ -54,6 +54,8 @@ import {
   Char_nestedContext,
   Char_in_recipeContext,
   Define_bodyContext,
+  UndefineContext,
+  ExportContext,
 } from "@parser/cbuildParser.js";
 import {
   AssignmentIR,
@@ -83,6 +85,12 @@ import {
   Include,
   HookIR,
   ConditionKind,
+  UndefineIR,
+  UndefineSpecifier,
+  ExportIR,
+  ExportSpecifier,
+  GlobalUnexportIR,
+  GlobalExportIR,
 } from "@compiler/ir.js";
 import {
   make_function_dispatcher,
@@ -157,6 +165,12 @@ export class CBuildCompiler
     } else if (ctx.hook() != null) {
       const hookIR = ctx.hook()!.accept(this) as HookIR;
       return hookIR;
+    } else if (ctx.undefine() != null) {
+      const undefineIR = ctx.undefine()!.accept(this) as UndefineIR;
+      return undefineIR;
+    } else if (ctx.export() != null) {
+      const exportIR = ctx.export()!.accept(this) as ExportIR;
+      return exportIR;
     }
 
     // should never reach here if all statement types are handled in parser correctly
@@ -209,7 +223,9 @@ export class CBuildCompiler
     return assignmentIR;
   }
 
-  public visitAssignment_prefix(ctx: Assignment_prefixContext): unknown {
+  public visitAssignment_prefix(
+    ctx: Assignment_prefixContext,
+  ): AssignmentPrefixPair {
     const specifier = ctx.specifiers().getText().trim();
     const prefix = assignmentPrefixFromSymbol(specifier);
     const parts = ctx.pattern().accept(this) as ValuePart[];
@@ -966,6 +982,37 @@ export class CBuildCompiler
     const program: string = ctx.hook_program().getText().trim();
     const hookIR = new HookIR(program);
     return hookIR;
+  }
+
+  public visitUndefine(ctx: UndefineContext): UndefineIR {
+    const identifier = new ValueIR(this.visitPattern(ctx.pattern()));
+    const prefix: UndefineSpecifier =
+      ctx.OVERRIDE() != null && ctx.UNDEFINE() != null
+        ? "override undefine"
+        : "undefine";
+    return new UndefineIR(identifier, prefix);
+  }
+
+  public visitExport(
+    ctx: ExportContext,
+  ): ExportIR | GlobalExportIR | GlobalUnexportIR {
+    if (ctx.assignment_prefix() != null) {
+      const pair: AssignmentPrefixPair = this.visitAssignment_prefix(
+        ctx.assignment_prefix()!,
+      );
+      const prefix: AssignmentPrefix = pair[0];
+      const value: ValueIR = new ValueIR(pair[1]);
+      if (prefix === "export" || prefix == "unexport") {
+        return new ExportIR(value, prefix);
+      }
+      throw new Error("Unknown assignment prefix");
+    } else if (ctx.EXPORT() != null) {
+      return new GlobalExportIR();
+    } else if (ctx.UNEXPORT() != null) {
+      return new GlobalUnexportIR();
+    }
+
+    throw new Error("Unknown export type");
   }
 
   // utility

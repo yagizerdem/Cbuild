@@ -27,50 +27,93 @@ export class Settings {
   // }
 }
 
-type VariableFlavor = "raw" | "recursive";
+export type VariableFlavor = "raw" | "recursive";
+export type VariableOrigin =
+  | "default"
+  | "environment"
+  | "environment-overridden"
+  | "file"
+  | "command-line"
+  | "override"
+  | "automatic";
+
+export const variableOriginPriorityMap: Record<VariableOrigin, number> = {
+  default: 2,
+  environment: 3,
+  file: 4,
+  "environment-overridden": 5,
+  "command-line": 6,
+  override: 7,
+  automatic: 1,
+};
 
 export class SymbolTableVariable {
-  public rawValue: string | null;
-  public deferredValue: ValueIR | null;
+  public value: ValueIR;
   public readonly flavor: VariableFlavor;
+  public origin: VariableOrigin;
+  public isExported: boolean;
 
   public constructor(
-    rawValue: string | null,
-    deferredValue: ValueIR | null,
+    value: ValueIR,
     flavor: VariableFlavor,
+    origin: VariableOrigin = "file",
+    isExported: boolean = false,
   ) {
-    this.rawValue = rawValue;
-    this.deferredValue = deferredValue;
+    this.value = value;
     this.flavor = flavor;
+    this.origin = origin;
+    this.isExported = isExported;
   }
 
-  public static rawVariable(rawValue: string): SymbolTableVariable {
-    return new SymbolTableVariable(rawValue, null, "raw");
+  public static rawVariable(
+    rawValue: string,
+    origin: VariableOrigin = "file",
+    isExported: boolean = false,
+  ): SymbolTableVariable {
+    return new SymbolTableVariable(
+      new ValueIR([{ kind: "text", lexeme: rawValue }]),
+      "raw",
+      origin,
+      isExported,
+    );
   }
 
-  public static deferredVariable(deferredValue: ValueIR): SymbolTableVariable {
-    return new SymbolTableVariable(null, deferredValue, "recursive");
+  public static deferredVariable(
+    deferredValue: ValueIR,
+    origin: VariableOrigin = "file",
+    isExported: boolean = false,
+  ): SymbolTableVariable {
+    return new SymbolTableVariable(
+      deferredValue,
+      "recursive",
+      origin,
+      isExported,
+    );
   }
 
   public getRawValue(): string | null {
-    return this.rawValue;
+    let rawValue = "";
+    for (const part of this.value.parts) {
+      if (part.kind === "text") {
+        rawValue += part.lexeme;
+      }
+    }
+    return rawValue;
   }
 
-  public getDeferredValue(): ValueIR | null {
-    return this.deferredValue;
+  public getDeferredValue(): ValueIR {
+    return this.value;
   }
 
   public isDeferred(): boolean {
-    return this.deferredValue !== null && this.flavor === "recursive";
+    return this.flavor === "recursive";
   }
 
   public appendValues(
     value: ValueIR | ValuePart | ValuePart[],
   ): SymbolTableVariable {
-    this.deferredValue =
-      this.deferredValue ?? new ValueIR([{ kind: "text", lexeme: "" }]);
-    this.deferredValue = new ValueIR([
-      ...(this.deferredValue as ValueIR).parts,
+    this.value = new ValueIR([
+      ...(this.value as ValueIR).parts,
       ...(value instanceof ValueIR
         ? value.parts
         : Array.isArray(value)
@@ -81,14 +124,17 @@ export class SymbolTableVariable {
   }
 
   public toString(): string {
-    return this.rawValue ?? JSON.stringify(this.deferredValue);
+    return this.value?.toString() ?? JSON.stringify(this.value);
   }
 }
 
 export class Env {
   private readonly symbolTable = new Map<string, SymbolTableVariable>();
+  public readonly settings: Settings;
 
-  public constructor(public setting: Settings) {}
+  public constructor(setting: Settings) {
+    this.settings = setting;
+  }
 
   public get variableCount(): number {
     return this.symbolTable.size;
@@ -232,22 +278,38 @@ export class Env {
     return value;
   }
 
-  public setRawVariable(name: string, value: string): void {
+  public setRawVariable(
+    name: string,
+    value: string,
+    origin: VariableOrigin = "file",
+    isExported: boolean = false,
+  ): void {
     if (value == null) {
       throw new TypeError(`Raw value cannot be null or undefined: ${name}`);
     }
 
-    this.setVariable(name, SymbolTableVariable.rawVariable(value));
+    this.setVariable(
+      name,
+      SymbolTableVariable.rawVariable(value, origin, isExported),
+    );
   }
 
-  public setDeferredVariable(name: string, value: ValueIR): void {
+  public setDeferredVariable(
+    name: string,
+    value: ValueIR,
+    origin: VariableOrigin = "file",
+    isExported: boolean = false,
+  ): void {
     if (value == null) {
       throw new TypeError(
         `Deferred value cannot be null or undefined: ${name}`,
       );
     }
 
-    this.setVariable(name, SymbolTableVariable.deferredVariable(value));
+    this.setVariable(
+      name,
+      SymbolTableVariable.deferredVariable(value, origin, isExported),
+    );
   }
 
   public variableEntries(): IterableIterator<[string, SymbolTableVariable]> {
@@ -277,4 +339,60 @@ export class Env {
       throw new TypeError(`Variable cannot be null or undefined: ${name}`);
     }
   }
+
+  public getVariablePriority(variable: SymbolTableVariable | string): number {
+    let symbolTableEntry =
+      variable instanceof SymbolTableVariable
+        ? variable
+        : (this.getVariable(variable) ?? undefined);
+    if (!symbolTableEntry) return -1;
+
+    return variableOriginPriorityMap[symbolTableEntry.origin] ?? -1;
+  }
+
+  public setVariableOrigin(
+    variable: SymbolTableVariable | string,
+    origin: VariableOrigin,
+  ): void {
+    let symbolTableEntry =
+      variable instanceof SymbolTableVariable
+        ? variable
+        : (this.getVariable(variable) ?? undefined);
+    if (!symbolTableEntry) return;
+
+    symbolTableEntry.origin = origin;
+  }
+
+  public setVariableExported(
+    variable: SymbolTableVariable | string,
+    isExported: boolean,
+  ): void {
+    let symbolTableEntry =
+      variable instanceof SymbolTableVariable
+        ? variable
+        : (this.getVariable(variable) ?? undefined);
+    if (!symbolTableEntry) return;
+
+    symbolTableEntry.isExported = isExported;
+  }
+
+  public getExportedVariables(): Map<string, SymbolTableVariable> {
+    const exportedVariables = new Map<string, SymbolTableVariable>();
+    for (const [name, variable] of this.variableEntries()) {
+      if (variable.isExported) {
+        exportedVariables.set(name, variable);
+      }
+    }
+    return exportedVariables;
+  }
+}
+
+export function compareVarPriority(
+  origin1: VariableOrigin,
+  origin2: VariableOrigin,
+): number {
+  const result =
+    (variableOriginPriorityMap[origin1] ?? 0) -
+    (variableOriginPriorityMap[origin2] ?? 0);
+  return result > 0 ? 1 : result == 0 ? 0 : -1;
 }

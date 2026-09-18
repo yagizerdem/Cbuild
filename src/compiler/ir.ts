@@ -106,9 +106,6 @@ export const AssignmentPrefix = {
   UNEXPORT: "unexport",
   OVERRIDE_EXPORT: "override export",
   EXPORT_OVERRIDE: "export override",
-  UNDEFINE: "undefine",
-  OVERRIDE_UNDEFINE: "override undefine",
-  UNDEFINE_OVERRIDE: "undefine override",
 } as const;
 
 export type AssignmentPrefix =
@@ -488,6 +485,83 @@ export class HookIR extends BaseIR {
     return executor.exec(this);
   }
 
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
+  }
+}
+
+export type UndefineSpecifier = "undefine" | "override undefine";
+
+export class UndefineIR extends BaseIR {
+  public readonly prefix: UndefineSpecifier;
+  public readonly identifier: ValueIR;
+  constructor(
+    identifier: ValueIR,
+    prefix: UndefineSpecifier,
+    row?: number,
+    col?: number,
+  ) {
+    super(row, col);
+    this.prefix = prefix;
+    this.identifier = identifier;
+  }
+
+  exec<T>(executor: Executor): T {
+    return executor.exec(this);
+  }
+
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
+  }
+}
+
+export type ExportSpecifier = "export" | "unexport";
+
+export class ExportIR extends BaseIR {
+  public readonly prefix: ExportSpecifier;
+  public readonly identifier: ValueIR;
+
+  constructor(
+    identifier: ValueIR,
+    prefix: ExportSpecifier,
+    row?: number,
+    col?: number,
+  ) {
+    super(row, col);
+    this.prefix = prefix;
+    this.identifier = identifier;
+  }
+
+  exec<T>(executor: Executor): T {
+    return executor.exec(this);
+  }
+
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
+  }
+}
+
+export class GlobalExportIR extends BaseIR {
+  public constructor(row?: number, col?: number) {
+    super(row, col);
+  }
+
+  exec<T>(executor: Executor): T {
+    return executor.exec(this);
+  }
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
+  }
+}
+
+export class GlobalUnexportIR extends BaseIR {
+  public constructor(row?: number, col?: number) {
+    super(row, col);
+  }
+
+  exec<T>(executor: Executor): T {
+    return executor.exec(this);
+  }
   execAsync<T>(executor: Executor): Promise<T> {
     return executor.execAsync(this);
   }

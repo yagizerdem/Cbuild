@@ -2,7 +2,7 @@
 
 import { compile } from "@src/test-util/compile.js";
 import { Env } from "@cbuild-backend/env.js";
-import { Core } from "@cbuild-backend/core.js";
+import { Core, type EnvVar, type CliVar } from "@cbuild-backend/core.js";
 import { pCharBufferToString, preprocess } from "@src/preprocessor.js";
 import cli from "@src/cli.js";
 
@@ -11,14 +11,18 @@ const options = cli.opts();
 // console.log(options);
 
 try {
-  const buildFile = String.raw`
+  const buildFile = `
 
-b= ahmet
-a :::= merhaba $(b) $b
+a := yagiz
+export a += erdem
+
 
 app:
-	echo $(a)
+\t  echo $a
+\t  echo $$a
+
 `.trim();
+
   const pCharBuffer = preprocess(buildFile);
   const preprocessedProgram = pCharBufferToString(pCharBuffer);
 
@@ -32,9 +36,29 @@ app:
     silent: false,
   });
 
+  const envVars: EnvVar[] = [
+    {
+      key: "b",
+      value: "value_of_b",
+    },
+    {
+      key: "a",
+      value: "value_of_a",
+    },
+  ];
+  const cliVars: CliVar[] = [
+    // {
+    //   key: "a",
+    //   value: "fucker",
+    // },
+  ];
+
   const core = new Core(context);
 
-  await core.runAsync(ir);
+  await core.runAsync(ir, {
+    envVars: envVars,
+    cliVars: cliVars,
+  });
 } catch (error) {
   if (error instanceof Error) {
     console.error(error);

@@ -51,6 +51,7 @@ import { TargetsContext } from "./cbuildParser.js";
 import { RecipesContext } from "./cbuildParser.js";
 import { Recipes_optContext } from "./cbuildParser.js";
 import { RecipeContext } from "./cbuildParser.js";
+import { UndefineContext } from "./cbuildParser.js";
 import { SpecifiersContext } from "./cbuildParser.js";
 import { IdentifierContext } from "./cbuildParser.js";
 import { Identifier_atomContext } from "./cbuildParser.js";
@@ -567,6 +568,16 @@ export class cbuildListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitRecipe?: (ctx: RecipeContext) => void;
+    /**
+     * Enter a parse tree produced by `cbuildParser.undefine`.
+     * @param ctx the parse tree
+     */
+    enterUndefine?: (ctx: UndefineContext) => void;
+    /**
+     * Exit a parse tree produced by `cbuildParser.undefine`.
+     * @param ctx the parse tree
+     */
+    exitUndefine?: (ctx: UndefineContext) => void;
     /**
      * Enter a parse tree produced by `cbuildParser.specifiers`.
      * @param ctx the parse tree

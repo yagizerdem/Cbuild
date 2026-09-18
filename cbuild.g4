@@ -40,6 +40,7 @@ statement
     | ws? function br
     | ws? rule
     | ws? hook
+    | ws? undefine
     ;
 
 define
@@ -58,9 +59,9 @@ include
     ;
 
 export
-    : EXPORT
-    | UNEXPORT
-    | assignment_prefix (ws targets)?
+    : ws? EXPORT ws?
+    | ws? UNEXPORT ws?
+    | ws? assignment_prefix  ws?
     ;
 
 vpath
@@ -244,15 +245,17 @@ recipe
     | NL
     ;
 
+undefine
+    : UNDEFINE ws pattern
+    | OVERRIDE ws UNDEFINE ws pattern
+    ;
+
 specifiers
     : OVERRIDE
     | EXPORT
     | UNEXPORT
     | OVERRIDE ws EXPORT
     | EXPORT ws OVERRIDE
-    | UNDEFINE
-    | OVERRIDE ws UNDEFINE
-    | UNDEFINE ws OVERRIDE
     ;
 
 identifier
