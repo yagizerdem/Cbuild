@@ -11,7 +11,7 @@ import {
 } from "@cbuild-backend/file-utils.js";
 import { topologicalSort } from "@cbuild-backend/depq-graph.js";
 import { NormalRule } from "@cbuild-backend/model.js";
-import { Env } from "@cbuild-backend/env.js";
+import { Env, SymbolTableVariable } from "@cbuild-backend/env.js";
 import { ProcessRunner } from "@cbuild-backend/process.js";
 import {
   CbuildException,
@@ -211,6 +211,16 @@ export class Build {
         }
       }
 
+      // send variables that marked as exported to child processes
+      const exportedVariablesEntries = this.context.getExportedVariables();
+      const exportedVarsMap: Record<string, string> = {};
+      for (const [identifier, exportedVariable] of exportedVariablesEntries) {
+        const expandedVariable = valueExpansionEngine.expand(
+          exportedVariable.value,
+        );
+        exportedVarsMap[identifier] = expandedVariable;
+      }
+
       const result =
         shellPath != null
           ? processRunner.runSync(command, {
@@ -219,12 +229,12 @@ export class Build {
                 args: [],
               },
               cwd: process.cwd(),
-              env: process.env,
+              env: { ...process.env, ...exportedVarsMap },
               output: "capture",
             })
           : processRunner.runSync(command, {
               cwd: process.cwd(),
-              env: process.env,
+              env: { ...process.env, ...exportedVarsMap },
               output: "capture",
             });
 
@@ -275,6 +285,16 @@ export class Build {
         }
       }
 
+      // send variables that marked as exported to child processes
+      const exportedVariablesEntries = this.context.getExportedVariables();
+      const exportedVarsMap: Record<string, string> = {};
+      for (const [identifier, exportedVariable] of exportedVariablesEntries) {
+        const expandedVariable = valueExpansionEngine.expand(
+          exportedVariable.value,
+        );
+        exportedVarsMap[identifier] = expandedVariable;
+      }
+
       const result = await (shellPath != null
         ? processRunner.runAsync(command, {
             shell: {
@@ -282,12 +302,12 @@ export class Build {
               args: [],
             },
             cwd: process.cwd(),
-            env: process.env,
+            env: { ...process.env, ...exportedVarsMap },
             output: "capture",
           })
         : processRunner.runAsync(command, {
             cwd: process.cwd(),
-            env: process.env,
+            env: { ...process.env, ...exportedVarsMap },
             output: "capture",
           }));
 

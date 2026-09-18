@@ -155,24 +155,29 @@ class AssignmentIREvaluator {
         this.valueExpansionEngine,
       );
 
-      this.setRawVariable(identifier, value);
+      this.setRawVariable(identifier, value, this.shouldExport(prefix));
     } else if (this.assignmentIR.type === AssignmentType.POSIX_SIMPLE) {
       const value = this.assignmentIR.right!.exec<string>(
         this.valueExpansionEngine,
       );
-      this.setRawVariable(identifier, value);
+      this.setRawVariable(identifier, value, this.shouldExport(prefix));
     } else if (this.assignmentIR.type === AssignmentType.CONDITIONAL) {
       if (!this.context.hasVariable(identifier)) {
-        this.context.setDeferredVariable(
+        this.setDeferredVariable(
           identifier,
           this.assignmentIR.right ??
             new ValueIR([{ kind: "text", lexeme: "" }]),
+          this.shouldExport(prefix),
         );
       }
     } else if (this.assignmentIR.type === AssignmentType.APPEND) {
       const right =
         this.assignmentIR.right ?? new ValueIR([{ kind: "text", lexeme: "" }]);
       this.appendVariable(identifier, right);
+
+      if (this.shouldExport(prefix)) {
+        this.context.setVariableExported(identifier, true);
+      }
     } else if (this.assignmentIR.type === AssignmentType.IMMEDIATE_ESCAPED) {
       const value =
         this.assignmentIR.right?.exec<string>(this.valueExpansionEngine) ?? "";
@@ -184,6 +189,7 @@ class AssignmentIREvaluator {
             lexeme: value,
           },
         ]),
+        this.shouldExport(prefix),
       );
     } else if (this.assignmentIR.type === AssignmentType.SHELL) {
       const command =
@@ -207,13 +213,22 @@ class AssignmentIREvaluator {
             lexeme: value,
           },
         ]),
+        this.shouldExport(prefix),
       );
     } else if (this.assignmentIR.type == AssignmentType.RECURSIVE) {
-      this.setDeferredVariable(identifier, this.assignmentIR.right!);
+      this.setDeferredVariable(
+        identifier,
+        this.assignmentIR.right!,
+        this.shouldExport(prefix),
+      );
     }
   }
 
-  private setRawVariable(identifier: string, value: string) {
+  private setRawVariable(
+    identifier: string,
+    value: string,
+    isExported: boolean = false,
+  ) {
     const hasVariable = this.context.hasVariable(identifier);
     const prefix: AssignmentPrefix | undefined =
       this.assignmentIR.prefix ?? undefined;
@@ -227,6 +242,7 @@ class AssignmentIREvaluator {
         identifier,
         value,
         this.assignmentPrefixToVariableOrigin(prefix),
+        isExported,
       );
       return;
     }
@@ -236,11 +252,16 @@ class AssignmentIREvaluator {
         identifier,
         value,
         this.assignmentPrefixToVariableOrigin(prefix),
+        isExported,
       );
     }
   }
 
-  private setDeferredVariable(identifier: string, value: ValueIR) {
+  private setDeferredVariable(
+    identifier: string,
+    value: ValueIR,
+    isExported: boolean = false,
+  ) {
     const hasVariable = this.context.hasVariable(identifier);
     const prefix: AssignmentPrefix | undefined =
       this.assignmentIR.prefix ?? undefined;
@@ -254,6 +275,7 @@ class AssignmentIREvaluator {
         identifier,
         value,
         this.assignmentPrefixToVariableOrigin(prefix),
+        isExported,
       );
       return;
     }
@@ -263,6 +285,7 @@ class AssignmentIREvaluator {
         identifier,
         value,
         this.assignmentPrefixToVariableOrigin(prefix),
+        isExported,
       );
     }
   }
@@ -325,6 +348,15 @@ class AssignmentIREvaluator {
       default:
         return variableOriginPriorityMap["file"];
     }
+  }
+
+  private shouldExport(prefix: AssignmentPrefix | undefined): boolean {
+    if (prefix === undefined) return false;
+    return (
+      prefix === "export override" ||
+      prefix === "export" ||
+      prefix === "override export"
+    );
   }
 }
 

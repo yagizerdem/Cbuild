@@ -51,33 +51,44 @@ export class SymbolTableVariable {
   public value: ValueIR;
   public readonly flavor: VariableFlavor;
   public origin: VariableOrigin;
+  public isExported: boolean;
 
   public constructor(
     value: ValueIR,
     flavor: VariableFlavor,
     origin: VariableOrigin = "file",
+    isExported: boolean = false,
   ) {
     this.value = value;
     this.flavor = flavor;
     this.origin = origin;
+    this.isExported = isExported;
   }
 
   public static rawVariable(
     rawValue: string,
     origin: VariableOrigin = "file",
+    isExported: boolean = false,
   ): SymbolTableVariable {
     return new SymbolTableVariable(
       new ValueIR([{ kind: "text", lexeme: rawValue }]),
       "raw",
       origin,
+      isExported,
     );
   }
 
   public static deferredVariable(
     deferredValue: ValueIR,
     origin: VariableOrigin = "file",
+    isExported: boolean = false,
   ): SymbolTableVariable {
-    return new SymbolTableVariable(deferredValue, "recursive", origin);
+    return new SymbolTableVariable(
+      deferredValue,
+      "recursive",
+      origin,
+      isExported,
+    );
   }
 
   public getRawValue(): string | null {
@@ -271,18 +282,23 @@ export class Env {
     name: string,
     value: string,
     origin: VariableOrigin = "file",
+    isExported: boolean = false,
   ): void {
     if (value == null) {
       throw new TypeError(`Raw value cannot be null or undefined: ${name}`);
     }
 
-    this.setVariable(name, SymbolTableVariable.rawVariable(value, origin));
+    this.setVariable(
+      name,
+      SymbolTableVariable.rawVariable(value, origin, isExported),
+    );
   }
 
   public setDeferredVariable(
     name: string,
     value: ValueIR,
     origin: VariableOrigin = "file",
+    isExported: boolean = false,
   ): void {
     if (value == null) {
       throw new TypeError(
@@ -290,7 +306,10 @@ export class Env {
       );
     }
 
-    this.setVariable(name, SymbolTableVariable.deferredVariable(value, origin));
+    this.setVariable(
+      name,
+      SymbolTableVariable.deferredVariable(value, origin, isExported),
+    );
   }
 
   public variableEntries(): IterableIterator<[string, SymbolTableVariable]> {
@@ -342,6 +361,29 @@ export class Env {
     if (!symbolTableEntry) return;
 
     symbolTableEntry.origin = origin;
+  }
+
+  public setVariableExported(
+    variable: SymbolTableVariable | string,
+    isExported: boolean,
+  ): void {
+    let symbolTableEntry =
+      variable instanceof SymbolTableVariable
+        ? variable
+        : (this.getVariable(variable) ?? undefined);
+    if (!symbolTableEntry) return;
+
+    symbolTableEntry.isExported = isExported;
+  }
+
+  public getExportedVariables(): Map<string, SymbolTableVariable> {
+    const exportedVariables = new Map<string, SymbolTableVariable>();
+    for (const [name, variable] of this.variableEntries()) {
+      if (variable.isExported) {
+        exportedVariables.set(name, variable);
+      }
+    }
+    return exportedVariables;
   }
 }
 
