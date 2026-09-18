@@ -59,9 +59,9 @@ include
     ;
 
 export
-    : EXPORT
-    | UNEXPORT
-    | assignment_prefix (ws targets)?
+    : ws? EXPORT ws?
+    | ws? UNEXPORT ws?
+    | ws? assignment_prefix  ws?
     ;
 
 vpath

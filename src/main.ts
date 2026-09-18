@@ -13,10 +13,12 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-export a := ahmet
+a := yagiz
+export a += erdem
+
 
 app:
-\t  echo $(b)
+\t  echo $a
 \t  echo $$a
 
 `.trim();

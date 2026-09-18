@@ -4,6 +4,7 @@ import {
   AssignmentType,
   ConditionalIR,
   DefineIR,
+  ExportIR,
   HookIR,
   IR,
   UndefineIR,
@@ -40,6 +41,9 @@ export async function evaluateBuildFile(
     } else if (ir instanceof UndefineIR) {
       const undefineIREvaluator = new UndefineIREvaluator(context, ir);
       undefineIREvaluator.execute();
+    } else if (ir instanceof ExportIR) {
+      const exportIREvaluator = new ExportIREvaluator(context, ir);
+      exportIREvaluator.execute();
     } else if (ir instanceof HookIR) {
       const interpreter = new Interpreter();
       interpreter.init(context);
@@ -175,9 +179,7 @@ class AssignmentIREvaluator {
         this.assignmentIR.right ?? new ValueIR([{ kind: "text", lexeme: "" }]);
       this.appendVariable(identifier, right);
 
-      if (this.shouldExport(prefix)) {
-        this.context.setVariableExported(identifier, true);
-      }
+      this.context.setVariableExported(identifier, this.shouldExport(prefix));
     } else if (this.assignmentIR.type === AssignmentType.IMMEDIATE_ESCAPED) {
       const value =
         this.assignmentIR.right?.exec<string>(this.valueExpansionEngine) ?? "";
@@ -304,6 +306,7 @@ class AssignmentIREvaluator {
         identifier,
         right,
         this.assignmentPrefixToVariableOrigin(prefix),
+        this.shouldExport(prefix),
       );
       return;
     }
@@ -352,6 +355,7 @@ class AssignmentIREvaluator {
 
   private shouldExport(prefix: AssignmentPrefix | undefined): boolean {
     if (prefix === undefined) return false;
+    if (prefix === "unexport") return false;
     return (
       prefix === "export override" ||
       prefix === "export" ||
@@ -399,5 +403,25 @@ class UndefineIREvaluator {
 
     // only allow undefine for non-command-line and non-override origins
     return origin !== "command-line" && origin !== "override";
+  }
+}
+
+class ExportIREvaluator {
+  private readonly context: Env;
+  private readonly valueExpansionEngine: ValueExpansionEngine;
+  private readonly ir: ExportIR;
+  constructor(context: Env, ir: ExportIR) {
+    this.context = context;
+    this.ir = ir;
+    this.valueExpansionEngine = new ValueExpansionEngine(context);
+  }
+
+  public execute() {
+    const identifier = this.valueExpansionEngine.expand(this.ir.identifier);
+    if (this.ir.prefix === "export") {
+      this.context.setVariableExported(identifier, true);
+    } else if (this.ir.prefix === "unexport") {
+      this.context.setVariableExported(identifier, false);
+    }
   }
 }

@@ -514,3 +514,55 @@ export class UndefineIR extends BaseIR {
     return executor.execAsync(this);
   }
 }
+
+export type ExportSpecifier = "export" | "unexport";
+
+export class ExportIR extends BaseIR {
+  public readonly prefix: ExportSpecifier;
+  public readonly identifier: ValueIR;
+
+  constructor(
+    identifier: ValueIR,
+    prefix: ExportSpecifier,
+    row?: number,
+    col?: number,
+  ) {
+    super(row, col);
+    this.prefix = prefix;
+    this.identifier = identifier;
+  }
+
+  exec<T>(executor: Executor): T {
+    return executor.exec(this);
+  }
+
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
+  }
+}
+
+export class GlobalExportIR extends BaseIR {
+  public constructor(row?: number, col?: number) {
+    super(row, col);
+  }
+
+  exec<T>(executor: Executor): T {
+    return executor.exec(this);
+  }
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
+  }
+}
+
+export class GlobalUnexportIR extends BaseIR {
+  public constructor(row?: number, col?: number) {
+    super(row, col);
+  }
+
+  exec<T>(executor: Executor): T {
+    return executor.exec(this);
+  }
+  execAsync<T>(executor: Executor): Promise<T> {
+    return executor.execAsync(this);
+  }
+}
