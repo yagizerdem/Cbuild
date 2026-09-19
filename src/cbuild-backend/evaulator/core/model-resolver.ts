@@ -17,7 +17,7 @@ export function filterModelResolverPassIr(irs: IR[]): IR[] {
   return result;
 }
 
-export class ModelResolver implements Executor {
+export default class ModelResolver implements Executor {
   public readonly ruleModels: BaseModel[] = [];
 
   public constructor(public readonly context: Env) {}

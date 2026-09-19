@@ -13,10 +13,16 @@ const options = cli.opts();
 try {
   const buildFile = `
 
+
+ifdef a
 reversed := $2 $1 
 a=reversed
 
 foo = $(dir src/foo.c hacks)
+else 
+  foo = else case
+endif
+
 
 app: 
 \t echo $(foo)
@@ -36,28 +42,11 @@ app:
     silent: false,
   });
 
-  const envVars: EnvVar[] = [
-    {
-      key: "b",
-      value: "value_of_b",
-    },
-    {
-      key: "a",
-      value: "value_of_a",
-    },
-  ];
-  const cliVars: CliVar[] = [
-    // {
-    //   key: "a",
-    //   value: "fucker",
-    // },
-  ];
-
   const core = new Core(context);
 
   await core.runAsync(ir, {
-    envVars: envVars,
-    cliVars: cliVars,
+    envVars: [],
+    cliVars: [],
   });
 } catch (error) {
   if (error instanceof Error) {
