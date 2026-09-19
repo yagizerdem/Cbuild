@@ -11,7 +11,7 @@ import {
 } from "@cbuild-backend/file-utils.js";
 import { topologicalSort } from "@cbuild-backend/depq-graph.js";
 import { NormalRule } from "@cbuild-backend/model.js";
-import { Env, SymbolTableVariable } from "@cbuild-backend/env.js";
+import { Env } from "@cbuild-backend/env.js";
 import { ProcessRunner } from "@cbuild-backend/process.js";
 import {
   CbuildException,

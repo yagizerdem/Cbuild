@@ -7,6 +7,7 @@ import {
   IR,
   NormalRuleIR,
   UndefineIR,
+  VpathIR,
 } from "@src/compiler/ir.js";
 import { Env } from "@cbuild-backend/env.js";
 import { ValueExpansionEngine } from "@cbuild-backend/expansion.js";
@@ -16,8 +17,9 @@ import AssignmentIREvaluator from "@cbuild-backend/evaluator/assignment-evaluato
 import UndefineIREvaluator from "@cbuild-backend/evaluator/undefine-evaluator.js";
 import ExportIREvaluator from "@cbuild-backend/evaluator/export-evaluator.js";
 import ConditionalIREvaluator from "@cbuild-backend/evaluator/conditional-evaluator.js";
-import { BaseModel } from "@src/cbuild-backend/model.js";
+import { BaseModel, VpathRule } from "@src/cbuild-backend/model.js";
 import ModelResolver from "@cbuild-backend/evaluator/core/model-resolver.js";
+import VpathIREvaluator from "@cbuild-backend/evaluator/vpath-evaluator.js";
 
 export function unsupported(ir: IR) {
   // programmatic error should never send invalid irtype to cbuild backend
@@ -27,6 +29,7 @@ export function unsupported(ir: IR) {
 export default class BuildFileEvaluator {
   private readonly context: Env;
   private readonly irs: IR[];
+  private vpaths: VpathRule[] = [];
 
   public constructor(context: Env, irs: IR[]) {
     this.context = context;
@@ -71,9 +74,12 @@ export default class BuildFileEvaluator {
         const identifier = ir.name?.exec<string>(valueExpansionEngine) ?? "";
         this.context.setRawVariable(identifier, expandedValue);
       } else if (ir instanceof NormalRuleIR) {
-        const modelResolver = new ModelResolver(this.context);
+        const modelResolver = new ModelResolver(this.context, this.vpaths);
         const resolutionResult = await modelResolver.execAsync<BaseModel[]>(ir);
         resolvedModels.push(...resolutionResult);
+      } else if (ir instanceof VpathIR) {
+        const vpathIREvaluator = new VpathIREvaluator(this.context, ir);
+        this.vpaths = vpathIREvaluator.execute(this.vpaths);
       } else if (!allowedIR(ir)) {
         unsupported(ir);
       } else {

@@ -6,7 +6,7 @@ import {
 } from "@compiler/ir.js";
 import { Env } from "@cbuild-backend/env.js";
 import { ValueExpansionEngine } from "@cbuild-backend/expansion.js";
-import { BaseModel, NormalRule } from "@cbuild-backend/model.js";
+import { BaseModel, NormalRule, VpathRule } from "@cbuild-backend/model.js";
 
 export function filterModelResolverPassIr(irs: IR[]): IR[] {
   const result: IR[] = [];
@@ -19,8 +19,13 @@ export function filterModelResolverPassIr(irs: IR[]): IR[] {
 
 export default class ModelResolver implements Executor {
   public readonly ruleModels: BaseModel[] = [];
+  public readonly vpathsRules: VpathRule[] = [];
+  public readonly context: Env;
 
-  public constructor(public readonly context: Env) {}
+  public constructor(context: Env, vpaths: VpathRule[] = []) {
+    this.context = context;
+    this.vpathsRules = vpaths;
+  }
 
   public async buildAsync(instructions: readonly IR[]): Promise<BaseModel[]> {
     for (const instruction of instructions) {
@@ -69,6 +74,7 @@ export default class ModelResolver implements Executor {
           normalRuleIR: ir,
           recipeIRS: [...ir.recipes],
           shellCommands: [], // do not use raw shell commands, expand from recipeIR before execution
+          vpathRules: this.vpathsRules ?? [],
         }),
     );
   }
