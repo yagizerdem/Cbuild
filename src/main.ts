@@ -24,7 +24,7 @@ else
 endif
 
 
-app: 
+app: fucker.txt
 \t echo $(foo)
 
 `.trim();

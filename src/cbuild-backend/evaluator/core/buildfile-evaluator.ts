@@ -12,12 +12,12 @@ import { Env } from "@cbuild-backend/env.js";
 import { ValueExpansionEngine } from "@cbuild-backend/expansion.js";
 import Interpreter from "@cbuild-backend/interpreter/interpreter.js";
 import { allowedIR } from "@cbuild-backend/semantic.js";
-import AssignmentIREvaluator from "@cbuild-backend/evaulator/assignment-evaluator.js";
-import UndefineIREvaluator from "@cbuild-backend/evaulator/undefine-evaluator.js";
-import ExportIREvaluator from "@cbuild-backend/evaulator/export-evaluator.js";
-import ConditionalIREvaluator from "@cbuild-backend/evaulator/conditional-evaluator.js";
+import AssignmentIREvaluator from "@cbuild-backend/evaluator/assignment-evaluator.js";
+import UndefineIREvaluator from "@cbuild-backend/evaluator/undefine-evaluator.js";
+import ExportIREvaluator from "@cbuild-backend/evaluator/export-evaluator.js";
+import ConditionalIREvaluator from "@cbuild-backend/evaluator/conditional-evaluator.js";
 import { BaseModel } from "@src/cbuild-backend/model.js";
-import ModelResolver from "@cbuild-backend/evaulator/core/model-resolver.js";
+import ModelResolver from "@cbuild-backend/evaluator/core/model-resolver.js";
 
 export function unsupported(ir: IR) {
   // programmatic error should never send invalid irtype to cbuild backend

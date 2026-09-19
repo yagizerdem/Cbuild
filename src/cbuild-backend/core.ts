@@ -19,9 +19,8 @@ import {
   hasCircularDependency,
 } from "@cbuild-backend/depq-graph.js";
 
-import { evaluateBuildFile } from "./buildfile-evaluator.js";
-import { Build } from "./build.js";
-import BuildFileEvaluator from "./evaulator/core/buildfile-evaluator.js";
+import { Build } from "@cbuild-backend/execution/build.js";
+import BuildFileEvaluator from "@cbuild-backend/evaluator/core/buildfile-evaluator.js";
 
 export interface CliVar {
   key: string;
