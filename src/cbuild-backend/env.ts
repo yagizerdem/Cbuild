@@ -92,6 +92,15 @@ export class SymbolTableVariable {
   }
 
   public getRawValue(): string | null {
+    // shoudl only contiain text parts if its in not recursive variable
+    if (this.value.parts.find((x) => x.kind !== "text")) {
+      return null;
+    }
+
+    if (this.flavor !== "raw") {
+      return null;
+    }
+
     let rawValue = "";
     for (const part of this.value.parts) {
       if (part.kind === "text") {
