@@ -16,7 +16,7 @@ try {
 reversed := $2 $1 
 a=reversed
 
-foo = $(call reversed, a, b)
+foo = $(dir src/foo.c hacks)
 
 app: 
 \t echo $(foo)

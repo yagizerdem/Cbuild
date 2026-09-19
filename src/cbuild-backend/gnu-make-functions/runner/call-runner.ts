@@ -2,7 +2,7 @@ import { Env } from "@cbuild-backend/env.js";
 import { ValueExpansionEngine } from "@cbuild-backend/expansion.js";
 import { FunctionIR } from "@src/compiler/ir.js";
 
-export default class BasenameRunner {
+export default class CallRunner {
   private readonly context: Env;
   private readonly valueExpansionEngine: ValueExpansionEngine;
   private readonly activeLookups: Set<string>;

@@ -15,9 +15,9 @@ export class compile_dir extends compile_fn {
     func: MakeFunction,
   ): FunctionIR {
     const ir = super.compile(ctx, func);
-    util.cleanWS(ir);
+    // util.cleanWS(ir);
 
-    if (ir.args.length !== 1) {
+    if (ir.args.length > 1) {
       throw CbuildException.from({
         column: ctx.start?.column || 0,
         row: ctx.start?.line || 0,
