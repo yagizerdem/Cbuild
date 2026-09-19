@@ -13,19 +13,12 @@ const options = cli.opts();
 try {
   const buildFile = `
 
+vpath %.ts ./src
 
-ifdef a
-reversed := $2 $1 
-a=reversed
-
-foo = $(dir src/foo.c hacks)
-else 
-  foo = else case
-endif
+app.c: main.ts
+\t echo "run app"
 
 
-app: fucker.txt
-\t echo $(foo)
 
 `.trim();
 

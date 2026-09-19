@@ -14,6 +14,7 @@ import {
   NormalRuleIR,
   UndefineIR,
   ValuePart,
+  VpathIR,
 } from "@src/compiler/ir.js";
 
 export function isCompatible(instructions: IR[]): boolean {
@@ -147,6 +148,7 @@ export function allowedIR(ir: IR): boolean {
     ir instanceof ConditionalIR ||
     ir instanceof DefineIR ||
     ir instanceof UndefineIR ||
-    ir instanceof ExportIR
+    ir instanceof ExportIR ||
+    ir instanceof VpathIR
   );
 }

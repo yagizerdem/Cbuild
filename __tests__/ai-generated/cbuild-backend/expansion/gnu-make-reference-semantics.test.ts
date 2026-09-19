@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { compile } from "@tests/util/compile.js";
 import { Env, Settings } from "@src/cbuild-backend/env.js";
-import { evaluateBuildFile } from "@src/cbuild-backend/buildfile-evaluator.js";
+import BuildFileEvaluator from "@src/cbuild-backend/evaluator/core/buildfile-evaluator.js";
 import { expandRecipe, expandValue } from "@src/cbuild-backend/expansion.js";
 import {
   AssignmentIR,
@@ -22,7 +22,8 @@ async function evaluate(source: string): Promise<Env> {
   expect(program.length).toBeGreaterThan(0);
   for (const node of program) expect(node).toBeInstanceOf(AssignmentIR);
   const context = new Env(new Settings(true, 1, ".", "cbuild", true));
-  await evaluateBuildFile(program, context);
+  const evaluator = new BuildFileEvaluator(context, program);
+  await evaluator.evaluateAsync();
   return context;
 }
 
@@ -165,7 +166,8 @@ describe("GNU Make assignment values used in compiled recipes", () => {
     const rule = program[4] as NormalRuleIR;
     expect(rule.recipes).toHaveLength(1);
     const context = new Env(new Settings(true, 1, ".", "cbuild", true));
-    await evaluateBuildFile(assignments, context);
+    const evaluator = new BuildFileEvaluator(context, assignments);
+    await evaluator.evaluateAsync();
     // Only inspect expanded command text: no shell is executed.
     expect(expandRecipe(rule.recipes[0]!, context)).toBe(expected);
   });

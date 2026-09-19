@@ -93,7 +93,7 @@ export class Core {
       });
     }
 
-    const builder = new Build(currentContext);
+    const builder = new Build(currentContext, normalRulesGraph);
     await builder.parallelBuildTargetAsync(rulesSubGraph, 2);
   }
 

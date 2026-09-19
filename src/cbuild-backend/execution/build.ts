@@ -18,11 +18,14 @@ import {
   ErrorType,
   MachineCode,
 } from "@src/cbuild-exception.js";
+import { PreqResolver } from "./preq-resolver.js";
 
 export class Build {
   private readonly context: Env;
-  public constructor(context: Env) {
+  private readonly rulePatterns: NormalRule[];
+  public constructor(context: Env, rulePatterns: NormalRule[]) {
     this.context = context;
+    this.rulePatterns = rulePatterns;
   }
 
   public async shouldRebuildAsync(
@@ -34,6 +37,30 @@ export class Build {
       rule.target,
     );
 
+    // resolve preqs
+    const preqResolver = new PreqResolver(
+      this.rulePatterns,
+      rule.vpathRules ?? [],
+    );
+
+    const preqResolutions = rule.prerequisites.map((preq) =>
+      preqResolver.resolve(preq),
+    );
+
+    const notFound = preqResolutions.find(
+      (resolution) => resolution.origin.type === "not-found",
+    );
+
+    if (notFound) {
+      throw CbuildException.from({
+        errorType: ErrorType.PROCESS,
+        machineCode: MachineCode.DEPQ_NOT_FOUND,
+        message: `cbuild: No rule to make target '${notFound.preqName}', needed by '${rule.target}'. Stop.`,
+        column: -1,
+        row: -1,
+      });
+    }
+
     if (!(await fileExistbyAbsolutePathAsync(targetEntryPath))) return true;
 
     const lastModifiedDateOfTarget: bigint | undefined =
@@ -41,8 +68,25 @@ export class Build {
 
     if (!lastModifiedDateOfTarget) return true;
 
-    for (const preq of rule.prerequisites) {
-      const preqAbsolutePath = resolveAndGetAbsolutePath(baseDir, preq);
+    for (const preq of preqResolutions) {
+      if (preq.origin.type === "target-rule") return true;
+      const preqAbsolutePath =
+        preq.origin.type === "cwd"
+          ? preq.origin.absolutePath
+          : preq.origin.type === "vpath"
+            ? preq.origin.absolutePath
+            : preq.origin.type === "absolute"
+              ? preq.origin.absolutePath
+              : (() => {
+                  throw CbuildException.from({
+                    errorType: ErrorType.PROCESS,
+                    machineCode: MachineCode.DEPQ_NOT_FOUND,
+                    message: `cbuild: No rule to make target '${preq.preqName}', needed by '${rule.target}'. Stop.`,
+                    column: -1,
+                    row: -1,
+                  });
+                })();
+
       const exist: boolean =
         await fileExistbyAbsolutePathAsync(preqAbsolutePath);
       if (!exist) return true;
@@ -63,22 +107,63 @@ export class Build {
       rule.target,
     );
 
+    // resolve preqs
+    const preqResolver = new PreqResolver(
+      this.rulePatterns,
+      rule.vpathRules ?? [],
+    );
+
+    const preqResolutions = rule.prerequisites.map((preq) =>
+      preqResolver.resolve(preq),
+    );
+
+    const notFound = preqResolutions.find(
+      (resolution) => resolution.origin.type === "not-found",
+    );
+
+    if (notFound) {
+      throw CbuildException.from({
+        errorType: ErrorType.PROCESS,
+        machineCode: MachineCode.DEPQ_NOT_FOUND,
+        message: `cbuild: No rule to make target '${notFound.preqName}', needed by '${rule.target}'. Stop.`,
+        column: -1,
+        row: -1,
+      });
+    }
+
     if (!fileExistbyAbsolutePath(targetEntryPath)) return true;
 
     const lastModifiedDateOfTarget: bigint | undefined =
       getModifiedTimeNs(targetEntryPath);
 
-    if (lastModifiedDateOfTarget === undefined) return true;
+    if (!lastModifiedDateOfTarget) return true;
 
-    for (const preq of rule.prerequisites) {
-      const preqAbsolutePath = resolveAndGetAbsolutePath(baseDir, preq);
+    for (const preq of preqResolutions) {
+      if (preq.origin.type === "target-rule") return true;
+      const preqAbsolutePath =
+        preq.origin.type === "cwd"
+          ? preq.origin.absolutePath
+          : preq.origin.type === "vpath"
+            ? preq.origin.absolutePath
+            : preq.origin.type === "absolute"
+              ? preq.origin.absolutePath
+              : (() => {
+                  throw CbuildException.from({
+                    errorType: ErrorType.PROCESS,
+                    machineCode: MachineCode.DEPQ_NOT_FOUND,
+                    message: `cbuild: No rule to make target '${preq.preqName}', needed by '${rule.target}'. Stop.`,
+                    column: -1,
+                    row: -1,
+                  });
+                })();
+
       const exist: boolean = fileExistbyAbsolutePath(preqAbsolutePath);
       if (!exist) return true;
 
       const lastModifiedDateOfPreq: bigint | undefined =
         getModifiedTimeNs(preqAbsolutePath);
 
-      if (lastModifiedDateOfPreq === undefined) return true;
+      if (!lastModifiedDateOfPreq) return true;
       if (lastModifiedDateOfPreq > lastModifiedDateOfTarget) return true;
     }
 
