@@ -7,6 +7,7 @@ import AddsuffixRunner from "@cbuild-backend/gnu-make-functions/runner/addsuffix
 import AndRunner from "@cbuild-backend/gnu-make-functions/runner/and-runner.js";
 import BasenameRunner from "@cbuild-backend/gnu-make-functions/runner/basname-runner.js";
 import WildcardRunner from "@cbuild-backend/gnu-make-functions/runner/wildcard-runner.js";
+import CallRunner from "@cbuild-backend/gnu-make-functions/runner/call-runner.js";
 
 export default class CbuildFnRunner extends BaseFnRunner {
   private readonly context: Env;
@@ -52,5 +53,10 @@ export default class CbuildFnRunner extends BaseFnRunner {
   wildcardFn(ir: FunctionIR): string {
     const wildcardRunner = new WildcardRunner(this.context, this.activeLookups);
     return wildcardRunner.run(ir);
+  }
+
+  callFn(ir: FunctionIR): string {
+    const callRunner = new CallRunner(this.context, this.activeLookups);
+    return callRunner.run(ir);
   }
 }

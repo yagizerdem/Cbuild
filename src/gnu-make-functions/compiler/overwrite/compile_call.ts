@@ -7,7 +7,6 @@ import {
 } from "@src/cbuild-exception.js";
 import type { MakeFunction } from "@gnu-make-functions/type.js";
 import { compile_fn } from "@gnu-make-functions/compiler/compile_fn.js";
-import { util } from "@gnu-make-functions/compiler/util.js";
 
 export class compile_call extends compile_fn {
   public override compile(
@@ -15,17 +14,6 @@ export class compile_call extends compile_fn {
     func: MakeFunction,
   ): FunctionIR {
     const ir = super.compile(ctx, func);
-
-    if (ir.args.length === 0) {
-      throw CbuildException.from({
-        column: ctx.start?.column || 0,
-        row: ctx.start?.line || 0,
-        errorType: ErrorType.SEMANTIC,
-        machineCode: MachineCode.FUNCTION_COMPILATION_ERROR,
-        message:
-          "buildFile: call: expected at least 1 argument: var[, param...]",
-      });
-    }
 
     return ir;
   }

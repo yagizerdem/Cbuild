@@ -13,9 +13,13 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-%.o : %c
-\t echo hit
+reversed := $2 $1 
+a=reversed
 
+foo = $(call reversed, a, b)
+
+app: 
+\t echo $(foo)
 
 `.trim();
 

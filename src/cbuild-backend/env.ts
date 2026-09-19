@@ -131,13 +131,59 @@ export class SymbolTableVariable {
 export class Env {
   private readonly symbolTable = new Map<string, SymbolTableVariable>();
   public readonly settings: Settings;
+  public enclosingEnv?: Env;
 
   public constructor(setting: Settings) {
     this.settings = setting;
   }
 
+  public get enclosing(): Env | undefined {
+    return this.enclosingEnv;
+  }
+
+  public set enclosing(env: Env | undefined) {
+    this.enclosingEnv = env;
+  }
+
+  public get hasEnclosing(): boolean {
+    return this.enclosingEnv !== undefined;
+  }
+
   public get variableCount(): number {
     return this.symbolTable.size;
+  }
+
+  public hasVariableRecursive(name: string): boolean {
+    if (this.hasVariable(name)) {
+      return true;
+    }
+
+    if (this.enclosingEnv) {
+      return this.enclosingEnv.hasVariableRecursive(name);
+    }
+
+    return false;
+  }
+
+  public getVariableRecursive(name: string): SymbolTableVariable | undefined {
+    const variable = this.getVariable(name);
+    if (variable !== undefined) {
+      return variable;
+    }
+
+    if (this.enclosingEnv) {
+      return this.enclosingEnv.getVariableRecursive(name);
+    }
+
+    return undefined;
+  }
+
+  public getVariableOrDefaultRecursive<T>(
+    name: string,
+    defaultValue: T,
+  ): SymbolTableVariable | T {
+    const variable = this.getVariableRecursive(name);
+    return variable ?? defaultValue;
   }
 
   public hasVariable(name: string): boolean {
@@ -158,10 +204,10 @@ export class Env {
     return variable;
   }
 
-  public getVariableOrDefault(
+  public getVariableOrDefault<T>(
     name: string,
-    defaultValue: SymbolTableVariable,
-  ): SymbolTableVariable {
+    defaultValue: T,
+  ): SymbolTableVariable | T {
     return this.getVariable(name) ?? defaultValue;
   }
 
