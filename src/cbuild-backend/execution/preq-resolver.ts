@@ -3,8 +3,8 @@ import path from "path";
 import {
   fileExistbyAbsolutePath,
   resolveAndGetAbsolutePath,
-} from "../../file-utils.js";
-import { VpathStemResolver } from "./resolve-stem.js";
+} from "@src/file-utils.js";
+import { StemResolver } from "@src/cbuild-backend/stem-resolver.js";
 
 export type PreqType =
   | "cwd"
@@ -82,7 +82,7 @@ export class PreqResolver {
       };
     }
 
-    const vpathStemResolver = new VpathStemResolver();
+    const vpathStemResolver = new StemResolver();
     // check by vpath rules
     for (const vpathRule of this.vpathRules) {
       if (!vpathStemResolver.match(vpathRule.pattern, preqName)) {

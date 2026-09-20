@@ -7,6 +7,7 @@ import {
   IncludeIR,
   IR,
   NormalRuleIR,
+  StaticPatternRuleIR,
   UndefineIR,
   VpathIR,
 } from "@src/compiler/ir.js";
@@ -22,6 +23,7 @@ import { BaseModel, VpathRule } from "@src/cbuild-backend/model.js";
 import ModelResolver from "@cbuild-backend/evaluator/core/model-resolver.js";
 import VpathIREvaluator from "@cbuild-backend/evaluator/vpath-evaluator.js";
 import IncludeIREvaluator from "@cbuild-backend/evaluator/include-evaluator.js";
+import StaticPatternIREvaluator from "@cbuild-backend/evaluator/staticpattern-evaluator.js";
 
 export function unsupported(ir: IR) {
   // programmatic error should never send invalid irtype to cbuild backend
@@ -91,6 +93,13 @@ export default class BuildFileEvaluator {
         );
         const includedModels = await includeIREvaluator.executeAsync();
         resolvedModels.push(...includedModels);
+      } else if (ir instanceof StaticPatternRuleIR) {
+        const staticPatternRuleIREvaluator = new StaticPatternIREvaluator(
+          this.context,
+          ir,
+        );
+        const resolutionResult = staticPatternRuleIREvaluator.execute();
+        resolvedModels.push(...resolutionResult);
       } else if (!allowedIR(ir)) {
         unsupported(ir);
       } else {

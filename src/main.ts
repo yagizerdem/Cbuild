@@ -13,10 +13,9 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-include test.mk
 
-app.c:
-\t echo $(FLL_NAME) -> app
+app.c: %.c : %.txt
+\t echo app build
 
 
 

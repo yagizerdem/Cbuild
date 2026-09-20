@@ -71,7 +71,7 @@ export default class ModelResolver implements Executor {
         new NormalRule({
           target,
           prerequisites: [...prerequisites],
-          normalRuleIR: ir,
+          ruleIR: ir,
           recipeIRS: [...ir.recipes],
           shellCommands: [], // do not use raw shell commands, expand from recipeIR before execution
           vpathRules: this.vpathsRules ?? [],
