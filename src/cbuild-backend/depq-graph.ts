@@ -10,7 +10,9 @@ export function hasCircularDependency(rules: NormalRule[]): boolean {
 
   for (const rule of rules) {
     const prerequisites = graph.get(rule.target) ?? [];
-    prerequisites.push(...rule.prerequisites);
+    prerequisites.push(
+      ...[...rule.prerequisites, ...rule.orderOnlyPrerequisites],
+    );
     graph.set(rule.target, prerequisites);
   }
 

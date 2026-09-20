@@ -90,16 +90,16 @@ function validateAssignment(assignmentIR: AssignmentIR): void {
 }
 
 function validateNormalRule(normalRuleIR: NormalRuleIR): void {
-  if (normalRuleIR.orderOnlyPrerequisites.length > 0) {
-    throw CbuildException.from({
-      column: normalRuleIR.col,
-      row: normalRuleIR.row,
-      errorType: ErrorType.SEMANTIC,
-      machineCode: MachineCode.UNSUPPORTED_IR,
-      message:
-        "Order-only prerequisites are not supported by the cbuild backend",
-    });
-  }
+  // if (normalRuleIR.orderOnlyPrerequisites.length > 0) {
+  //   throw CbuildException.from({
+  //     column: normalRuleIR.col,
+  //     row: normalRuleIR.row,
+  //     errorType: ErrorType.SEMANTIC,
+  //     machineCode: MachineCode.UNSUPPORTED_IR,
+  //     message:
+  //       "Order-only prerequisites are not supported by the cbuild backend",
+  //   });
+  // }
 
   for (const target of normalRuleIR.targets) {
     validateParts(target.parts, normalRuleIR, "Rule target");

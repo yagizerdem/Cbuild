@@ -14,7 +14,7 @@ try {
   const buildFile = `
 
 
-app.c: %.c : %.txt
+app.c: app.txt
 \t echo app build
 
 
