@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
-import type { RecipeIR, NormalRuleIR } from "@compiler/ir.js";
+import type {
+  RecipeIR,
+  NormalRuleIR,
+  StaticPatternRuleIR,
+} from "@compiler/ir.js";
 
 export abstract class BaseModel {
   public readonly uuid: string = randomUUID();
@@ -14,7 +18,7 @@ export interface NormalRuleOptions {
   prerequisites: string[];
   shellCommands: string[];
   recipeIRS: RecipeIR[];
-  normalRuleIR: NormalRuleIR;
+  ruleIR: NormalRuleIR | StaticPatternRuleIR;
   vpathRules?: VpathRule[];
 }
 
@@ -35,7 +39,7 @@ export class NormalRule extends BaseModel {
   public prerequisites: string[];
   public shellCommands: string[];
   public recipeIRS: RecipeIR[];
-  public normalRuleIR: NormalRuleIR;
+  public ruleIR: NormalRuleIR | StaticPatternRuleIR;
   public vpathRules: VpathRule[];
 
   public constructor(options: NormalRuleOptions) {
@@ -45,7 +49,7 @@ export class NormalRule extends BaseModel {
     this.prerequisites = options.prerequisites;
     this.shellCommands = options.shellCommands;
     this.recipeIRS = options.recipeIRS;
-    this.normalRuleIR = options.normalRuleIR;
+    this.ruleIR = options.ruleIR;
     this.vpathRules = options.vpathRules ?? [];
   }
 
@@ -55,7 +59,7 @@ export class NormalRule extends BaseModel {
   prerequisites=${JSON.stringify(this.prerequisites)},
   shellCommands=${JSON.stringify(this.shellCommands)},
   recipeIRS=${JSON.stringify(this.recipeIRS)},
-  normalRuleIR=${JSON.stringify(this.normalRuleIR)}
+  ruleIR=${JSON.stringify(this.ruleIR)}
 }`;
   }
 }

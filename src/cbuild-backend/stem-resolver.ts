@@ -118,4 +118,11 @@ export class StemResolver {
   public match(pattern: string, candidate: string): boolean {
     return this.resolveStem(pattern, candidate) !== null;
   }
+
+  public replaceStem(pattern: string, stem: string): string {
+    if (!this.hasStem(pattern)) return pattern;
+
+    const parsed = parsePattern(pattern);
+    return parsed.prefix + stem + parsed.suffix;
+  }
 }

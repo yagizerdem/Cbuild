@@ -303,8 +303,8 @@ export class TargetRuleIR extends BaseIR implements Rule {
 }
 
 export interface StaticPatternRuleOptions {
-  targets?: ValueIR[];
-  targetPattern?: ValueIR;
+  targets: ValueIR[];
+  targetPattern: ValueIR;
   prerequisites?: ValueIR[];
   orderOnlyPrerequisites?: ValueIR[];
   recipes?: RecipeIR[];
@@ -313,17 +313,13 @@ export interface StaticPatternRuleOptions {
 
 export class StaticPatternRuleIR extends BaseIR implements Rule {
   public readonly targets: ValueIR[];
-  public targetPattern?: ValueIR;
+  public targetPattern: ValueIR;
   public readonly prerequisites: ValueIR[];
   public readonly orderOnlyPrerequisites: ValueIR[];
   public readonly recipes: RecipeIR[];
   public separator?: RuleSeparator;
 
-  constructor(
-    options: StaticPatternRuleOptions = {},
-    row?: number,
-    col?: number,
-  ) {
+  constructor(options: StaticPatternRuleOptions, row?: number, col?: number) {
     super(row, col);
     this.targets = options.targets ?? [];
     this.targetPattern = options.targetPattern;
