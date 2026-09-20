@@ -2,13 +2,6 @@ import {
   RecipeExpansionEngine,
   ValueExpansionEngine,
 } from "@cbuild-backend/expansion.js";
-import {
-  fileExistbyAbsolutePath,
-  fileExistbyAbsolutePathAsync,
-  getModifiedTimeNs,
-  getModifiedTimeNsAsync,
-  resolveAndGetAbsolutePath,
-} from "@src/file-utils.js";
 import { topologicalSort } from "@cbuild-backend/depq-graph.js";
 import { NormalRule } from "@cbuild-backend/model.js";
 import { Env } from "@cbuild-backend/env.js";
@@ -18,7 +11,19 @@ import {
   ErrorType,
   MachineCode,
 } from "@src/cbuild-exception.js";
-import { PreqResolver } from "./preq-resolver.js";
+import {
+  PreqResolution,
+  PreqResolver,
+} from "@cbuild-backend/execution/preq-resolver.js";
+import {
+  isOutOfDateAsync,
+  isOutOfDateSync,
+} from "@cbuild-backend/execution/out-of-date.js";
+
+export type Pair<T1, T2> = {
+  first: T1;
+  second: T2;
+};
 
 export class Build {
   private readonly context: Env;
@@ -28,16 +33,9 @@ export class Build {
     this.rulePatterns = rulePatterns;
   }
 
-  public async shouldRebuildAsync(
+  public resolvePreqs(
     rule: NormalRule,
-    baseDir: string,
-  ): Promise<boolean> {
-    const targetEntryPath: string = resolveAndGetAbsolutePath(
-      baseDir,
-      rule.target,
-    );
-
-    // resolve preqs
+  ): Pair<PreqResolution[], PreqResolution[]> {
     const preqResolver = new PreqResolver(
       this.rulePatterns,
       rule.vpathRules ?? [],
@@ -47,7 +45,11 @@ export class Build {
       preqResolver.resolve(preq),
     );
 
-    const notFound = preqResolutions.find(
+    const orderOnlyPreqResolutions = rule.orderOnlyPrerequisites.map((preq) =>
+      preqResolver.resolve(preq),
+    );
+
+    const notFound = [...preqResolutions, ...orderOnlyPreqResolutions].find(
       (resolution) => resolution.origin.type === "not-found",
     );
 
@@ -61,113 +63,22 @@ export class Build {
       });
     }
 
-    if (!(await fileExistbyAbsolutePathAsync(targetEntryPath))) return true;
-
-    const lastModifiedDateOfTarget: bigint | undefined =
-      await getModifiedTimeNsAsync(targetEntryPath);
-
-    if (!lastModifiedDateOfTarget) return true;
-
-    for (const preq of preqResolutions) {
-      if (preq.origin.type === "target-rule") return true;
-      const preqAbsolutePath =
-        preq.origin.type === "cwd"
-          ? preq.origin.absolutePath
-          : preq.origin.type === "vpath"
-            ? preq.origin.absolutePath
-            : preq.origin.type === "absolute"
-              ? preq.origin.absolutePath
-              : (() => {
-                  throw CbuildException.from({
-                    errorType: ErrorType.PROCESS,
-                    machineCode: MachineCode.DEPQ_NOT_FOUND,
-                    message: `cbuild: No rule to make target '${preq.preqName}', needed by '${rule.target}'. Stop.`,
-                    column: -1,
-                    row: -1,
-                  });
-                })();
-
-      const exist: boolean =
-        await fileExistbyAbsolutePathAsync(preqAbsolutePath);
-      if (!exist) return true;
-
-      const lastModifiedDateOfPreq: bigint | undefined =
-        await getModifiedTimeNsAsync(preqAbsolutePath);
-
-      if (!lastModifiedDateOfPreq) return true;
-      if (lastModifiedDateOfPreq > lastModifiedDateOfTarget) return true;
-    }
-
-    return false;
+    return {
+      first: preqResolutions,
+      second: orderOnlyPreqResolutions,
+    };
   }
 
-  public shouldRebuildSync(rule: NormalRule, baseDir: string): boolean {
-    const targetEntryPath: string = resolveAndGetAbsolutePath(
-      baseDir,
-      rule.target,
-    );
-
+  public async shouldRebuildAsync(rule: NormalRule): Promise<boolean> {
     // resolve preqs
-    const preqResolver = new PreqResolver(
-      this.rulePatterns,
-      rule.vpathRules ?? [],
-    );
+    const preqResolutions = this.resolvePreqs(rule).first;
+    return await isOutOfDateAsync(rule, preqResolutions);
+  }
 
-    const preqResolutions = rule.prerequisites.map((preq) =>
-      preqResolver.resolve(preq),
-    );
-
-    const notFound = preqResolutions.find(
-      (resolution) => resolution.origin.type === "not-found",
-    );
-
-    if (notFound) {
-      throw CbuildException.from({
-        errorType: ErrorType.PROCESS,
-        machineCode: MachineCode.DEPQ_NOT_FOUND,
-        message: `cbuild: No rule to make target '${notFound.preqName}', needed by '${rule.target}'. Stop.`,
-        column: -1,
-        row: -1,
-      });
-    }
-
-    if (!fileExistbyAbsolutePath(targetEntryPath)) return true;
-
-    const lastModifiedDateOfTarget: bigint | undefined =
-      getModifiedTimeNs(targetEntryPath);
-
-    if (!lastModifiedDateOfTarget) return true;
-
-    for (const preq of preqResolutions) {
-      if (preq.origin.type === "target-rule") return true;
-      const preqAbsolutePath =
-        preq.origin.type === "cwd"
-          ? preq.origin.absolutePath
-          : preq.origin.type === "vpath"
-            ? preq.origin.absolutePath
-            : preq.origin.type === "absolute"
-              ? preq.origin.absolutePath
-              : (() => {
-                  throw CbuildException.from({
-                    errorType: ErrorType.PROCESS,
-                    machineCode: MachineCode.DEPQ_NOT_FOUND,
-                    message: `cbuild: No rule to make target '${preq.preqName}', needed by '${rule.target}'. Stop.`,
-                    column: -1,
-                    row: -1,
-                  });
-                })();
-
-      const exist: boolean = fileExistbyAbsolutePath(preqAbsolutePath);
-      if (!exist) return true;
-
-      const lastModifiedDateOfPreq: bigint | undefined =
-        getModifiedTimeNs(preqAbsolutePath);
-
-      if (!lastModifiedDateOfPreq) return true;
-      if (lastModifiedDateOfPreq > lastModifiedDateOfTarget) return true;
-    }
-
-    return false;
+  public shouldRebuildSync(rule: NormalRule): boolean {
+    // resolve preqs
+    const preqResolutions = this.resolvePreqs(rule).first;
+    return isOutOfDateSync(rule, preqResolutions);
   }
 
   // maps rule uuid to preq rules
@@ -190,7 +101,10 @@ export class Build {
     for (const rule of rules) {
       const dependencies: NormalRule[] = [];
 
-      for (const prerequisite of rule.prerequisites) {
+      for (const prerequisite of [
+        ...rule.prerequisites,
+        ...rule.orderOnlyPrerequisites,
+      ]) {
         const matches = rulesByTarget.get(prerequisite);
 
         if (matches) {
@@ -223,7 +137,10 @@ export class Build {
     const reverseTargetMap = new Map<string, NormalRule[]>();
 
     for (const rule of rules) {
-      for (const preq of rule.prerequisites) {
+      for (const preq of [
+        ...rule.prerequisites,
+        ...rule.orderOnlyPrerequisites,
+      ]) {
         const preqRules = rulesByTarget.get(preq);
         if (!preqRules) continue; // No rule produces this prerequisite; it may be a filesystem or external dependency.
 
@@ -270,7 +187,7 @@ export class Build {
   }
 
   public buildTargetSync(rule: NormalRule) {
-    if (!this.shouldRebuildSync(rule, process.cwd())) {
+    if (!this.shouldRebuildSync(rule)) {
       return;
     }
 
@@ -338,7 +255,7 @@ export class Build {
   }
 
   public async buildTargetAsync(rule: NormalRule) {
-    if (!(await this.shouldRebuildAsync(rule, process.cwd()))) {
+    if (!(await this.shouldRebuildAsync(rule))) {
       return;
     }
 

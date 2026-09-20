@@ -65,12 +65,14 @@ export default class ModelResolver implements Executor {
 
     const targets = expandWords(ir.targets);
     const prerequisites = expandWords(ir.prerequisites);
+    const orderOnlyPrerequisites = expandWords(ir.orderOnlyPrerequisites ?? []);
 
     return targets.map(
       (target) =>
         new NormalRule({
           target,
           prerequisites: [...prerequisites],
+          orderOnlyPrerequisites: [...orderOnlyPrerequisites],
           ruleIR: ir,
           recipeIRS: [...ir.recipes],
           shellCommands: [], // do not use raw shell commands, expand from recipeIR before execution

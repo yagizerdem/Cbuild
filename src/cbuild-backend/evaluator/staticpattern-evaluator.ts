@@ -3,6 +3,11 @@ import { ValueExpansionEngine } from "@cbuild-backend/expansion.js";
 import { StaticPatternRuleIR } from "@src/compiler/ir.js";
 import { StemResolver } from "@cbuild-backend/stem-resolver.js";
 import { NormalRule } from "@cbuild-backend/model.js";
+import {
+  CbuildException,
+  ErrorType,
+  MachineCode,
+} from "@src/cbuild-exception.js";
 
 export default class StaticPatternIREvaluator {
   private readonly context: Env;
@@ -18,6 +23,7 @@ export default class StaticPatternIREvaluator {
     const stemResolver = new StemResolver();
     const targets: string[] = [];
     const preqPatterns: string[] = [];
+    const orderOnlyPreqPatterns: string[] = [];
     const ruleModels: NormalRule[] = [];
 
     // rule format
@@ -36,21 +42,52 @@ export default class StaticPatternIREvaluator {
       preqPatterns.push(this.valueExpansionEngine.expand(preqPattern));
     }
 
+    for (const orderOnlyPreqPattern of this.ir.orderOnlyPrerequisites) {
+      orderOnlyPreqPatterns.push(
+        this.valueExpansionEngine.expand(orderOnlyPreqPattern),
+      );
+    }
+
     for (const target of targets) {
       const resolvedPreqs: string[] = [];
+      const resolvedOrderOnlyPreqs: string[] = [];
       if (stemResolver.match(targetPattern, target)) {
         const stem = stemResolver.resolveStem(targetPattern, target);
         for (const preqPattern of preqPatterns) {
           if (stem == null) {
-            resolvedPreqs.push(preqPattern);
+            throw CbuildException.from({
+              errorType: ErrorType.PROCESS,
+              message: "cbuild: *** target pattern contains no '%'.  Stop.",
+              machineCode: MachineCode.STEM_RESOLUTION_FAILED,
+              row: this.ir.row,
+              column: this.ir.col,
+            });
           } else {
             const resolvedPreq = stemResolver.replaceStem(preqPattern, stem);
             resolvedPreqs.push(resolvedPreq);
           }
         }
+        for (const orderOnlyPreqPattern of orderOnlyPreqPatterns) {
+          if (stem == null) {
+            throw CbuildException.from({
+              errorType: ErrorType.PROCESS,
+              message: "cbuild: *** target pattern contains no '%'.  Stop.",
+              machineCode: MachineCode.STEM_RESOLUTION_FAILED,
+              row: this.ir.row,
+              column: this.ir.col,
+            });
+          } else {
+            const resolvedOrderOnlyPreq = stemResolver.replaceStem(
+              orderOnlyPreqPattern,
+              stem,
+            );
+            resolvedOrderOnlyPreqs.push(resolvedOrderOnlyPreq);
+          }
+        }
         ruleModels.push(
           new NormalRule({
             prerequisites: resolvedPreqs,
+            orderOnlyPrerequisites: resolvedOrderOnlyPreqs,
             ruleIR: this.ir,
             target: target,
             recipeIRS: this.ir.recipes,

@@ -16,6 +16,7 @@ export abstract class BaseModel {
 export interface NormalRuleOptions {
   target: string;
   prerequisites: string[];
+  orderOnlyPrerequisites?: string[];
   shellCommands: string[];
   recipeIRS: RecipeIR[];
   ruleIR: NormalRuleIR | StaticPatternRuleIR;
@@ -37,6 +38,7 @@ export class VpathRule extends BaseModel {
 export class NormalRule extends BaseModel {
   public target: string;
   public prerequisites: string[];
+  public orderOnlyPrerequisites: string[];
   public shellCommands: string[];
   public recipeIRS: RecipeIR[];
   public ruleIR: NormalRuleIR | StaticPatternRuleIR;
@@ -47,9 +49,11 @@ export class NormalRule extends BaseModel {
 
     this.target = options.target;
     this.prerequisites = options.prerequisites;
+    this.orderOnlyPrerequisites = options.orderOnlyPrerequisites ?? [];
     this.shellCommands = options.shellCommands;
     this.recipeIRS = options.recipeIRS;
     this.ruleIR = options.ruleIR;
+
     this.vpathRules = options.vpathRules ?? [];
   }
 
@@ -57,6 +61,7 @@ export class NormalRule extends BaseModel {
     return `NormalRule {
   target=${this.target},
   prerequisites=${JSON.stringify(this.prerequisites)},
+  orderOnlyPrerequisites=${JSON.stringify(this.orderOnlyPrerequisites)},
   shellCommands=${JSON.stringify(this.shellCommands)},
   recipeIRS=${JSON.stringify(this.recipeIRS)},
   ruleIR=${JSON.stringify(this.ruleIR)}
