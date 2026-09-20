@@ -21,6 +21,7 @@ export interface NormalRuleOptions {
   recipeIRS: RecipeIR[];
   ruleIR: NormalRuleIR | StaticPatternRuleIR;
   vpathRules?: VpathRule[];
+  stem?: string;
 }
 
 export class VpathRule extends BaseModel {
@@ -43,6 +44,7 @@ export class NormalRule extends BaseModel {
   public recipeIRS: RecipeIR[];
   public ruleIR: NormalRuleIR | StaticPatternRuleIR;
   public vpathRules: VpathRule[];
+  public stem?: string;
 
   public constructor(options: NormalRuleOptions) {
     super();
@@ -55,6 +57,7 @@ export class NormalRule extends BaseModel {
     this.ruleIR = options.ruleIR;
 
     this.vpathRules = options.vpathRules ?? [];
+    this.stem = options.stem;
   }
 
   public override toString(): string {
@@ -70,16 +73,31 @@ export class NormalRule extends BaseModel {
 }
 
 export interface ImplicitPatternRuleOptions {
+  targetPattern: string;
+  prerequisites: string[];
+  orderOnlyPrerequisites: string[];
   recipeIRS: RecipeIR[];
+  ruleIR: NormalRuleIR;
+  vpathRules: VpathRule[];
 }
 
 // implicit pattern rule
 export class ImplicitPatterRule extends BaseModel {
+  public targetPattern: string;
+  public prerequisites: string[];
+  public orderOnlyPrerequisites: string[];
   public recipeIRS: RecipeIR[];
+  public ruleIR: NormalRuleIR;
+  public vpathRules: VpathRule[];
 
   public constructor(options: ImplicitPatternRuleOptions) {
     super();
 
+    this.targetPattern = options.targetPattern;
+    this.prerequisites = options.prerequisites;
+    this.orderOnlyPrerequisites = options.orderOnlyPrerequisites;
     this.recipeIRS = options.recipeIRS;
+    this.ruleIR = options.ruleIR;
+    this.vpathRules = options.vpathRules;
   }
 }
