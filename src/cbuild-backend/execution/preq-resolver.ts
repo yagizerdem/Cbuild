@@ -3,7 +3,7 @@ import path from "path";
 import {
   fileExistbyAbsolutePath,
   resolveAndGetAbsolutePath,
-} from "../file-utils.js";
+} from "../../file-utils.js";
 import { VpathStemResolver } from "./resolve-stem.js";
 
 export type PreqType =

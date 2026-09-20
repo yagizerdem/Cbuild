@@ -13,10 +13,10 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-vpath %.ts ./src
+include test.mk
 
-app.c: main.ts
-\t echo "run app"
+app.c:
+\t echo $(FLL_NAME) -> app
 
 
 

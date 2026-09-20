@@ -10,6 +10,7 @@ import {
   DefineIR,
   ExportIR,
   HookIR,
+  IncludeIR,
   IR,
   NormalRuleIR,
   UndefineIR,
@@ -149,6 +150,7 @@ export function allowedIR(ir: IR): boolean {
     ir instanceof DefineIR ||
     ir instanceof UndefineIR ||
     ir instanceof ExportIR ||
-    ir instanceof VpathIR
+    ir instanceof VpathIR ||
+    ir instanceof IncludeIR
   );
 }

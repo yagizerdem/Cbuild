@@ -4,6 +4,7 @@ import {
   DefineIR,
   ExportIR,
   HookIR,
+  IncludeIR,
   IR,
   NormalRuleIR,
   UndefineIR,
@@ -20,6 +21,7 @@ import ConditionalIREvaluator from "@cbuild-backend/evaluator/conditional-evalua
 import { BaseModel, VpathRule } from "@src/cbuild-backend/model.js";
 import ModelResolver from "@cbuild-backend/evaluator/core/model-resolver.js";
 import VpathIREvaluator from "@cbuild-backend/evaluator/vpath-evaluator.js";
+import IncludeIREvaluator from "@cbuild-backend/evaluator/include-evaluator.js";
 
 export function unsupported(ir: IR) {
   // programmatic error should never send invalid irtype to cbuild backend
@@ -31,9 +33,10 @@ export default class BuildFileEvaluator {
   private readonly irs: IR[];
   private vpaths: VpathRule[] = [];
 
-  public constructor(context: Env, irs: IR[]) {
+  public constructor(context: Env, irs: IR[], vpaths: VpathRule[] = []) {
     this.context = context;
     this.irs = irs;
+    this.vpaths = vpaths;
   }
 
   public async evaluateAsync(): Promise<BaseModel[]> {
@@ -80,6 +83,14 @@ export default class BuildFileEvaluator {
       } else if (ir instanceof VpathIR) {
         const vpathIREvaluator = new VpathIREvaluator(this.context, ir);
         this.vpaths = vpathIREvaluator.execute(this.vpaths);
+      } else if (ir instanceof IncludeIR) {
+        const includeIREvaluator = new IncludeIREvaluator(
+          this.context,
+          ir,
+          this.vpaths,
+        );
+        const includedModels = await includeIREvaluator.executeAsync();
+        resolvedModels.push(...includedModels);
       } else if (!allowedIR(ir)) {
         unsupported(ir);
       } else {

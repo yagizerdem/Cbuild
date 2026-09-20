@@ -8,7 +8,7 @@ import {
   getModifiedTimeNs,
   getModifiedTimeNsAsync,
   resolveAndGetAbsolutePath,
-} from "@cbuild-backend/file-utils.js";
+} from "@src/file-utils.js";
 import { topologicalSort } from "@cbuild-backend/depq-graph.js";
 import { NormalRule } from "@cbuild-backend/model.js";
 import { Env } from "@cbuild-backend/env.js";
@@ -360,14 +360,8 @@ export class Build {
       const shellVar = this.context.getVariable("SHELL");
       let shellPath: string | null = null;
 
-      if (shellVar != null) {
-        if (!shellVar.isDeferred()) shellPath = shellVar.getRawValue();
-        else {
-          const defferedValue = shellVar.getDeferredValue();
-          if (defferedValue) {
-            shellPath = valueExpansionEngine.expand(defferedValue);
-          }
-        }
+      if (shellVar != undefined) {
+        shellPath = valueExpansionEngine.expand(shellVar.value);
       }
 
       // send variables that marked as exported to child processes
