@@ -286,14 +286,8 @@ export class Build {
       const shellVar = this.context.getVariable("SHELL");
       let shellPath: string | null = null;
 
-      if (shellVar != null) {
-        if (!shellVar.isDeferred()) shellPath = shellVar.getRawValue();
-        else {
-          const defferedValue = shellVar.getDeferredValue();
-          if (defferedValue) {
-            shellPath = valueExpansionEngine.expand(defferedValue);
-          }
-        }
+      if (shellVar != undefined) {
+        shellPath = valueExpansionEngine.expand(shellVar.value);
       }
 
       // send variables that marked as exported to child processes
