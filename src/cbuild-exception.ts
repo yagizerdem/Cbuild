@@ -15,6 +15,7 @@ export enum MachineCode {
   // process
   FILE_NOT_FOUND,
   DEPQ_NOT_FOUND,
+  INCLUDE_FILE_NOT_FOUND,
 
   // depq graph
   NO_TARGET_FOUND,

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { compile } from "@tests/util/compile.js";
 import { Env, Settings } from "@src/cbuild-backend/env.js";
-import { evaluateBuildFile } from "@src/cbuild-backend/buildfile-evaluator.js";
+import BuildFileEvaluator from "@src/cbuild-backend/evaluator/core/buildfile-evaluator.js";
 import {
   expandValue,
   RecursiveVariableExpansionException,
@@ -28,8 +28,11 @@ async function evaluate(source: string): Promise<Env> {
       (node as AssignmentIR).type,
     );
   }
+
   const context = new Env(new Settings(true, 1, ".", "cbuild", true));
-  await evaluateBuildFile(program, context);
+  const evaluator = new BuildFileEvaluator(context, program);
+
+  await evaluator.evaluateAsync();
   return context;
 }
 
@@ -166,7 +169,8 @@ describe("GNU Make assignment timing and redefinition", () => {
     );
     expect(read(context, "LIVE")).toBe("old");
     expect(read(context, "FROZEN")).toBe("old");
-    await evaluateBuildFile(compile("BASE = new\n"), context);
+    const evaluator = new BuildFileEvaluator(context, compile("BASE = new\n"));
+    await evaluator.evaluateAsync();
     expect(read(context, "LIVE")).toBe("new");
     expect(read(context, "FROZEN")).toBe("old");
   });
@@ -243,7 +247,8 @@ describe("GNU Make actual recursion errors and their timing", () => {
     // Parse separately so a syntax error cannot masquerade as a recursion failure.
     const program = compile("LOOP = $(LOOP)\nRESULT := $(LOOP)\n");
     const context = new Env(new Settings(true, 1, ".", "cbuild", true));
-    await expect(evaluateBuildFile(program, context)).rejects.toBeInstanceOf(
+    const evaluator = new BuildFileEvaluator(context, program);
+    await expect(evaluator.evaluateAsync()).rejects.toBeInstanceOf(
       RecursiveVariableExpansionException,
     );
   });

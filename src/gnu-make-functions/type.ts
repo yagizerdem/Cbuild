@@ -366,7 +366,7 @@ export class dirFn implements MakeFunction {
   }
 
   public arity(): number {
-    return 1;
+    return -1; // takes 0 or 1 argument, check at compiler override function
   }
 
   public compile(ctx: FunctionContext): FunctionIR {

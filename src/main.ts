@@ -13,13 +13,12 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-a := yagiz
-export a += erdem
+include test.mk
+
+app.c:
+\t echo $(FLL_NAME) -> app
 
 
-app:
-\t  echo $a
-\t  echo $$a
 
 `.trim();
 
@@ -36,28 +35,11 @@ app:
     silent: false,
   });
 
-  const envVars: EnvVar[] = [
-    {
-      key: "b",
-      value: "value_of_b",
-    },
-    {
-      key: "a",
-      value: "value_of_a",
-    },
-  ];
-  const cliVars: CliVar[] = [
-    // {
-    //   key: "a",
-    //   value: "fucker",
-    // },
-  ];
-
   const core = new Core(context);
 
   await core.runAsync(ir, {
-    envVars: envVars,
-    cliVars: cliVars,
+    envVars: [],
+    cliVars: [],
   });
 } catch (error) {
   if (error instanceof Error) {

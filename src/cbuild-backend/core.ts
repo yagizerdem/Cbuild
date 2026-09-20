@@ -13,18 +13,14 @@ import {
   MachineCode,
 } from "@src/cbuild-exception.js";
 import {
-  filterModelResolverPassIr,
-  ModelResolver,
-} from "@src/cbuild-backend/model-resolver.js";
-import {
   findDefaultTarget,
   findTarget,
   getTargetSubgraph,
   hasCircularDependency,
 } from "@cbuild-backend/depq-graph.js";
 
-import { evaluateBuildFile } from "./buildfile-evaluator.js";
-import { Build } from "./build.js";
+import { Build } from "@cbuild-backend/execution/build.js";
+import BuildFileEvaluator from "@cbuild-backend/evaluator/core/buildfile-evaluator.js";
 
 export interface CliVar {
   key: string;
@@ -61,19 +57,13 @@ export class Core {
     this.mergeEnvVars(options?.envVars ?? []);
     this.mergeCliVars(options?.cliVars ?? []);
 
-    const evaluatedIr = await evaluateBuildFile(rules, currentContext);
-
-    const modelResolver = new ModelResolver(currentContext);
-
-    // contains type of relations in under single interface. ex. hooks
-    const graph: BaseModel[] = await modelResolver.buildAsync(
-      filterModelResolverPassIr(evaluatedIr),
-    );
+    const evaluator = new BuildFileEvaluator(this.context, rules);
+    const resolvedModels = await evaluator.evaluateAsync();
 
     // add seperate resolutino step and normalize rules
 
     // contains relation only needed for build
-    const normalRulesGraph = this.collectNormalRuleModels(graph);
+    const normalRulesGraph = this.collectNormalRuleModels(resolvedModels);
 
     const target = findDefaultTarget(normalRulesGraph);
     if (!target) {
@@ -103,7 +93,7 @@ export class Core {
       });
     }
 
-    const builder = new Build(currentContext);
+    const builder = new Build(currentContext, normalRulesGraph);
     await builder.parallelBuildTargetAsync(rulesSubGraph, 2);
   }
 

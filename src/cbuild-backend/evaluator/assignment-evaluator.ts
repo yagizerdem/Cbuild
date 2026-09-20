@@ -2,13 +2,6 @@ import {
   AssignmentIR,
   AssignmentPrefix,
   AssignmentType,
-  ConditionalIR,
-  DefineIR,
-  ExportIR,
-  HookIR,
-  IR,
-  UndefineIR,
-  UndefineSpecifier,
   ValueIR,
 } from "@src/compiler/ir.js";
 import {
@@ -17,126 +10,9 @@ import {
   variableOriginPriorityMap,
 } from "@cbuild-backend/env.js";
 import { ValueExpansionEngine } from "@cbuild-backend/expansion.js";
-import Interpreter from "@cbuild-backend/interpreter/interpreter.js";
-import { allowedIR } from "@cbuild-backend/semantic.js";
-import { ProcessRunner } from "./process.js";
+import { ProcessRunner } from "@cbuild-backend/process.js";
 
-export function unsupported(ir: IR) {
-  // programmatic error should never send invalid irtype to cbuild backend
-  throw new Error("Unsupported IR type");
-}
-
-export async function evaluateBuildFile(
-  irs: IR[],
-  context: Env,
-): Promise<IR[]> {
-  const evaluatedIRs: IR[] = [];
-
-  for (const ir of irs) {
-    const valueExpansionEngine = new ValueExpansionEngine(context);
-
-    if (ir instanceof AssignmentIR) {
-      const assignmentIREvaluator = new AssignmentIREvaluator(context, ir);
-      await assignmentIREvaluator.evaluate();
-    } else if (ir instanceof UndefineIR) {
-      const undefineIREvaluator = new UndefineIREvaluator(context, ir);
-      undefineIREvaluator.execute();
-    } else if (ir instanceof ExportIR) {
-      const exportIREvaluator = new ExportIREvaluator(context, ir);
-      exportIREvaluator.execute();
-    } else if (ir instanceof HookIR) {
-      const interpreter = new Interpreter();
-      interpreter.init(context);
-      await interpreter.runAsync(ir.hookProgram);
-    } else if (ir instanceof ConditionalIR) {
-      const activeBranch: IR[] = evaluateActiveBranch(
-        ir,
-        valueExpansionEngine,
-        context,
-      );
-      const evaluatedIR = await evaluateBuildFile(activeBranch, context);
-      evaluatedIRs.push(...evaluatedIR);
-    } else if (ir instanceof DefineIR) {
-      const expandedValue = ir.value?.exec<string>(valueExpansionEngine) ?? "";
-      const identifier = ir.name?.exec<string>(valueExpansionEngine) ?? "";
-      context.setRawVariable(identifier, expandedValue);
-    } else if (allowedIR(ir)) {
-      evaluatedIRs.push(ir);
-    } else {
-      unsupported(ir);
-    }
-  }
-  return evaluatedIRs;
-}
-
-function evaluateActiveBranch(
-  ir: ConditionalIR,
-  valueExpansionEngine: ValueExpansionEngine,
-  context: Env,
-): IR[] {
-  // identififer names
-  const expandedLeftCondition =
-    ir.condition?.left?.exec<string>(valueExpansionEngine) ?? "";
-  const expandedRightCondition =
-    ir.condition?.right?.exec<string>(valueExpansionEngine) ?? undefined;
-  // if right condition is undefined it must be ifdef kw
-
-  let leftValue = "";
-  if (context.hasVariable(expandedLeftCondition)) {
-    const symbolTableVar = context.getVariable(expandedLeftCondition);
-    if (symbolTableVar?.isDeferred() && symbolTableVar.value) {
-      leftValue = valueExpansionEngine.exec(symbolTableVar.value);
-    } else {
-      leftValue = context.getRawVariable(expandedLeftCondition) ?? "";
-    }
-  }
-
-  let rightValue = "";
-  if (expandedRightCondition && context.hasVariable(expandedRightCondition)) {
-    const symbolTableVar = context.getVariable(expandedRightCondition);
-    if (symbolTableVar?.isDeferred() && symbolTableVar.value) {
-      rightValue = valueExpansionEngine.exec(symbolTableVar.value);
-    } else {
-      rightValue = context.getRawVariable(expandedRightCondition) ?? "";
-    }
-  }
-
-  if (ir.kind == "ifeq") {
-    if (leftValue === rightValue) {
-      return ir.thenBranch;
-    } else {
-      return ir.elseBranch;
-    }
-  }
-
-  if (ir.kind == "ifneq") {
-    if (leftValue !== rightValue) {
-      return ir.thenBranch;
-    } else {
-      return ir.elseBranch;
-    }
-  }
-
-  if (ir.kind == "ifdef") {
-    if (leftValue) {
-      return ir.thenBranch;
-    } else {
-      return ir.elseBranch;
-    }
-  }
-
-  if (ir.kind == "ifndef") {
-    if (!leftValue) {
-      return ir.thenBranch;
-    } else {
-      return ir.elseBranch;
-    }
-  }
-
-  return [];
-}
-
-class AssignmentIREvaluator {
+export default class AssignmentIREvaluator {
   private readonly context: Env;
   private readonly valueExpansionEngine: ValueExpansionEngine;
   private readonly assignmentIR: AssignmentIR;
@@ -361,67 +237,5 @@ class AssignmentIREvaluator {
       prefix === "export" ||
       prefix === "override export"
     );
-  }
-}
-
-class UndefineIREvaluator {
-  private readonly context: Env;
-  private readonly valueExpansionEngine: ValueExpansionEngine;
-  private readonly ir: UndefineIR;
-  constructor(context: Env, ir: UndefineIR) {
-    this.context = context;
-    this.ir = ir;
-    this.valueExpansionEngine = new ValueExpansionEngine(context);
-  }
-
-  public execute() {
-    const identifier = this.valueExpansionEngine.expand(this.ir.identifier);
-    this.undefineVariable(identifier, this.ir.prefix);
-  }
-
-  private undefineVariable(identifier: string, prefix: UndefineSpecifier) {
-    if (!this.context.hasVariable(identifier)) return;
-
-    const symbolTableVar = this.context.getVariable(identifier)!;
-    if (prefix === "override undefine") {
-      this.context.removeVariable(identifier);
-    }
-
-    if (
-      prefix === "undefine" &&
-      this.canUndefineVariable(symbolTableVar.origin, "undefine")
-    ) {
-      this.context.removeVariable(identifier);
-    }
-  }
-
-  private canUndefineVariable(
-    origin: VariableOrigin,
-    prefix: "undefine" | "override undefine",
-  ): boolean {
-    if (prefix === "override undefine") return true;
-
-    // only allow undefine for non-command-line and non-override origins
-    return origin !== "command-line" && origin !== "override";
-  }
-}
-
-class ExportIREvaluator {
-  private readonly context: Env;
-  private readonly valueExpansionEngine: ValueExpansionEngine;
-  private readonly ir: ExportIR;
-  constructor(context: Env, ir: ExportIR) {
-    this.context = context;
-    this.ir = ir;
-    this.valueExpansionEngine = new ValueExpansionEngine(context);
-  }
-
-  public execute() {
-    const identifier = this.valueExpansionEngine.expand(this.ir.identifier);
-    if (this.ir.prefix === "export") {
-      this.context.setVariableExported(identifier, true);
-    } else if (this.ir.prefix === "unexport") {
-      this.context.setVariableExported(identifier, false);
-    }
   }
 }
