@@ -16,7 +16,7 @@ try {
 include test.mk
 
 app.c:
-\t echo $(FLL_NAME) -> app
+\t echo $(FLL_NAME)  app
 
 
 

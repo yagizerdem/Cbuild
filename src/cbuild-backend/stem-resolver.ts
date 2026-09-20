@@ -82,7 +82,7 @@ function parsePattern(pattern: string): ParsedStemPattern {
   };
 }
 
-export class VpathStemResolver {
+export class StemResolver {
   public resolveStem(pattern: string, candidate: string): string | null {
     const parsed = parsePattern(pattern);
 
