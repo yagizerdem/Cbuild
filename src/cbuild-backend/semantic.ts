@@ -110,16 +110,15 @@ function validateNormalRule(normalRuleIR: NormalRuleIR): void {
   }
 
   for (const recipe of normalRuleIR.recipes) {
-    // conditionals are  not supported in cbuild backend
-    if ("kind" in recipe && recipe.kind === "conditional") {
-      throw CbuildException.from({
-        column: normalRuleIR.col,
-        row: normalRuleIR.row,
-        errorType: ErrorType.SEMANTIC,
-        machineCode: MachineCode.UNSUPPORTED_IR,
-        message: "Conditional recipes are not supported by the cbuild backend",
-      });
-    }
+    // if ("kind" in recipe && recipe.kind === "conditional") {
+    //   throw CbuildException.from({
+    //     column: normalRuleIR.col,
+    //     row: normalRuleIR.row,
+    //     errorType: ErrorType.SEMANTIC,
+    //     machineCode: MachineCode.UNSUPPORTED_IR,
+    //     message: "Conditional recipes are not supported by the cbuild backend",
+    //   });
+    // }
   }
 }
 

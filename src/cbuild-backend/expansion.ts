@@ -7,6 +7,7 @@ import {
   ValuePart,
 } from "@compiler/ir.js";
 import { Env } from "@src/cbuild-backend/env.js";
+import type { NormalRule } from "@cbuild-backend/model.js";
 import { make_function_dispatcher } from "@src/gnu-make-functions/make_function_dispatcher.js";
 import CbuildFnRunner from "@src/cbuild-backend/gnu-make-functions/fn-runner.js";
 
@@ -189,16 +190,37 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
 export class RecipeExpansionEngine extends BaseExpansionEngine {
   private readonly context: Env;
 
-  public constructor(context: Env) {
+  public constructor(context: Env, rule?: NormalRule) {
     super();
-    this.context = context;
+    if (!rule) {
+      this.context = context;
+      return;
+    }
+
+    // Automatic variables are local to one recipe, even when builds run in parallel.
+    const recipeContext = new Env(context.settings);
+    for (const [name, variable] of context.variableEntries()) {
+      recipeContext.setVariable(name, variable);
+    }
+    recipeContext.setRawVariable("@", rule.target, "automatic");
+    recipeContext.setRawVariable("<", rule.prerequisites[0] ?? "", "automatic");
+    recipeContext.setRawVariable("*", rule.stem ?? "", "automatic");
+    recipeContext.setRawVariable(
+      "^",
+      [...new Set(rule.prerequisites)].join(" "),
+      "automatic",
+    );
+    recipeContext.setRawVariable(
+      "+",
+      rule.prerequisites.join(" "),
+      "automatic",
+    );
+    this.context = recipeContext;
   }
 
   public override exec<T>(ir: RecipeIR): T {
     if (ir.recipe.kind !== "command") {
-      throw new Error(
-        "RecipeIR only support command recipes for cbuild backend",
-      );
+      throw new Error("Only RecipeIR kind command can be expanded.");
     }
 
     const valueExpansionEngine = new ValueExpansionEngine(this.context);

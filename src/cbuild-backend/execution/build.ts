@@ -191,12 +191,12 @@ export class Build {
       return;
     }
 
-    const recipeExpansionEngine = new RecipeExpansionEngine(this.context);
+    const recipeExpansionEngine = new RecipeExpansionEngine(this.context, rule);
     const valueExpansionEngine = new ValueExpansionEngine(this.context);
 
     const processRunner = new ProcessRunner();
 
-    for (const recipeIR of rule.recipeIRS) {
+    for (const recipeIR of rule.evaluatedRecipeIRs) {
       // expand recipe before executing
       const command: string = recipeIR.exec(recipeExpansionEngine);
 
@@ -259,12 +259,12 @@ export class Build {
       return;
     }
 
-    const recipeExpansionEngine = new RecipeExpansionEngine(this.context);
+    const recipeExpansionEngine = new RecipeExpansionEngine(this.context, rule);
     const valueExpansionEngine = new ValueExpansionEngine(this.context);
 
     const processRunner = new ProcessRunner();
 
-    for (const recipeIR of rule.recipeIRS) {
+    for (const recipeIR of rule.evaluatedRecipeIRs) {
       // expand recipe before executing
       const command: string = recipeIR.exec(recipeExpansionEngine);
 

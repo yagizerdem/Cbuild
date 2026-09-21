@@ -1,12 +1,20 @@
 import {
   NormalRuleIR,
+  RecipeIR,
   type Executor,
   type IR,
   type ValueIR,
 } from "@compiler/ir.js";
 import { Env } from "@cbuild-backend/env.js";
 import { ValueExpansionEngine } from "@cbuild-backend/expansion.js";
-import { BaseModel, NormalRule, VpathRule } from "@cbuild-backend/model.js";
+import {
+  BaseModel,
+  ImplicitPatterRule,
+  NormalRule,
+  VpathRule,
+} from "@cbuild-backend/model.js";
+import { StemResolver } from "@cbuild-backend/stem-resolver.js";
+import ConditionalRecipeIREvaluator from "@cbuild-backend/evaluator/conditional-recipe-evaluator.js";
 
 export function filterModelResolverPassIr(irs: IR[]): IR[] {
   const result: IR[] = [];
@@ -66,18 +74,41 @@ export default class ModelResolver implements Executor {
     const targets = expandWords(ir.targets);
     const prerequisites = expandWords(ir.prerequisites);
     const orderOnlyPrerequisites = expandWords(ir.orderOnlyPrerequisites ?? []);
+    const stemResolver = new StemResolver();
 
-    return targets.map(
-      (target) =>
-        new NormalRule({
-          target,
-          prerequisites: [...prerequisites],
-          orderOnlyPrerequisites: [...orderOnlyPrerequisites],
-          ruleIR: ir,
-          recipeIRS: [...ir.recipes],
-          shellCommands: [], // do not use raw shell commands, expand from recipeIR before execution
-          vpathRules: this.vpathsRules ?? [],
-        }),
+    // resolve recipes
+    const recipeIRresolutions: RecipeIR[] = [];
+    for (const recipeIR of ir.recipes) {
+      const conditionalRecipeIREvaluator = new ConditionalRecipeIREvaluator(
+        this.context,
+        recipeIR,
+      );
+      const activeRecipeIRs: RecipeIR[] =
+        conditionalRecipeIREvaluator.execute();
+      recipeIRresolutions.push(...activeRecipeIRs);
+    }
+
+    return targets.map((target) =>
+      stemResolver.hasStem(target)
+        ? new ImplicitPatterRule({
+            targetPattern: target,
+            prerequisites: [...prerequisites],
+            orderOnlyPrerequisites: [...orderOnlyPrerequisites],
+            recipeIRs: [...ir.recipes],
+            evaluatedRecipeIRs: [...recipeIRresolutions],
+            ruleIR: ir,
+            vpathRules: [...this.vpathsRules],
+          })
+        : new NormalRule({
+            target,
+            prerequisites: [...prerequisites],
+            orderOnlyPrerequisites: [...orderOnlyPrerequisites],
+            ruleIR: ir,
+            recipeIRs: [...ir.recipes],
+            evaluatedRecipeIRs: [...recipeIRresolutions],
+            shellCommands: [], // do not use raw shell commands, expand from recipeIR before execution
+            vpathRules: this.vpathsRules ?? [],
+          }),
     );
   }
 }

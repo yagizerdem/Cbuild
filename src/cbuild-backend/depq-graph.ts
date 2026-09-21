@@ -92,7 +92,7 @@ export function getTargetSubgraph(
     for (const rule of rules) {
       if (rule.target === currentTarget) {
         subGraph.push(rule);
-        stack.push(...rule.prerequisites);
+        stack.push(...rule.prerequisites, ...rule.orderOnlyPrerequisites);
       }
     }
   }
@@ -158,7 +158,10 @@ export function findRuleByUUID(rules: NormalRule[], uuid: string): NormalRule {
 // preserve order of targets
 export function findTopLevelTargets(rules: NormalRule[]): string[] {
   const prerequisiteTargets: Set<string> = new Set(
-    rules.flatMap((rule) => rule.prerequisites),
+    rules.flatMap((rule) => [
+      ...rule.prerequisites,
+      ...rule.orderOnlyPrerequisites,
+    ]),
   );
 
   return Array.from(new Set(rules.map((rule) => rule.target))).filter(
@@ -233,7 +236,10 @@ function topologicalSortRecursive(
   const targetRules: NormalRule[] = rulesByTarget.get(target) ?? [];
 
   for (const rule of targetRules) {
-    for (const prerequisite of rule.prerequisites) {
+    for (const prerequisite of [
+      ...rule.prerequisites,
+      ...rule.orderOnlyPrerequisites,
+    ]) {
       if (rulesByTarget.has(prerequisite)) {
         topologicalSortRecursive(
           prerequisite,

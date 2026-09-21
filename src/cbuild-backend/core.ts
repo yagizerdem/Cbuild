@@ -1,4 +1,8 @@
-import { BaseModel, NormalRule } from "@cbuild-backend/model.js";
+import {
+  BaseModel,
+  ImplicitPatterRule,
+  NormalRule,
+} from "@cbuild-backend/model.js";
 
 import {
   compareVarPriority,
@@ -21,6 +25,7 @@ import {
 
 import { Build } from "@cbuild-backend/execution/build.js";
 import BuildFileEvaluator from "@cbuild-backend/evaluator/core/buildfile-evaluator.js";
+import { ImplicitRuleResolver } from "@cbuild-backend/implicit-rule-resolver.js";
 
 export interface CliVar {
   key: string;
@@ -63,9 +68,10 @@ export class Core {
     // add seperate resolutino step and normalize rules
 
     // contains relation only needed for build
-    const normalRulesGraph = this.collectNormalRuleModels(resolvedModels);
+    const explicitRules = this.collectNormalRuleModels(resolvedModels);
+    const patterns = this.collectImplicitPatternRuleModels(resolvedModels);
 
-    const target = findDefaultTarget(normalRulesGraph);
+    const target = findDefaultTarget(explicitRules);
     if (!target) {
       throw CbuildException.from({
         errorType: ErrorType.SEMANTIC,
@@ -76,7 +82,11 @@ export class Core {
       });
     }
 
-    const targetRule = findTarget(normalRulesGraph, target);
+    const normalRulesGraph = new ImplicitRuleResolver(
+      explicitRules,
+      patterns,
+      process.cwd(),
+    ).resolve(target);
 
     // contains only the rules relevant to the target
     const rulesSubGraph = getTargetSubgraph(normalRulesGraph, target);
@@ -99,6 +109,12 @@ export class Core {
 
   public collectNormalRuleModels(baseModesl: BaseModel[]): NormalRule[] {
     return baseModesl.filter((model) => model instanceof NormalRule);
+  }
+
+  public collectImplicitPatternRuleModels(
+    baseModesl: BaseModel[],
+  ): ImplicitPatterRule[] {
+    return baseModesl.filter((model) => model instanceof ImplicitPatterRule);
   }
 
   public mergeEnvVars(envVars: EnvVar[]) {
