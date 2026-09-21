@@ -15,16 +15,15 @@ export class compile_file extends compile_fn {
     func: MakeFunction,
   ): FunctionIR {
     const ir = super.compile(ctx, func);
-    util.cleanWS(ir);
 
-    if (ir.args.length !== 2 && ir.args.length !== 3) {
+    if (ir.args.length !== 1 && ir.args.length !== 2) {
       throw CbuildException.from({
         column: ctx.start?.column || 0,
         row: ctx.start?.line || 0,
         errorType: ErrorType.SEMANTIC,
         machineCode: MachineCode.FUNCTION_COMPILATION_ERROR,
         message:
-          "buildFile: file: expected 2 or 3 arguments: op filename[, text]",
+          "buildFile: file: expected 1 or 2 arguments: op filename[, text]",
       });
     }
 
