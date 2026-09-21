@@ -11,6 +11,10 @@ import CallRunner from "@cbuild-backend/gnu-make-functions/runner/call-runner.js
 import DirRunner from "@cbuild-backend/gnu-make-functions/runner/dir-runner.js";
 import ErrorRunner from "@cbuild-backend/gnu-make-functions/runner/error-runner.js";
 import FileRunner from "@cbuild-backend/gnu-make-functions/runner/file-runner.js";
+import FilterOutRunner from "@cbuild-backend/gnu-make-functions/runner/filter-out-runner.js";
+import FilterRunner from "@cbuild-backend/gnu-make-functions/runner/filter-runner.js";
+import FindStringRunner from "@cbuild-backend/gnu-make-functions/runner/findstring-runner.js";
+import FirstWordRunner from "@cbuild-backend/gnu-make-functions/runner/firstword-runner.js";
 
 export default class CbuildFnRunner extends BaseFnRunner {
   private readonly context: Env;
@@ -76,5 +80,34 @@ export default class CbuildFnRunner extends BaseFnRunner {
   fileFn(ir: FunctionIR): string {
     const fileRunner = new FileRunner(this.context, this.activeLookups);
     return fileRunner.run(ir);
+  }
+
+  filterOutFn(ir: FunctionIR): string {
+    const filterOutRunner = new FilterOutRunner(
+      this.context,
+      this.activeLookups,
+    );
+    return filterOutRunner.run(ir);
+  }
+
+  filterFn(ir: FunctionIR): string {
+    const filterRunner = new FilterRunner(this.context, this.activeLookups);
+    return filterRunner.run(ir);
+  }
+
+  findstringFn(ir: FunctionIR): string {
+    const findStringRunner = new FindStringRunner(
+      this.context,
+      this.activeLookups,
+    );
+    return findStringRunner.run(ir);
+  }
+
+  firstwordFn(ir: FunctionIR): string {
+    const firstWordRunner = new FirstWordRunner(
+      this.context,
+      this.activeLookups,
+    );
+    return firstWordRunner.run(ir);
   }
 }
