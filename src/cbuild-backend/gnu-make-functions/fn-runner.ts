@@ -23,6 +23,8 @@ import LastWordRunner from "@cbuild-backend/gnu-make-functions/runner/last-word-
 import NotDirRunner from "@cbuild-backend/gnu-make-functions/runner/not-dir-runner.js";
 import OrRunner from "@cbuild-backend/gnu-make-functions/runner/or-runner.js";
 import OriginRunner from "@cbuild-backend/gnu-make-functions/runner/origin-runner.js";
+import PatsubstRunner from "@cbuild-backend/gnu-make-functions/runner/patsubst-runner.js";
+import RealPathRunner from "@cbuild-backend/gnu-make-functions/runner/real-path-runner.js";
 
 export default class CbuildFnRunner extends BaseFnRunner {
   private readonly context: Env;
@@ -157,5 +159,15 @@ export default class CbuildFnRunner extends BaseFnRunner {
   originFn(ir: FunctionIR): string {
     const originRunner = new OriginRunner(this.context, this.activeLookups);
     return originRunner.run(ir);
+  }
+
+  patsubstFn(ir: FunctionIR): string {
+    const patsubstRunner = new PatsubstRunner(this.context, this.activeLookups);
+    return patsubstRunner.run(ir);
+  }
+
+  realpathFn(ir: FunctionIR): string {
+    const realpathRunner = new RealPathRunner(this.context, this.activeLookups);
+    return realpathRunner.run(ir);
   }
 }
