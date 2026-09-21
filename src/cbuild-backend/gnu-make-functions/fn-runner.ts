@@ -6,7 +6,6 @@ import AddprefixRunner from "@cbuild-backend/gnu-make-functions/runner/addprefix
 import AddsuffixRunner from "@cbuild-backend/gnu-make-functions/runner/addsuffix-runner.js";
 import AndRunner from "@cbuild-backend/gnu-make-functions/runner/and-runner.js";
 import BasenameRunner from "@cbuild-backend/gnu-make-functions/runner/basname-runner.js";
-import WildcardRunner from "@cbuild-backend/gnu-make-functions/runner/wildcard-runner.js";
 import CallRunner from "@cbuild-backend/gnu-make-functions/runner/call-runner.js";
 import DirRunner from "@cbuild-backend/gnu-make-functions/runner/dir-runner.js";
 import ErrorRunner from "@cbuild-backend/gnu-make-functions/runner/error-runner.js";
@@ -28,6 +27,14 @@ import RealPathRunner from "@cbuild-backend/gnu-make-functions/runner/real-path-
 import ShellRunner from "@cbuild-backend/gnu-make-functions/runner/shell-runner.js";
 import SortRunner from "@cbuild-backend/gnu-make-functions/runner/sort-runner.js";
 import StripRunner from "@cbuild-backend/gnu-make-functions/runner/strip-runner.js";
+import SubstRunner from "@cbuild-backend/gnu-make-functions/runner/subst-runner.js";
+import SuffixRunner from "@cbuild-backend/gnu-make-functions/runner/suffix-runner.js";
+import ValueRunner from "@cbuild-backend/gnu-make-functions/runner/value-runner.js";
+import WarningRunner from "@cbuild-backend/gnu-make-functions/runner/warning-runner.js";
+import WildcardRunner from "@cbuild-backend/gnu-make-functions/runner/wildcard-runner.js";
+import WordRunner from "@cbuild-backend/gnu-make-functions/runner/word-runner.js";
+import WordListRunner from "@cbuild-backend/gnu-make-functions/runner/wordlist-runner.js";
+import WordsRunner from "@cbuild-backend/gnu-make-functions/runner/words-runner.js";
 
 export default class CbuildFnRunner extends BaseFnRunner {
   private readonly context: Env;
@@ -68,11 +75,6 @@ export default class CbuildFnRunner extends BaseFnRunner {
   basenameFn(ir: FunctionIR): string {
     const basenameRunner = new BasenameRunner(this.context, this.activeLookups);
     return basenameRunner.run(ir);
-  }
-
-  wildcardFn(ir: FunctionIR): string {
-    const wildcardRunner = new WildcardRunner(this.context, this.activeLookups);
-    return wildcardRunner.run(ir);
   }
 
   callFn(ir: FunctionIR): string {
@@ -187,5 +189,45 @@ export default class CbuildFnRunner extends BaseFnRunner {
   stripFn(ir: FunctionIR): string {
     const stripRunner = new StripRunner(this.context, this.activeLookups);
     return stripRunner.run(ir);
+  }
+
+  substFn(ir: FunctionIR): string {
+    const substRunner = new SubstRunner(this.context, this.activeLookups);
+    return substRunner.run(ir);
+  }
+
+  suffixFn(ir: FunctionIR): string {
+    const suffixRunner = new SuffixRunner(this.context, this.activeLookups);
+    return suffixRunner.run(ir);
+  }
+
+  valueFn(ir: FunctionIR): string {
+    const valueRunner = new ValueRunner(this.context, this.activeLookups);
+    return valueRunner.run(ir);
+  }
+
+  warningFn(ir: FunctionIR): string {
+    const warningRunner = new WarningRunner(this.context, this.activeLookups);
+    return warningRunner.run(ir);
+  }
+
+  wildcardFn(ir: FunctionIR): string {
+    const wildcardRunner = new WildcardRunner(this.context, this.activeLookups);
+    return wildcardRunner.run(ir);
+  }
+
+  wordFn(ir: FunctionIR): string {
+    const wordsRunner = new WordRunner(this.context, this.activeLookups);
+    return wordsRunner.run(ir);
+  }
+
+  wordlistFn(ir: FunctionIR): string {
+    const wordListRunner = new WordListRunner(this.context, this.activeLookups);
+    return wordListRunner.run(ir);
+  }
+
+  wordsFn(ir: FunctionIR): string {
+    const wordsRunner = new WordsRunner(this.context, this.activeLookups);
+    return wordsRunner.run(ir);
   }
 }
