@@ -89,13 +89,15 @@ export default class StaticPatternIREvaluator {
         // resolve recipes
         const recipeIRresolutions: RecipeIR[] = [];
         for (const recipeIR of this.ir.recipes) {
-          const conditionalRecipeIREvaluator = new ConditionalRecipeIREvaluator(
-            this.context,
-            recipeIR,
-          );
-          const activeRecipeIRs: RecipeIR[] =
-            conditionalRecipeIREvaluator.execute();
-          recipeIRresolutions.push(...activeRecipeIRs);
+          if (recipeIR.recipe.kind === "conditional") {
+            const conditionalRecipeIREvaluator =
+              new ConditionalRecipeIREvaluator(this.context, recipeIR);
+            const activeRecipeIRs: RecipeIR[] =
+              conditionalRecipeIREvaluator.execute();
+            recipeIRresolutions.push(...activeRecipeIRs);
+          } else {
+            recipeIRresolutions.push(recipeIR);
+          }
         }
 
         ruleModels.push(

@@ -13,17 +13,8 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-
 app: 
-ifdef a
-ifdef b
-\t echo b is defined
-\t echo a is defined
-endif
-else
-\t echo app build
-endif
-
+\t echo app
 
 `.trim();
 

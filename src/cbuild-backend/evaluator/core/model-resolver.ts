@@ -79,13 +79,17 @@ export default class ModelResolver implements Executor {
     // resolve recipes
     const recipeIRresolutions: RecipeIR[] = [];
     for (const recipeIR of ir.recipes) {
-      const conditionalRecipeIREvaluator = new ConditionalRecipeIREvaluator(
-        this.context,
-        recipeIR,
-      );
-      const activeRecipeIRs: RecipeIR[] =
-        conditionalRecipeIREvaluator.execute();
-      recipeIRresolutions.push(...activeRecipeIRs);
+      if (recipeIR.recipe.kind === "conditional") {
+        const conditionalRecipeIREvaluator = new ConditionalRecipeIREvaluator(
+          this.context,
+          recipeIR,
+        );
+        const activeRecipeIRs: RecipeIR[] =
+          conditionalRecipeIREvaluator.execute();
+        recipeIRresolutions.push(...activeRecipeIRs);
+      } else {
+        recipeIRresolutions.push(recipeIR);
+      }
     }
 
     return targets.map((target) =>
