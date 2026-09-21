@@ -7,7 +7,6 @@ import {
 } from "@src/cbuild-exception.js";
 import type { MakeFunction } from "@gnu-make-functions/type.js";
 import { compile_fn } from "@gnu-make-functions/compiler/compile_fn.js";
-import { util } from "@gnu-make-functions/compiler/util.js";
 
 export class compile_error extends compile_fn {
   public override compile(
@@ -15,7 +14,6 @@ export class compile_error extends compile_fn {
     func: MakeFunction,
   ): FunctionIR {
     const ir = super.compile(ctx, func);
-    util.cleanWS(ir);
 
     if (ir.args.length !== 1) {
       throw CbuildException.from({

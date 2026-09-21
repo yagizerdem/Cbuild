@@ -13,8 +13,18 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-app: 
-\t echo app
+app :: bar
+\t echo app 1
+
+app :: bar
+\t echo app 2
+
+bar ::
+\t echo bar
+
+bar :: 
+\t echo bar 2
+
 
 `.trim();
 

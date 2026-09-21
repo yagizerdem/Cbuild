@@ -17,6 +17,7 @@ export enum MachineCode {
   DEPQ_NOT_FOUND,
   INCLUDE_FILE_NOT_FOUND,
   STEM_RESOLUTION_FAILED,
+  ERROR_FN,
 
   // depq graph
   NO_TARGET_FOUND,

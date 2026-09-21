@@ -9,6 +9,7 @@ import BasenameRunner from "@cbuild-backend/gnu-make-functions/runner/basname-ru
 import WildcardRunner from "@cbuild-backend/gnu-make-functions/runner/wildcard-runner.js";
 import CallRunner from "@cbuild-backend/gnu-make-functions/runner/call-runner.js";
 import DirRunner from "@cbuild-backend/gnu-make-functions/runner/dir-runner.js";
+import ErrorRunner from "@cbuild-backend/gnu-make-functions/runner/error-runner.js";
 
 export default class CbuildFnRunner extends BaseFnRunner {
   private readonly context: Env;
@@ -64,5 +65,10 @@ export default class CbuildFnRunner extends BaseFnRunner {
   dirFn(ir: FunctionIR): string {
     const dirRunner = new DirRunner(this.context, this.activeLookups);
     return dirRunner.run(ir);
+  }
+
+  errorFn(ir: FunctionIR): string {
+    const errorRunner = new ErrorRunner(this.context, this.activeLookups);
+    return errorRunner.run(ir);
   }
 }
