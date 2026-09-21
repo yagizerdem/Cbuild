@@ -886,7 +886,7 @@ export class fileFn implements MakeFunction {
   }
 
   public arity(): number {
-    return -1;
+    return -1; // variadic
   }
 
   public compile(ctx: FunctionContext): FunctionIR {

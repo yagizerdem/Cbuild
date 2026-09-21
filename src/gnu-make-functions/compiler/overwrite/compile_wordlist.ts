@@ -15,7 +15,6 @@ export class compile_wordlist extends compile_fn {
     func: MakeFunction,
   ): FunctionIR {
     const ir = super.compile(ctx, func);
-    util.cleanWS(ir);
 
     if (ir.args[0].parts.length !== 1) {
       throw CbuildException.from({
@@ -28,11 +27,11 @@ export class compile_wordlist extends compile_fn {
       });
     }
 
-    if (ir.args[1].parts.length !== 1) {
+    if (ir.args.length !== 3) {
       throw CbuildException.from({
         errorType: ErrorType.SEMANTIC,
         message:
-          "buildFile: wordlist: expected exactly one expression as the second argument",
+          "buildFile: wordlist: expected exactly 3 arguments: start, end, text",
         row: ctx.start?.line || 0,
         column: (ctx.start?.column || 0) + 1,
         machineCode: MachineCode.FUNCTION_COMPILATION_ERROR,

@@ -6,9 +6,35 @@ import AddprefixRunner from "@cbuild-backend/gnu-make-functions/runner/addprefix
 import AddsuffixRunner from "@cbuild-backend/gnu-make-functions/runner/addsuffix-runner.js";
 import AndRunner from "@cbuild-backend/gnu-make-functions/runner/and-runner.js";
 import BasenameRunner from "@cbuild-backend/gnu-make-functions/runner/basname-runner.js";
-import WildcardRunner from "@cbuild-backend/gnu-make-functions/runner/wildcard-runner.js";
 import CallRunner from "@cbuild-backend/gnu-make-functions/runner/call-runner.js";
 import DirRunner from "@cbuild-backend/gnu-make-functions/runner/dir-runner.js";
+import ErrorRunner from "@cbuild-backend/gnu-make-functions/runner/error-runner.js";
+import FileRunner from "@cbuild-backend/gnu-make-functions/runner/file-runner.js";
+import FilterOutRunner from "@cbuild-backend/gnu-make-functions/runner/filter-out-runner.js";
+import FilterRunner from "@cbuild-backend/gnu-make-functions/runner/filter-runner.js";
+import FindStringRunner from "@cbuild-backend/gnu-make-functions/runner/findstring-runner.js";
+import FirstWordRunner from "@cbuild-backend/gnu-make-functions/runner/firstword-runner.js";
+import FlavorRunner from "@cbuild-backend/gnu-make-functions/runner/flavor-runner.js";
+import IfRunner from "@cbuild-backend/gnu-make-functions/runner/if-runner.js";
+import JoinRunner from "@cbuild-backend/gnu-make-functions/runner/join-runner.js";
+import ForeachRunner from "@cbuild-backend/gnu-make-functions/runner/foreach-runner.js";
+import LastWordRunner from "@cbuild-backend/gnu-make-functions/runner/last-word-runner.js";
+import NotDirRunner from "@cbuild-backend/gnu-make-functions/runner/not-dir-runner.js";
+import OrRunner from "@cbuild-backend/gnu-make-functions/runner/or-runner.js";
+import OriginRunner from "@cbuild-backend/gnu-make-functions/runner/origin-runner.js";
+import PatsubstRunner from "@cbuild-backend/gnu-make-functions/runner/patsubst-runner.js";
+import RealPathRunner from "@cbuild-backend/gnu-make-functions/runner/real-path-runner.js";
+import ShellRunner from "@cbuild-backend/gnu-make-functions/runner/shell-runner.js";
+import SortRunner from "@cbuild-backend/gnu-make-functions/runner/sort-runner.js";
+import StripRunner from "@cbuild-backend/gnu-make-functions/runner/strip-runner.js";
+import SubstRunner from "@cbuild-backend/gnu-make-functions/runner/subst-runner.js";
+import SuffixRunner from "@cbuild-backend/gnu-make-functions/runner/suffix-runner.js";
+import ValueRunner from "@cbuild-backend/gnu-make-functions/runner/value-runner.js";
+import WarningRunner from "@cbuild-backend/gnu-make-functions/runner/warning-runner.js";
+import WildcardRunner from "@cbuild-backend/gnu-make-functions/runner/wildcard-runner.js";
+import WordRunner from "@cbuild-backend/gnu-make-functions/runner/word-runner.js";
+import WordListRunner from "@cbuild-backend/gnu-make-functions/runner/wordlist-runner.js";
+import WordsRunner from "@cbuild-backend/gnu-make-functions/runner/words-runner.js";
 
 export default class CbuildFnRunner extends BaseFnRunner {
   private readonly context: Env;
@@ -51,11 +77,6 @@ export default class CbuildFnRunner extends BaseFnRunner {
     return basenameRunner.run(ir);
   }
 
-  wildcardFn(ir: FunctionIR): string {
-    const wildcardRunner = new WildcardRunner(this.context, this.activeLookups);
-    return wildcardRunner.run(ir);
-  }
-
   callFn(ir: FunctionIR): string {
     const callRunner = new CallRunner(this.context, this.activeLookups);
     return callRunner.run(ir);
@@ -64,5 +85,149 @@ export default class CbuildFnRunner extends BaseFnRunner {
   dirFn(ir: FunctionIR): string {
     const dirRunner = new DirRunner(this.context, this.activeLookups);
     return dirRunner.run(ir);
+  }
+
+  errorFn(ir: FunctionIR): string {
+    const errorRunner = new ErrorRunner(this.context, this.activeLookups);
+    return errorRunner.run(ir);
+  }
+
+  fileFn(ir: FunctionIR): string {
+    const fileRunner = new FileRunner(this.context, this.activeLookups);
+    return fileRunner.run(ir);
+  }
+
+  filterOutFn(ir: FunctionIR): string {
+    const filterOutRunner = new FilterOutRunner(
+      this.context,
+      this.activeLookups,
+    );
+    return filterOutRunner.run(ir);
+  }
+
+  filterFn(ir: FunctionIR): string {
+    const filterRunner = new FilterRunner(this.context, this.activeLookups);
+    return filterRunner.run(ir);
+  }
+
+  findstringFn(ir: FunctionIR): string {
+    const findStringRunner = new FindStringRunner(
+      this.context,
+      this.activeLookups,
+    );
+    return findStringRunner.run(ir);
+  }
+
+  firstwordFn(ir: FunctionIR): string {
+    const firstWordRunner = new FirstWordRunner(
+      this.context,
+      this.activeLookups,
+    );
+    return firstWordRunner.run(ir);
+  }
+
+  flavorFn(ir: FunctionIR): string {
+    const flavorRunner = new FlavorRunner(this.context, this.activeLookups);
+    return flavorRunner.run(ir);
+  }
+
+  foreachFn(ir: FunctionIR): string {
+    const foreachRunner = new ForeachRunner(this.context, this.activeLookups);
+    return foreachRunner.run(ir);
+  }
+
+  ifFn(ir: FunctionIR): string {
+    const ifRunner = new IfRunner(this.context, this.activeLookups);
+    return ifRunner.run(ir);
+  }
+
+  joinFn(ir: FunctionIR): string {
+    const joinRunner = new JoinRunner(this.context, this.activeLookups);
+    return joinRunner.run(ir);
+  }
+
+  lastwordFn(ir: FunctionIR): string {
+    const lastWordRunner = new LastWordRunner(this.context, this.activeLookups);
+    return lastWordRunner.run(ir);
+  }
+
+  notDirFn(ir: FunctionIR): string {
+    const notDirRunner = new NotDirRunner(this.context, this.activeLookups);
+    return notDirRunner.run(ir);
+  }
+
+  orFn(ir: FunctionIR): string {
+    const orRunner = new OrRunner(this.context, this.activeLookups);
+    return orRunner.run(ir);
+  }
+
+  originFn(ir: FunctionIR): string {
+    const originRunner = new OriginRunner(this.context, this.activeLookups);
+    return originRunner.run(ir);
+  }
+
+  patsubstFn(ir: FunctionIR): string {
+    const patsubstRunner = new PatsubstRunner(this.context, this.activeLookups);
+    return patsubstRunner.run(ir);
+  }
+
+  realpathFn(ir: FunctionIR): string {
+    const realpathRunner = new RealPathRunner(this.context, this.activeLookups);
+    return realpathRunner.run(ir);
+  }
+
+  shellFn(ir: FunctionIR): string {
+    const shellRunner = new ShellRunner(this.context, this.activeLookups);
+    return shellRunner.run(ir);
+  }
+
+  sortFn(ir: FunctionIR): string {
+    const sortRunner = new SortRunner(this.context, this.activeLookups);
+    return sortRunner.run(ir);
+  }
+
+  stripFn(ir: FunctionIR): string {
+    const stripRunner = new StripRunner(this.context, this.activeLookups);
+    return stripRunner.run(ir);
+  }
+
+  substFn(ir: FunctionIR): string {
+    const substRunner = new SubstRunner(this.context, this.activeLookups);
+    return substRunner.run(ir);
+  }
+
+  suffixFn(ir: FunctionIR): string {
+    const suffixRunner = new SuffixRunner(this.context, this.activeLookups);
+    return suffixRunner.run(ir);
+  }
+
+  valueFn(ir: FunctionIR): string {
+    const valueRunner = new ValueRunner(this.context, this.activeLookups);
+    return valueRunner.run(ir);
+  }
+
+  warningFn(ir: FunctionIR): string {
+    const warningRunner = new WarningRunner(this.context, this.activeLookups);
+    return warningRunner.run(ir);
+  }
+
+  wildcardFn(ir: FunctionIR): string {
+    const wildcardRunner = new WildcardRunner(this.context, this.activeLookups);
+    return wildcardRunner.run(ir);
+  }
+
+  wordFn(ir: FunctionIR): string {
+    const wordsRunner = new WordRunner(this.context, this.activeLookups);
+    return wordsRunner.run(ir);
+  }
+
+  wordlistFn(ir: FunctionIR): string {
+    const wordListRunner = new WordListRunner(this.context, this.activeLookups);
+    return wordListRunner.run(ir);
+  }
+
+  wordsFn(ir: FunctionIR): string {
+    const wordsRunner = new WordsRunner(this.context, this.activeLookups);
+    return wordsRunner.run(ir);
   }
 }

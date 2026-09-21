@@ -15,7 +15,6 @@ export class compile_if extends compile_fn {
     func: MakeFunction,
   ): FunctionIR {
     const ir = super.compile(ctx, func);
-    util.cleanWS(ir);
 
     if (ir.args.length !== 2 && ir.args.length !== 3) {
       throw CbuildException.from({
