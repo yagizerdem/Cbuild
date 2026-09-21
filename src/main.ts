@@ -14,9 +14,15 @@ try {
   const buildFile = `
 
 
-app.c: app.txt
+app: 
+ifdef a
+ifdef b
+\t echo b is defined
+\t echo a is defined
+endif
+else
 \t echo app build
-
+endif
 
 
 `.trim();

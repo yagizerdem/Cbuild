@@ -7,6 +7,7 @@ import {
   IncludeIR,
   IR,
   NormalRuleIR,
+  RecipeIR,
   StaticPatternRuleIR,
   UndefineIR,
   VpathIR,
@@ -70,9 +71,15 @@ export default class BuildFileEvaluator {
         );
         const activeBranch: IR[] = condionalIrEvaluator.execute();
         // recursively evaluate the active branch
-        const evaluator = new BuildFileEvaluator(this.context, activeBranch);
+        const evaluator = new BuildFileEvaluator(
+          this.context,
+          activeBranch,
+          this.vpaths,
+        );
         const evaluatedIR = await evaluator.evaluateAsync();
         resolvedModels.push(...evaluatedIR);
+        // propogate child vpath muataitons to parent evaluator
+        this.vpaths = evaluator.vpaths;
       } else if (ir instanceof DefineIR) {
         const expandedValue =
           ir.value?.exec<string>(valueExpansionEngine) ?? "";

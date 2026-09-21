@@ -196,7 +196,7 @@ export class Build {
 
     const processRunner = new ProcessRunner();
 
-    for (const recipeIR of rule.recipeIRS) {
+    for (const recipeIR of rule.evaluatedRecipeIRs) {
       // expand recipe before executing
       const command: string = recipeIR.exec(recipeExpansionEngine);
 
@@ -264,7 +264,7 @@ export class Build {
 
     const processRunner = new ProcessRunner();
 
-    for (const recipeIR of rule.recipeIRS) {
+    for (const recipeIR of rule.evaluatedRecipeIRs) {
       // expand recipe before executing
       const command: string = recipeIR.exec(recipeExpansionEngine);
 

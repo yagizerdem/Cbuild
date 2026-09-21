@@ -1,6 +1,6 @@
 import { Env } from "@cbuild-backend/env.js";
 import { ValueExpansionEngine } from "@cbuild-backend/expansion.js";
-import { StaticPatternRuleIR } from "@src/compiler/ir.js";
+import { RecipeIR, StaticPatternRuleIR } from "@src/compiler/ir.js";
 import { StemResolver } from "@cbuild-backend/stem-resolver.js";
 import { NormalRule } from "@cbuild-backend/model.js";
 import {
@@ -8,6 +8,7 @@ import {
   ErrorType,
   MachineCode,
 } from "@src/cbuild-exception.js";
+import ConditionalRecipeIREvaluator from "@cbuild-backend/evaluator/conditional-recipe-evaluator.js";
 
 export default class StaticPatternIREvaluator {
   private readonly context: Env;
@@ -84,13 +85,27 @@ export default class StaticPatternIREvaluator {
             resolvedOrderOnlyPreqs.push(resolvedOrderOnlyPreq);
           }
         }
+
+        // resolve recipes
+        const recipeIRresolutions: RecipeIR[] = [];
+        for (const recipeIR of this.ir.recipes) {
+          const conditionalRecipeIREvaluator = new ConditionalRecipeIREvaluator(
+            this.context,
+            recipeIR,
+          );
+          const activeRecipeIRs: RecipeIR[] =
+            conditionalRecipeIREvaluator.execute();
+          recipeIRresolutions.push(...activeRecipeIRs);
+        }
+
         ruleModels.push(
           new NormalRule({
             prerequisites: resolvedPreqs,
             orderOnlyPrerequisites: resolvedOrderOnlyPreqs,
             ruleIR: this.ir,
             target: target,
-            recipeIRS: this.ir.recipes,
+            recipeIRs: [...this.ir.recipes],
+            evaluatedRecipeIRs: [...recipeIRresolutions],
             shellCommands: [],
           }),
         );

@@ -18,8 +18,9 @@ export interface NormalRuleOptions {
   prerequisites: string[];
   orderOnlyPrerequisites?: string[];
   shellCommands: string[];
-  recipeIRS: RecipeIR[];
+  recipeIRs: RecipeIR[];
   ruleIR: NormalRuleIR | StaticPatternRuleIR;
+  evaluatedRecipeIRs: RecipeIR[];
   vpathRules?: VpathRule[];
   stem?: string;
 }
@@ -41,7 +42,8 @@ export class NormalRule extends BaseModel {
   public prerequisites: string[];
   public orderOnlyPrerequisites: string[];
   public shellCommands: string[];
-  public recipeIRS: RecipeIR[];
+  public recipeIRs: RecipeIR[];
+  public evaluatedRecipeIRs: RecipeIR[];
   public ruleIR: NormalRuleIR | StaticPatternRuleIR;
   public vpathRules: VpathRule[];
   public stem?: string;
@@ -53,7 +55,8 @@ export class NormalRule extends BaseModel {
     this.prerequisites = options.prerequisites;
     this.orderOnlyPrerequisites = options.orderOnlyPrerequisites ?? [];
     this.shellCommands = options.shellCommands;
-    this.recipeIRS = options.recipeIRS;
+    this.recipeIRs = options.recipeIRs;
+    this.evaluatedRecipeIRs = options.evaluatedRecipeIRs;
     this.ruleIR = options.ruleIR;
 
     this.vpathRules = options.vpathRules ?? [];
@@ -66,7 +69,8 @@ export class NormalRule extends BaseModel {
   prerequisites=${JSON.stringify(this.prerequisites)},
   orderOnlyPrerequisites=${JSON.stringify(this.orderOnlyPrerequisites)},
   shellCommands=${JSON.stringify(this.shellCommands)},
-  recipeIRS=${JSON.stringify(this.recipeIRS)},
+  recipeIRS=${JSON.stringify(this.recipeIRs)},
+  evaluatedRecipeIRs=${JSON.stringify(this.evaluatedRecipeIRs)},
   ruleIR=${JSON.stringify(this.ruleIR)}
 }`;
   }
@@ -76,9 +80,10 @@ export interface ImplicitPatternRuleOptions {
   targetPattern: string;
   prerequisites: string[];
   orderOnlyPrerequisites: string[];
-  recipeIRS: RecipeIR[];
+  recipeIRs: RecipeIR[];
   ruleIR: NormalRuleIR;
   vpathRules: VpathRule[];
+  evaluatedRecipeIRs: RecipeIR[];
 }
 
 // implicit pattern rule
@@ -86,9 +91,10 @@ export class ImplicitPatterRule extends BaseModel {
   public targetPattern: string;
   public prerequisites: string[];
   public orderOnlyPrerequisites: string[];
-  public recipeIRS: RecipeIR[];
+  public recipeIRs: RecipeIR[];
   public ruleIR: NormalRuleIR;
   public vpathRules: VpathRule[];
+  public evaluatedRecipeIRs: RecipeIR[];
 
   public constructor(options: ImplicitPatternRuleOptions) {
     super();
@@ -96,8 +102,9 @@ export class ImplicitPatterRule extends BaseModel {
     this.targetPattern = options.targetPattern;
     this.prerequisites = options.prerequisites;
     this.orderOnlyPrerequisites = options.orderOnlyPrerequisites;
-    this.recipeIRS = options.recipeIRS;
+    this.recipeIRs = options.recipeIRs;
     this.ruleIR = options.ruleIR;
     this.vpathRules = options.vpathRules;
+    this.evaluatedRecipeIRs = options.evaluatedRecipeIRs;
   }
 }

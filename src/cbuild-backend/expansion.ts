@@ -205,16 +205,22 @@ export class RecipeExpansionEngine extends BaseExpansionEngine {
     recipeContext.setRawVariable("@", rule.target, "automatic");
     recipeContext.setRawVariable("<", rule.prerequisites[0] ?? "", "automatic");
     recipeContext.setRawVariable("*", rule.stem ?? "", "automatic");
-    recipeContext.setRawVariable("^", [...new Set(rule.prerequisites)].join(" "), "automatic");
-    recipeContext.setRawVariable("+", rule.prerequisites.join(" "), "automatic");
+    recipeContext.setRawVariable(
+      "^",
+      [...new Set(rule.prerequisites)].join(" "),
+      "automatic",
+    );
+    recipeContext.setRawVariable(
+      "+",
+      rule.prerequisites.join(" "),
+      "automatic",
+    );
     this.context = recipeContext;
   }
 
   public override exec<T>(ir: RecipeIR): T {
     if (ir.recipe.kind !== "command") {
-      throw new Error(
-        "RecipeIR only support command recipes for cbuild backend",
-      );
+      throw new Error("Only RecipeIR kind command can be expanded.");
     }
 
     const valueExpansionEngine = new ValueExpansionEngine(this.context);

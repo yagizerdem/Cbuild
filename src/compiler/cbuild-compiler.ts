@@ -632,7 +632,7 @@ export class CBuildCompiler
     return ctx.targets()!.accept(this);
   }
 
-  public visitRecipes(ctx: RecipesContext): unknown {
+  public visitRecipes(ctx: RecipesContext): RecipeIR[] {
     const recipes: RecipeIR[] = [];
 
     for (const recipeCtx of ctx.recipe()) {
@@ -668,7 +668,10 @@ export class CBuildCompiler
     }
 
     if (ctx.conditional_in_recipe() != null) {
-      return ctx.conditional_in_recipe()!.accept(this);
+      const conditionalIR = this.visitConditional_in_recipe(
+        ctx.conditional_in_recipe()!,
+      );
+      return RecipeIR.conditional(conditionalIR);
     }
 
     return undefined;
@@ -734,7 +737,7 @@ export class CBuildCompiler
 
   public visitConditional_in_recipe(
     ctx: Conditional_in_recipeContext,
-  ): unknown {
+  ): ConditionalIR {
     let kind: ConditionKind | null;
     let condition: Condition | null = null;
 

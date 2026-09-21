@@ -50,7 +50,7 @@ export class ImplicitRuleResolver {
     active.add(target);
 
     let explicit = this.rulesByTarget.get(target) ?? [];
-    if (!explicit.some((rule) => rule.recipeIRS.length > 0)) {
+    if (!explicit.some((rule) => rule.evaluatedRecipeIRs.length > 0)) {
       const candidate = this.findCandidate(target, active);
       if (candidate) {
         const merged = new NormalRule({
@@ -63,7 +63,8 @@ export class ImplicitRuleResolver {
             ...explicit.flatMap((rule) => rule.orderOnlyPrerequisites),
             ...candidate.orderOnlyPrerequisites,
           ],
-          recipeIRS: [...candidate.pattern.recipeIRS],
+          evaluatedRecipeIRs: [...candidate.pattern.recipeIRs],
+          recipeIRs: [...candidate.pattern.recipeIRs],
           ruleIR: candidate.pattern.ruleIR,
           shellCommands: [],
           vpathRules: candidate.pattern.vpathRules,
@@ -98,7 +99,7 @@ export class ImplicitRuleResolver {
   private findCandidate(target: string, active: Set<string>): Candidate | null {
     const candidates: Candidate[] = [];
     for (const pattern of this.patterns) {
-      if (pattern.recipeIRS.length === 0) continue;
+      if (pattern.recipeIRs.length === 0) continue;
       const stem = this.stemResolver.resolveStem(pattern.targetPattern, target);
       if (stem === null || stem.length === 0) continue;
       candidates.push({
