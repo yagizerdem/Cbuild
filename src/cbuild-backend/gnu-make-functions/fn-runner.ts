@@ -25,6 +25,9 @@ import OrRunner from "@cbuild-backend/gnu-make-functions/runner/or-runner.js";
 import OriginRunner from "@cbuild-backend/gnu-make-functions/runner/origin-runner.js";
 import PatsubstRunner from "@cbuild-backend/gnu-make-functions/runner/patsubst-runner.js";
 import RealPathRunner from "@cbuild-backend/gnu-make-functions/runner/real-path-runner.js";
+import ShellRunner from "@cbuild-backend/gnu-make-functions/runner/shell-runner.js";
+import SortRunner from "@cbuild-backend/gnu-make-functions/runner/sort-runner.js";
+import StripRunner from "@cbuild-backend/gnu-make-functions/runner/strip-runner.js";
 
 export default class CbuildFnRunner extends BaseFnRunner {
   private readonly context: Env;
@@ -169,5 +172,20 @@ export default class CbuildFnRunner extends BaseFnRunner {
   realpathFn(ir: FunctionIR): string {
     const realpathRunner = new RealPathRunner(this.context, this.activeLookups);
     return realpathRunner.run(ir);
+  }
+
+  shellFn(ir: FunctionIR): string {
+    const shellRunner = new ShellRunner(this.context, this.activeLookups);
+    return shellRunner.run(ir);
+  }
+
+  sortFn(ir: FunctionIR): string {
+    const sortRunner = new SortRunner(this.context, this.activeLookups);
+    return sortRunner.run(ir);
+  }
+
+  stripFn(ir: FunctionIR): string {
+    const stripRunner = new StripRunner(this.context, this.activeLookups);
+    return stripRunner.run(ir);
   }
 }
