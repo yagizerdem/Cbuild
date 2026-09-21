@@ -15,6 +15,10 @@ import FilterOutRunner from "@cbuild-backend/gnu-make-functions/runner/filter-ou
 import FilterRunner from "@cbuild-backend/gnu-make-functions/runner/filter-runner.js";
 import FindStringRunner from "@cbuild-backend/gnu-make-functions/runner/findstring-runner.js";
 import FirstWordRunner from "@cbuild-backend/gnu-make-functions/runner/firstword-runner.js";
+import FlavorRunner from "@cbuild-backend/gnu-make-functions/runner/flavor-runner.js";
+import IfRunner from "@cbuild-backend/gnu-make-functions/runner/if-runner.js";
+import JoinRunner from "@cbuild-backend/gnu-make-functions/runner/join-runner.js";
+import ForeachRunner from "@cbuild-backend/gnu-make-functions/runner/foreach-runner.js";
 
 export default class CbuildFnRunner extends BaseFnRunner {
   private readonly context: Env;
@@ -109,5 +113,25 @@ export default class CbuildFnRunner extends BaseFnRunner {
       this.activeLookups,
     );
     return firstWordRunner.run(ir);
+  }
+
+  flavorFn(ir: FunctionIR): string {
+    const flavorRunner = new FlavorRunner(this.context, this.activeLookups);
+    return flavorRunner.run(ir);
+  }
+
+  foreachFn(ir: FunctionIR): string {
+    const foreachRunner = new ForeachRunner(this.context, this.activeLookups);
+    return foreachRunner.run(ir);
+  }
+
+  ifFn(ir: FunctionIR): string {
+    const ifRunner = new IfRunner(this.context, this.activeLookups);
+    return ifRunner.run(ir);
+  }
+
+  joinFn(ir: FunctionIR): string {
+    const joinRunner = new JoinRunner(this.context, this.activeLookups);
+    return joinRunner.run(ir);
   }
 }
