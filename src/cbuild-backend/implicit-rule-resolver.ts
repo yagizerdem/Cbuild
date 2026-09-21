@@ -1,4 +1,8 @@
-import { ImplicitPatterRule, NormalRule, VpathRule } from "@cbuild-backend/model.js";
+import {
+  ImplicitPatterRule,
+  NormalRule,
+  VpathRule,
+} from "@cbuild-backend/model.js";
 import { StemResolver } from "@cbuild-backend/stem-resolver.js";
 import {
   fileExistbyAbsolutePath,
@@ -113,14 +117,20 @@ export class ImplicitRuleResolver {
     // one requiring another implicit rule. Preserve declaration order on ties.
     candidates.sort((left, right) => left.stem.length - right.stem.length);
     for (const candidate of candidates) {
-      if (this.inputs(candidate).every((name) =>
-        this.isDirectInput(name, candidate.pattern.vpathRules),
-      )) return candidate;
+      if (
+        this.inputs(candidate).every((name) =>
+          this.isDirectInput(name, candidate.pattern.vpathRules),
+        )
+      )
+        return candidate;
     }
     for (const candidate of candidates) {
-      if (this.inputs(candidate).every((name) =>
-        this.canMake(name, active, candidate.pattern.vpathRules),
-      )) return candidate;
+      if (
+        this.inputs(candidate).every((name) =>
+          this.canMake(name, active, candidate.pattern.vpathRules),
+        )
+      )
+        return candidate;
     }
     return null;
   }
