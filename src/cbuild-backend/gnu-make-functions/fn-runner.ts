@@ -19,6 +19,10 @@ import FlavorRunner from "@cbuild-backend/gnu-make-functions/runner/flavor-runne
 import IfRunner from "@cbuild-backend/gnu-make-functions/runner/if-runner.js";
 import JoinRunner from "@cbuild-backend/gnu-make-functions/runner/join-runner.js";
 import ForeachRunner from "@cbuild-backend/gnu-make-functions/runner/foreach-runner.js";
+import LastWordRunner from "@cbuild-backend/gnu-make-functions/runner/last-word-runner.js";
+import NotDirRunner from "@cbuild-backend/gnu-make-functions/runner/not-dir-runner.js";
+import OrRunner from "@cbuild-backend/gnu-make-functions/runner/or-runner.js";
+import OriginRunner from "@cbuild-backend/gnu-make-functions/runner/origin-runner.js";
 
 export default class CbuildFnRunner extends BaseFnRunner {
   private readonly context: Env;
@@ -133,5 +137,25 @@ export default class CbuildFnRunner extends BaseFnRunner {
   joinFn(ir: FunctionIR): string {
     const joinRunner = new JoinRunner(this.context, this.activeLookups);
     return joinRunner.run(ir);
+  }
+
+  lastwordFn(ir: FunctionIR): string {
+    const lastWordRunner = new LastWordRunner(this.context, this.activeLookups);
+    return lastWordRunner.run(ir);
+  }
+
+  notDirFn(ir: FunctionIR): string {
+    const notDirRunner = new NotDirRunner(this.context, this.activeLookups);
+    return notDirRunner.run(ir);
+  }
+
+  orFn(ir: FunctionIR): string {
+    const orRunner = new OrRunner(this.context, this.activeLookups);
+    return orRunner.run(ir);
+  }
+
+  originFn(ir: FunctionIR): string {
+    const originRunner = new OriginRunner(this.context, this.activeLookups);
+    return originRunner.run(ir);
   }
 }

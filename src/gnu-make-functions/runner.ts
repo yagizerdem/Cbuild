@@ -49,6 +49,10 @@ export abstract class AbstractFnRunner implements FnRunner {
     throw new Error("lastwordFn not implemented.");
   }
 
+  notDirFn(ir: FunctionIR): string {
+    throw new Error("notDirFn not implemented.");
+  }
+
   dirFn(ir: FunctionIR): string {
     throw new Error("dirFn not implemented.");
   }
@@ -191,6 +195,10 @@ export class BaseFnRunner extends AbstractFnRunner {
     return "";
   }
 
+  override notDirFn(ir: FunctionIR): string {
+    return "";
+  }
+
   override suffixFn(ir: FunctionIR): string {
     return "";
   }
@@ -290,6 +298,7 @@ export interface FnRunner {
   firstwordFn(ir: FunctionIR): string;
   lastwordFn(ir: FunctionIR): string;
   dirFn(ir: FunctionIR): string;
+  notDirFn(ir: FunctionIR): string;
   suffixFn(ir: FunctionIR): string;
   basenameFn(ir: FunctionIR): string;
   addsuffixFn(ir: FunctionIR): string;
