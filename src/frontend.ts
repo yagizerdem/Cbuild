@@ -1,0 +1,103 @@
+import {
+  ATNConfigSet,
+  BitSet,
+  CharStream,
+  CommonTokenStream,
+  DFA,
+  Parser,
+} from "antlr4ng";
+import {
+  ANTLRErrorListener,
+  ATNSimulator,
+  RecognitionException,
+  Recognizer,
+  Token,
+} from "antlr4ng";
+import { cbuildLexer } from "@parser/cbuildLexer.js";
+import { CbuildfileContext, cbuildParser } from "@parser/cbuildParser.js";
+import { CBuildCompiler } from "@compiler/cbuild-compiler.js";
+import { IR } from "@compiler/ir.js";
+import { pCharBufferToString, preprocess } from "@src/preprocessor.js";
+
+class SyntaxErrorCollector implements ANTLRErrorListener {
+  public readonly errors: string[] = [];
+
+  syntaxError<S extends Token, T extends ATNSimulator>(
+    recognizer: Recognizer<T>,
+    offendingSymbol: S | null,
+    line: number,
+    charPositionInLine: number,
+    msg: string,
+    e: RecognitionException | null,
+  ): void {
+    this.errors.push(`line ${line}:${charPositionInLine} ${msg}`);
+  }
+
+  reportAmbiguity(
+    recognizer: Parser,
+    dfa: DFA,
+    startIndex: number,
+    stopIndex: number,
+    exact: boolean,
+    ambigAlts: BitSet | undefined,
+    configs: ATNConfigSet,
+  ): void {}
+
+  reportAttemptingFullContext(
+    recognizer: Parser,
+    dfa: DFA,
+    startIndex: number,
+    stopIndex: number,
+    conflictingAlts: BitSet | undefined,
+    configs: ATNConfigSet,
+  ): void {}
+
+  reportContextSensitivity(
+    recognizer: Parser,
+    dfa: DFA,
+    startIndex: number,
+    stopIndex: number,
+    prediction: number,
+    configs: ATNConfigSet,
+  ): void {}
+}
+
+export function parseBuildFile(buildFile: string): CbuildfileContext {
+  const charStream = CharStream.fromString(buildFile);
+  const lexer = new cbuildLexer(charStream);
+  const lexerErrors = new SyntaxErrorCollector();
+
+  lexer.removeErrorListeners();
+  lexer.addErrorListener(lexerErrors);
+
+  const tokenStream = new CommonTokenStream(lexer);
+  const parser = new cbuildParser(tokenStream);
+  const parserErrors = new SyntaxErrorCollector();
+
+  parser.removeErrorListeners();
+  parser.addErrorListener(parserErrors);
+
+  const root = parser.cbuildfile();
+  const errors = [...lexerErrors.errors, ...parserErrors.errors];
+
+  if (errors.length > 0) {
+    throw new Error(`Build file could not be parsed:\n${errors.join("\n")}`);
+  }
+
+  return root;
+}
+
+export function compile(context: CbuildfileContext) {
+  const compiler = new CBuildCompiler();
+  const compiledProgram: IR[] = compiler.compile(context);
+
+  return compiledProgram;
+}
+
+export function frontend(buildFile: string): IR[] {
+  const pCharBuffer = preprocess(buildFile);
+  const preprocessedProgram = pCharBufferToString(pCharBuffer);
+  const context = parseBuildFile(preprocessedProgram);
+  const compiledProgram = compile(context);
+  return compiledProgram;
+}

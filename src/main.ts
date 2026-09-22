@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-import { compile } from "@src/test-util/compile.js";
+import { frontend } from "@src/frontend.js";
 import { Env } from "@cbuild-backend/env.js";
 import { Core, type EnvVar, type CliVar } from "@cbuild-backend/core.js";
-import { pCharBufferToString, preprocess } from "@src/preprocessor.js";
 import cli from "@src/cli.js";
+import handleError from "@src/error-handler.js";
 
 cli.parse();
 const options = cli.opts();
@@ -28,14 +28,10 @@ bar ::
 
 `.trim();
 
-  const pCharBuffer = preprocess(buildFile);
-  const preprocessedProgram = pCharBufferToString(pCharBuffer);
-
-  const ir = compile(preprocessedProgram);
+  const irs = frontend(buildFile);
 
   const context = new Env({
     buildSequential: true,
-    cwd: process.cwd(),
     backend: "cbuild",
     parallelJobCount: 2,
     silent: false,
@@ -43,14 +39,10 @@ bar ::
 
   const core = new Core(context);
 
-  await core.runAsync(ir, {
+  await core.runAsync(irs, {
     envVars: [],
     cliVars: [],
   });
 } catch (error) {
-  if (error instanceof Error) {
-    console.error(error);
-  } else {
-    console.error(error);
-  }
+  handleError(error);
 }
