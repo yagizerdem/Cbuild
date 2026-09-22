@@ -190,32 +190,9 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
 export class RecipeExpansionEngine extends BaseExpansionEngine {
   private readonly context: Env;
 
-  public constructor(context: Env, rule?: NormalRule) {
+  public constructor(context: Env) {
     super();
-    if (!rule) {
-      this.context = context;
-      return;
-    }
-
-    // Automatic variables are local to one recipe, even when builds run in parallel.
-    const recipeContext = new Env(context.settings);
-    for (const [name, variable] of context.variableEntries()) {
-      recipeContext.setVariable(name, variable);
-    }
-    recipeContext.setRawVariable("@", rule.target, "automatic");
-    recipeContext.setRawVariable("<", rule.prerequisites[0] ?? "", "automatic");
-    recipeContext.setRawVariable("*", rule.stem ?? "", "automatic");
-    recipeContext.setRawVariable(
-      "^",
-      [...new Set(rule.prerequisites)].join(" "),
-      "automatic",
-    );
-    recipeContext.setRawVariable(
-      "+",
-      rule.prerequisites.join(" "),
-      "automatic",
-    );
-    this.context = recipeContext;
+    this.context = context;
   }
 
   public override exec<T>(ir: RecipeIR): T {

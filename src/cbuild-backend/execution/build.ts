@@ -191,7 +191,7 @@ export class Build {
       return;
     }
 
-    const recipeExpansionEngine = new RecipeExpansionEngine(this.context, rule);
+    const recipeExpansionEngine = new RecipeExpansionEngine(this.context);
     const valueExpansionEngine = new ValueExpansionEngine(this.context);
 
     const processRunner = new ProcessRunner();
@@ -259,7 +259,7 @@ export class Build {
       return;
     }
 
-    const recipeExpansionEngine = new RecipeExpansionEngine(this.context, rule);
+    const recipeExpansionEngine = new RecipeExpansionEngine(this.context);
     const valueExpansionEngine = new ValueExpansionEngine(this.context);
 
     const processRunner = new ProcessRunner();
