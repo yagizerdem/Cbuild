@@ -26,6 +26,7 @@ import {
 import { make_function_dispatcher } from "@gnu-make-functions/make_function_dispatcher.js";
 import type { MakeFunction } from "@gnu-make-functions/type.js";
 import { I_compiler_base } from "@src/gnu-make-functions/compiler/Icompiler-base.js";
+import { CBuildCompiler } from "@src/compiler/cbuild-compiler.js";
 
 export class compile_fn
   extends AbstractParseTreeVisitor<ValueIR>
@@ -97,23 +98,27 @@ export class compile_fn
     }
 
     if (
-      ctx.function() != null &&
-      ctx.function()!.function_name() != null &&
-      !ctx.function()!.function_name()!.isEmpty()
+      ctx.function() != null
+      // ctx.function()!.function_name() != null &&
+      // !ctx.function()!.function_name()!.isEmpty()
     ) {
-      if (this.dispatcher.has(ctx.function()!.function_name()!.getText())) {
-        const handler = this.dispatcher.getHandler(
-          ctx.function()!.function_name()!.getText(),
-        );
-        const functionIR = handler.compile(ctx.function()!);
-        value.parts.push(functionCallPart(functionIR));
-      } else {
-        const varName = new ValueIR();
-        varName.parts.push(
-          textPart(ctx.function()!.function_name()!.getText()),
-        );
-        value.parts.push(varRefPart(varName));
-      }
+      const compiler = new CBuildCompiler();
+      const fnPart = compiler.visitFunction(ctx.function()!);
+      value.parts.push(fnPart);
+
+      // if (this.dispatcher.has(ctx.function()!.function_name()!.getText())) {
+      //   const handler = this.dispatcher.getHandler(
+      //     ctx.function()!.function_name()!.getText(),
+      //   );
+      //   const functionIR = handler.compile(ctx.function()!);
+      //   value.parts.push(functionCallPart(functionIR));
+      // } else {
+      //   const varName = new ValueIR();
+      //   varName.parts.push(
+      //     textPart(ctx.function()!.function_name()!.getText()),
+      //   );
+      //   value.parts.push(varRefPart(varName));
+      // }
 
       return value;
     }
@@ -158,19 +163,23 @@ export class compile_fn
     }
 
     if (ctx.function() != null) {
-      if (this.dispatcher.has(ctx.function()!.function_name()!.getText())) {
-        const handler = this.dispatcher.getHandler(
-          ctx.function()!.function_name()!.getText(),
-        );
-        const functionIR = handler.compile(ctx.function()!);
-        value.parts.push(functionCallPart(functionIR));
-      } else {
-        const varName = new ValueIR();
-        varName.parts.push(
-          textPart(ctx.function()!.function_name()!.getText()),
-        );
-        value.parts.push(varRefPart(varName));
-      }
+      const compiler = new CBuildCompiler();
+      const fnPart = compiler.visitFunction(ctx.function()!);
+      value.parts.push(fnPart);
+
+      // if (this.dispatcher.has(ctx.function()!.function_name()!.getText())) {
+      //   const handler = this.dispatcher.getHandler(
+      //     ctx.function()!.function_name()!.getText(),
+      //   );
+      //   const functionIR = handler.compile(ctx.function()!);
+      //   value.parts.push(functionCallPart(functionIR));
+      // } else {
+      //   const varName = new ValueIR();
+      //   varName.parts.push(
+      //     textPart(ctx.function()!.function_name()!.getText()),
+      //   );
+      //   value.parts.push(varRefPart(varName));
+      // }
 
       return value;
     }

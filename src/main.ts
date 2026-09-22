@@ -13,13 +13,12 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-c = 100
-a = $\{c}
-b = $(value $(k))
-k = a
+FILES := foo.c bar.txt baz.c
+
+RESULT := $(sort $(filter %.c,$(FILES)))
 
 app: 
-\t echo '$(b)' 
+\t echo '$(RESULT)' 
 
 
 `;
