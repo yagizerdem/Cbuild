@@ -4,7 +4,6 @@ import { Tbackend } from "@src/type/tBackend.js";
 export class Settings {
   public readonly buildSequential: boolean;
   public readonly parallelJobCount: number;
-  public readonly cwd: string;
   public readonly backend: Tbackend;
   public readonly silent: boolean;
 
@@ -17,7 +16,6 @@ export class Settings {
   ) {
     this.buildSequential = buildSequential;
     this.parallelJobCount = parallelJobCount;
-    this.cwd = cwd;
     this.backend = backend;
     this.silent = silent;
   }

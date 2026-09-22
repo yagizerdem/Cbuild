@@ -1,9 +1,6 @@
 import { Env } from "@cbuild-backend/env.js";
 import { ValueExpansionEngine } from "@cbuild-backend/expansion.js";
-import {
-  defaultShell,
-  ProcessRunner,
-} from "@cbuild-backend/process.js";
+import { defaultShell, ProcessRunner } from "@cbuild-backend/process.js";
 import { FunctionIR } from "@src/compiler/ir.js";
 
 export default class ShellRunner {
@@ -45,7 +42,7 @@ export default class ShellRunner {
 
     const result = new ProcessRunner().runSync(command, {
       shell,
-      cwd: this.context.settings.cwd,
+      cwd: process.cwd(),
       env: { ...process.env, ...exportedVarsMap },
       output: "capture",
       ignoreErrors: true,

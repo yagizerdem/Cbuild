@@ -14,7 +14,7 @@
     "build:dev": "tsc -p ./tsconfig.dev.json && tsc-alias -p ./tsconfig.dev.json",
     "build": "tsc -p ./tsconfig.prod.json && tsc-alias -p ./tsconfig.prod.json",
     "disable-generated-typecheck": "npx tsx ./scripts/disable-generated-typecheck.ts",
-    "dev": "npm run build:dev && node --enable-source-maps ./dist/src/main.js",
+    "dev": "npm run build:dev && cross-env DEV_MODE=true node --enable-source-maps ./dist/src/main.js",
     "start": "npm run build && node --enable-source-maps ./dist/src/main.js",
     "type-check": "tsc --noEmit"
   },
@@ -32,6 +32,7 @@
     "antlr4ts": "^0.5.0-alpha.4",
     "chalk": "^6.0.0",
     "commander": "^15.0.0",
+    "cross-env": "^10.1.0",
     "glob": "^13.0.6",
     "vitest": "^5.0.0",
     "wasmoon": "^1.16.0"
