@@ -26,7 +26,7 @@ export abstract class BaseIR implements IR {
 
 export type ValuePart =
   | { kind: "text"; lexeme: string }
-  | { kind: "variable-reference"; nameExpr: ValueIR }
+  | { kind: "variable-reference"; nameExpr: ValueIR; parenType?: "(" | "{" }
   | { kind: "function-call"; function: FunctionIR };
 
 export const textPart = (lexeme: string): ValuePart => ({
@@ -34,9 +34,13 @@ export const textPart = (lexeme: string): ValuePart => ({
   lexeme,
 });
 
-export const varRefPart = (nameExpr: ValueIR): ValuePart => ({
+export const varRefPart = (
+  nameExpr: ValueIR,
+  parenType?: "(" | "{",
+): ValuePart => ({
   kind: "variable-reference",
   nameExpr,
+  parenType,
 });
 
 export const functionCallPart = (func: FunctionIR): ValuePart => ({

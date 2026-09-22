@@ -42,7 +42,9 @@ export default class ValueRunner {
         }
 
         if (part.kind === "variable-reference") {
-          return `$(${this.serialize(part.nameExpr)})`;
+          const paren = part.parenType ?? "(";
+
+          return `$${paren}${this.serialize(part.nameExpr)}${paren === "(" ? ")" : "}"}`;
         }
 
         const args = part.function.args
