@@ -12,12 +12,31 @@ export default function handleError(error: unknown): void {
 
 function handleBaseError(error: Error): void {
   console.error(error.message);
+
+  if (process.env.DEV_MODE) {
+    console.log("--- Error Details (Base) ---");
+    console.log(error);
+    console.log("--- Stack Trace ---");
+    console.log(error.stack);
+  }
 }
 
 function handleCbuildError(error: CbuildException): void {
   console.error(error.message);
+
+  if (process.env.DEV_MODE) {
+    console.log("--- Error Details (Cbuild) ---");
+    console.log(error);
+    console.log("--- Stack Trace ---");
+    console.log(error.stack);
+  }
 }
 
 function handleUnknownError(error: unknown): void {
   console.error("An unknown error occurred:");
+
+  if (process.env.DEV_MODE) {
+    console.log("--- Error Details (Unknown) ---");
+    console.log(error);
+  }
 }
