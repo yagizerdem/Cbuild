@@ -13,20 +13,12 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-app :: bar
-\t echo app 1
+a := $(b
 
-app :: bar
-\t echo app 2
+app: 
+\t echo hit
 
-bar ::
-\t echo bar
-
-bar :: 
-\t echo bar 2
-
-
-`.trim();
+`;
 
   const irs = frontend(buildFile);
 
