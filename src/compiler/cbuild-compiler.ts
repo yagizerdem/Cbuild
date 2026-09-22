@@ -316,7 +316,8 @@ export class CBuildCompiler
       this.collectValueParts(parts, result);
     }
 
-    return varRefPart(new ValueIR(parts));
+    const parenType = ctx.DOLLAR_LPAREN() != null ? "(" : "{";
+    return varRefPart(new ValueIR(parts), parenType);
   }
 
   public visitFunction_name(ctx: Function_nameContext): ValuePart[] {
@@ -361,7 +362,8 @@ export class CBuildCompiler
     const name = raw.slice(1);
     const part = textPart(name);
     const value = new ValueIR([part]);
-    return varRefPart(value);
+    const parenType = ctx.DOLLAR_LPAREN() != null ? "(" : "{";
+    return varRefPart(value, parenType);
   }
 
   public visitConditional(ctx: ConditionalContext): ConditionalIR {

@@ -13,10 +13,14 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-a := $(b
+c = 100
+a = $\{c}
+b = $(value $(k))
+k = a
 
 app: 
-\t echo hit
+\t echo '$(b)' 
+
 
 `;
 
