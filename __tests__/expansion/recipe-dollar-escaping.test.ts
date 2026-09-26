@@ -19,7 +19,15 @@ test.each([
     `A = ok\nRESULT = $(A)$(A)\nDOLLARS := $$$$\napp:\n\t ${command}\n`,
   );
   const context = new Env(new Settings(true, 1, ".", "cbuild", true));
-  const evaluator = new BuildFileEvaluator(context, program.slice(0, 3));
+  const evaluationState = {
+    resolvedModels: [],
+    vpaths: [],
+  };
+  const evaluator = new BuildFileEvaluator(
+    context,
+    program.slice(0, 3),
+    evaluationState,
+  );
   await evaluator.evaluateAsync();
   expect(program[3]).toBeInstanceOf(NormalRuleIR);
   const rule = program[3] as NormalRuleIR;

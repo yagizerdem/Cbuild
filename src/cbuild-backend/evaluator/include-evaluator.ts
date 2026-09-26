@@ -12,20 +12,24 @@ import {
   MachineCode,
 } from "@src/cbuild-exception.js";
 import { BaseModel } from "@cbuild-backend/model.js";
-import { pCharBufferToString, preprocess } from "@src/preprocessor.js";
 import fsPromises from "fs/promises";
-import { compile } from "@src/test-util/compile.js";
-import BuildFileEvaluator from "./core/buildfile-evaluator.js";
+import { frontend } from "@src/frontend.js";
+import BuildFileEvaluator from "@cbuild-backend/evaluator/core/buildfile-evaluator.js";
+import { BuildFileEvaluationState } from "@cbuild-backend/evaluator/core/type.js";
 
 export default class IncludeIREvaluator {
   private readonly context: Env;
   private readonly valueExpansionEngine: ValueExpansionEngine;
   private readonly ir: IncludeIR;
-  private readonly vpaths: VpathRule[];
-  constructor(context: Env, ir: IncludeIR, vpaths: VpathRule[]) {
+  private readonly evaluationState: BuildFileEvaluationState;
+  constructor(
+    context: Env,
+    ir: IncludeIR,
+    evaluationState: BuildFileEvaluationState,
+  ) {
     this.context = context;
     this.ir = ir;
-    this.vpaths = vpaths;
+    this.evaluationState = evaluationState;
     this.valueExpansionEngine = new ValueExpansionEngine(context);
   }
 
@@ -66,14 +70,12 @@ export default class IncludeIREvaluator {
         "utf-8",
       );
 
-      const pCharBuffer = preprocess(buildFile);
-      const preprocessedProgram = pCharBufferToString(pCharBuffer);
-      const ir = compile(preprocessedProgram);
+      const ir = frontend(buildFile);
 
       const buildFileEvaluator = new BuildFileEvaluator(
         this.context,
         ir,
-        this.vpaths,
+        this.evaluationState,
       );
 
       const resolvedModels = await buildFileEvaluator.evaluateAsync();

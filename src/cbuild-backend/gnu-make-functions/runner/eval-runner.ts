@@ -21,5 +21,13 @@ export default class EvalRunner {
     );
   }
 
-  public run(functionIr: FunctionIR) {}
+  public run(functionIr: FunctionIR) {
+    throw CbuildException.from({
+      column: functionIr.col,
+      row: functionIr.row,
+      errorType: ErrorType.PROCESS,
+      machineCode: MachineCode.UNSUPPORTED,
+      message: `cbuild:${functionIr.row}: eval function is not supported`,
+    });
+  }
 }

@@ -25,6 +25,7 @@ import ModelResolver from "@cbuild-backend/evaluator/core/model-resolver.js";
 import VpathIREvaluator from "@cbuild-backend/evaluator/vpath-evaluator.js";
 import IncludeIREvaluator from "@cbuild-backend/evaluator/include-evaluator.js";
 import StaticPatternIREvaluator from "@cbuild-backend/evaluator/staticpattern-evaluator.js";
+import { BuildFileEvaluationState } from "@cbuild-backend/evaluator/core/type.js";
 
 export function unsupported(ir: IR) {
   // programmatic error should never send invalid irtype to cbuild backend
@@ -34,17 +35,19 @@ export function unsupported(ir: IR) {
 export default class BuildFileEvaluator {
   private readonly context: Env;
   private readonly irs: IR[];
-  private vpaths: VpathRule[] = [];
+  private evaluationState: BuildFileEvaluationState;
 
-  public constructor(context: Env, irs: IR[], vpaths: VpathRule[] = []) {
+  public constructor(
+    context: Env,
+    irs: IR[],
+    evaluationState: BuildFileEvaluationState,
+  ) {
     this.context = context;
     this.irs = irs;
-    this.vpaths = vpaths;
+    this.evaluationState = evaluationState;
   }
 
   public async evaluateAsync(): Promise<BaseModel[]> {
-    const resolvedModels: BaseModel[] = [];
-
     for (const ir of this.irs) {
       const valueExpansionEngine = new ValueExpansionEngine(this.context);
 
@@ -74,45 +77,51 @@ export default class BuildFileEvaluator {
         const evaluator = new BuildFileEvaluator(
           this.context,
           activeBranch,
-          this.vpaths,
+          this.evaluationState,
         );
-        const evaluatedIR = await evaluator.evaluateAsync();
-        resolvedModels.push(...evaluatedIR);
-        // propogate child vpath muataitons to parent evaluator
-        this.vpaths = evaluator.vpaths;
+        const evaluatedModels = await evaluator.evaluateAsync();
+        this.evaluationState.resolvedModels.push(...evaluatedModels);
       } else if (ir instanceof DefineIR) {
         const expandedValue =
           ir.value?.exec<string>(valueExpansionEngine) ?? "";
         const identifier = ir.name?.exec<string>(valueExpansionEngine) ?? "";
         this.context.setRawVariable(identifier, expandedValue);
       } else if (ir instanceof NormalRuleIR) {
-        const modelResolver = new ModelResolver(this.context, this.vpaths);
+        const modelResolver = new ModelResolver(
+          this.context,
+          this.evaluationState,
+        );
         const resolutionResult = await modelResolver.execAsync<BaseModel[]>(ir);
-        resolvedModels.push(...resolutionResult);
+        this.evaluationState.resolvedModels.push(...resolutionResult);
       } else if (ir instanceof VpathIR) {
-        const vpathIREvaluator = new VpathIREvaluator(this.context, ir);
-        this.vpaths = vpathIREvaluator.execute(this.vpaths);
+        const vpathIREvaluator = new VpathIREvaluator(
+          this.context,
+          ir,
+          this.evaluationState,
+        );
+
+        vpathIREvaluator.execute();
       } else if (ir instanceof IncludeIR) {
         const includeIREvaluator = new IncludeIREvaluator(
           this.context,
           ir,
-          this.vpaths,
+          this.evaluationState,
         );
         const includedModels = await includeIREvaluator.executeAsync();
-        resolvedModels.push(...includedModels);
+        this.evaluationState.resolvedModels.push(...includedModels);
       } else if (ir instanceof StaticPatternRuleIR) {
         const staticPatternRuleIREvaluator = new StaticPatternIREvaluator(
           this.context,
           ir,
         );
         const resolutionResult = staticPatternRuleIREvaluator.execute();
-        resolvedModels.push(...resolutionResult);
+        this.evaluationState.resolvedModels.push(...resolutionResult);
       } else if (!allowedIR(ir)) {
         unsupported(ir);
       } else {
         unsupported(ir);
       }
     }
-    return resolvedModels;
+    return this.evaluationState.resolvedModels;
   }
 }

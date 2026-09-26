@@ -15,6 +15,7 @@ import {
 } from "@cbuild-backend/model.js";
 import { StemResolver } from "@cbuild-backend/stem-resolver.js";
 import ConditionalRecipeIREvaluator from "@cbuild-backend/evaluator/conditional-recipe-evaluator.js";
+import { BuildFileEvaluationState } from "./type.js";
 
 export function filterModelResolverPassIr(irs: IR[]): IR[] {
   const result: IR[] = [];
@@ -27,12 +28,12 @@ export function filterModelResolverPassIr(irs: IR[]): IR[] {
 
 export default class ModelResolver implements Executor {
   public readonly ruleModels: BaseModel[] = [];
-  public readonly vpathsRules: VpathRule[] = [];
+  public readonly evaluationState: BuildFileEvaluationState;
   public readonly context: Env;
 
-  public constructor(context: Env, vpaths: VpathRule[] = []) {
+  public constructor(context: Env, evaluationState: BuildFileEvaluationState) {
     this.context = context;
-    this.vpathsRules = vpaths;
+    this.evaluationState = evaluationState;
   }
 
   public async buildAsync(instructions: readonly IR[]): Promise<BaseModel[]> {
@@ -101,7 +102,7 @@ export default class ModelResolver implements Executor {
             recipeIRs: [...ir.recipes],
             evaluatedRecipeIRs: [...recipeIRresolutions],
             ruleIR: ir,
-            vpathRules: [...this.vpathsRules],
+            vpathRules: [...this.evaluationState.vpaths],
           })
         : new NormalRule({
             target,
@@ -111,7 +112,7 @@ export default class ModelResolver implements Executor {
             recipeIRs: [...ir.recipes],
             evaluatedRecipeIRs: [...recipeIRresolutions],
             shellCommands: [], // do not use raw shell commands, expand from recipeIR before execution
-            vpathRules: this.vpathsRules ?? [],
+            vpathRules: this.evaluationState.vpaths ?? [],
           }),
     );
   }

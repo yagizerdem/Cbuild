@@ -26,6 +26,7 @@ import {
 import { Build } from "@cbuild-backend/execution/build.js";
 import BuildFileEvaluator from "@cbuild-backend/evaluator/core/buildfile-evaluator.js";
 import { ImplicitRuleResolver } from "@cbuild-backend/implicit-rule-resolver.js";
+import { BuildFileEvaluationState } from "./evaluator/core/type.js";
 
 export interface CliVar {
   key: string;
@@ -62,7 +63,15 @@ export class Core {
     this.mergeEnvVars(options?.envVars ?? []);
     this.mergeCliVars(options?.cliVars ?? []);
 
-    const evaluator = new BuildFileEvaluator(this.context, rules);
+    const evaluationState: BuildFileEvaluationState = {
+      resolvedModels: [],
+      vpaths: [],
+    };
+    const evaluator = new BuildFileEvaluator(
+      this.context,
+      rules,
+      evaluationState,
+    );
     const resolvedModels = await evaluator.evaluateAsync();
 
     // add seperate resolutino step and normalize rules

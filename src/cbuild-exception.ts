@@ -28,6 +28,8 @@ export enum MachineCode {
   SHELL_COMMAND_FAILED,
   SHELL_COMMAND_ABORTED,
   INVALID_SHELL_PATH,
+
+  UNSUPPORTED,
 }
 
 export interface CbuildExceptionOptions {
