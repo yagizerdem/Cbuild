@@ -19,6 +19,8 @@ import {
   isOutOfDateAsync,
   isOutOfDateSync,
 } from "@cbuild-backend/execution/out-of-date.js";
+import { createProcessEnv } from "./create-process-env.js";
+import CommandRunner from "./command-runner.js";
 
 export type Pair<T1, T2> = {
   first: T1;
@@ -78,6 +80,7 @@ export class Build {
   public shouldRebuildSync(rule: NormalRule): boolean {
     // resolve preqs
     const preqResolutions = this.resolvePreqs(rule).first;
+    // apply out of date check for only prequestes NOT order-only prerequisites
     return isOutOfDateSync(rule, preqResolutions);
   }
 
@@ -194,8 +197,6 @@ export class Build {
     const recipeExpansionEngine = new RecipeExpansionEngine(this.context);
     const valueExpansionEngine = new ValueExpansionEngine(this.context);
 
-    const processRunner = new ProcessRunner();
-
     for (const recipeIR of rule.evaluatedRecipeIRs) {
       // expand recipe before executing
       const command: string = recipeIR.exec(recipeExpansionEngine);
@@ -208,49 +209,16 @@ export class Build {
       }
 
       // send variables that marked as exported to child processes
-      const exportedVariablesEntries = this.context.getExportedVariables();
-      const exportedVarsMap: Record<string, string> = {};
-      for (const [identifier, exportedVariable] of exportedVariablesEntries) {
-        const expandedVariable = valueExpansionEngine.expand(
-          exportedVariable.value,
-        );
-        exportedVarsMap[identifier] = expandedVariable;
-      }
+      const processEnv = createProcessEnv(this.context, valueExpansionEngine);
 
-      const result =
-        shellPath != null
-          ? processRunner.runSync(command, {
-              shell: {
-                executable: shellPath,
-                args: [],
-              },
-              cwd: process.cwd(),
-              env: { ...process.env, ...exportedVarsMap },
-              output: "capture",
-            })
-          : processRunner.runSync(command, {
-              cwd: process.cwd(),
-              env: { ...process.env, ...exportedVarsMap },
-              output: "capture",
-            });
-
-      if (result.exitCode == null || result.exitCode !== 0) {
-        throw CbuildException.from({
-          column: -1,
-          row: -1,
-          errorType: ErrorType.PROCESS,
-          machineCode: MachineCode.SHELL_COMMAND_FAILED,
-          message: `Build failed for target '${rule.target}': ${command}, message : ${result.stderr}`,
-        });
-      }
-
-      let normalizedStdout: string = result.stdout.trim();
-
-      if (!this.context.settings.silent) {
-        console.log(`${command}\n${normalizedStdout}`);
-      } else {
-        console.log(normalizedStdout);
-      }
+      const commandRunner = new CommandRunner({
+        command,
+        processEnv,
+        srcRule: rule,
+        context: this.context,
+        shellPath,
+      });
+      commandRunner.runCommandSync();
     }
   }
 
@@ -262,8 +230,6 @@ export class Build {
     const recipeExpansionEngine = new RecipeExpansionEngine(this.context);
     const valueExpansionEngine = new ValueExpansionEngine(this.context);
 
-    const processRunner = new ProcessRunner();
-
     for (const recipeIR of rule.evaluatedRecipeIRs) {
       // expand recipe before executing
       const command: string = recipeIR.exec(recipeExpansionEngine);
@@ -276,54 +242,16 @@ export class Build {
       }
 
       // send variables that marked as exported to child processes
-      const exportedVariablesEntries = this.context.getExportedVariables();
-      const exportedVarsMap: Record<string, string> = {};
-      for (const [identifier, exportedVariable] of exportedVariablesEntries) {
-        const expandedVariable = valueExpansionEngine.expand(
-          exportedVariable.value,
-        );
-        exportedVarsMap[identifier] = expandedVariable;
-      }
+      const processEnv = createProcessEnv(this.context, valueExpansionEngine);
 
-      const result = await (shellPath != null
-        ? processRunner.runAsync(command, {
-            shell: {
-              executable: shellPath,
-              args: [],
-            },
-            cwd: process.cwd(),
-            env: { ...process.env, ...exportedVarsMap },
-            output: "capture",
-          })
-        : processRunner.runAsync(command, {
-            cwd: process.cwd(),
-            env: { ...process.env, ...exportedVarsMap },
-            output: "capture",
-          }));
-
-      if (result.exitCode == null || result.exitCode !== 0) {
-        throw CbuildException.from({
-          column: -1,
-          row: -1,
-          errorType: ErrorType.PROCESS,
-          machineCode: MachineCode.SHELL_COMMAND_FAILED,
-          message: `Build failed for target '${rule.target}': ${command}, message : ${result.stderr}`,
-        });
-      }
-
-      let normalizedStdout: string = result.stdout.trim();
-      if (normalizedStdout.endsWith("\n")) {
-        normalizedStdout = normalizedStdout.substring(
-          0,
-          normalizedStdout.length - 1,
-        );
-      }
-
-      if (!this.context.settings.silent) {
-        console.log(`${command}\n${normalizedStdout}`);
-      } else {
-        console.log(normalizedStdout);
-      }
+      const commandRunner = new CommandRunner({
+        command,
+        processEnv,
+        srcRule: rule,
+        context: this.context,
+        shellPath,
+      });
+      await commandRunner.runCommandAsync();
     }
   }
 
