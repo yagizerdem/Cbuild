@@ -6,12 +6,9 @@ import { topologicalSort } from "@cbuild-backend/depq-graph.js";
 import { NormalRule } from "@cbuild-backend/model.js";
 import { Env } from "@cbuild-backend/env.js";
 import { resolvePreqs } from "@src/cbuild-backend/execution/preq-resolution/preq-resolver.js";
-import {
-  isOutOfDateAsync,
-  isOutOfDateSync,
-} from "@src/cbuild-backend/execution/preq-resolution/out-of-date.js";
-import { createProcessEnv } from "./create-process-env.js";
-import CommandRunner from "./command-runner.js";
+import { createProcessEnv } from "@src/cbuild-backend/execution/create-process-env.js";
+import CommandRunner from "@src/cbuild-backend/execution/command-runner.js";
+import AutomaticVariableEnv from "@src/cbuild-backend/execution/auto-variable.js";
 
 export class Build {
   private readonly context: Env;
@@ -129,11 +126,18 @@ export class Build {
   public buildTargetSync(rule: NormalRule) {
     const preqResolutions = resolvePreqs(this.explicitRules, rule).first;
 
-    if (preqResolutions.some((preq) => preq.meta?.outOfDate)) {
+    if (!preqResolutions.some((preq) => preq.meta?.outOfDate)) {
       return;
     }
 
-    const recipeExpansionEngine = new RecipeExpansionEngine(this.context);
+    const automaticVariableEnv = new AutomaticVariableEnv(
+      rule,
+      this.context,
+      preqResolutions,
+    );
+    const automaticEnv = automaticVariableEnv.generate();
+
+    const recipeExpansionEngine = new RecipeExpansionEngine(automaticEnv);
     const valueExpansionEngine = new ValueExpansionEngine(this.context);
 
     for (const recipeIR of rule.evaluatedRecipeIRs) {
@@ -164,11 +168,18 @@ export class Build {
   public async buildTargetAsync(rule: NormalRule) {
     const preqResolutions = resolvePreqs(this.explicitRules, rule).first;
 
-    if (preqResolutions.some((preq) => preq.meta?.outOfDate)) {
+    if (!preqResolutions.some((preq) => preq.meta?.outOfDate)) {
       return;
     }
 
-    const recipeExpansionEngine = new RecipeExpansionEngine(this.context);
+    const automaticVariableEnv = new AutomaticVariableEnv(
+      rule,
+      this.context,
+      preqResolutions,
+    );
+    const automaticEnv = automaticVariableEnv.generate();
+
+    const recipeExpansionEngine = new RecipeExpansionEngine(automaticEnv);
     const valueExpansionEngine = new ValueExpansionEngine(this.context);
 
     for (const recipeIR of rule.evaluatedRecipeIRs) {

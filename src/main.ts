@@ -15,7 +15,7 @@ try {
 
 
 app : bar.txt
-\t echo $(.A)
+\t echo $%
 
 
 `;
