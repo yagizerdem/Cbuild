@@ -11,6 +11,7 @@ export enum MachineCode {
 
   // semantic
   UNSUPPORTED_IR,
+  INVALID_RULE_SEPERATOR,
 
   // process
   FILE_NOT_FOUND,

@@ -26,7 +26,8 @@ import {
 import { Build } from "@cbuild-backend/execution/build.js";
 import BuildFileEvaluator from "@cbuild-backend/evaluator/core/buildfile-evaluator.js";
 import { ImplicitRuleResolver } from "@cbuild-backend/implicit-rule-resolver.js";
-import { BuildFileEvaluationState } from "./evaluator/core/type.js";
+import { BuildFileEvaluationState } from "@cbuild-backend/evaluator/core/type.js";
+import { NormalizeModels } from "@cbuild-backend/normalize-models.js";
 
 export interface CliVar {
   key: string;
@@ -74,13 +75,15 @@ export class Core {
     );
     const resolvedModels = await evaluator.evaluateAsync();
 
-    // add seperate resolutino step and normalize rules
-
     // contains relation only needed for build
     const explicitRules = this.collectNormalRuleModels(resolvedModels);
     const patterns = this.collectImplicitPatternRuleModels(resolvedModels);
 
-    const target = findDefaultTarget(explicitRules);
+    // add seperate resolutino step and normalize rules
+    const normalization = new NormalizeModels(explicitRules);
+    const normalizedExplicitRules = normalization.normalize();
+
+    const target = findDefaultTarget(normalizedExplicitRules);
     if (!target) {
       throw CbuildException.from({
         errorType: ErrorType.SEMANTIC,
@@ -91,14 +94,14 @@ export class Core {
       });
     }
 
-    const normalRulesGraph = new ImplicitRuleResolver(
-      explicitRules,
+    const resolution = new ImplicitRuleResolver(
+      normalizedExplicitRules,
       patterns,
       process.cwd(),
     ).resolve(target);
 
     // contains only the rules relevant to the target
-    const rulesSubGraph = getTargetSubgraph(normalRulesGraph, target);
+    const rulesSubGraph = getTargetSubgraph(resolution, target);
 
     const flag = hasCircularDependency(rulesSubGraph);
 
@@ -112,7 +115,7 @@ export class Core {
       });
     }
 
-    const builder = new Build(currentContext, normalRulesGraph);
+    const builder = new Build(currentContext, resolution);
     await builder.parallelBuildTargetAsync(rulesSubGraph, 2);
   }
 

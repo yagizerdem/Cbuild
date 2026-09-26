@@ -321,7 +321,7 @@ export class StaticPatternRuleIR extends BaseIR implements Rule {
   public readonly prerequisites: ValueIR[];
   public readonly orderOnlyPrerequisites: ValueIR[];
   public readonly recipes: RecipeIR[];
-  public separator?: RuleSeparator;
+  public separator: RuleSeparator;
 
   constructor(options: StaticPatternRuleOptions, row?: number, col?: number) {
     super(row, col);
@@ -330,7 +330,7 @@ export class StaticPatternRuleIR extends BaseIR implements Rule {
     this.prerequisites = options.prerequisites ?? [];
     this.orderOnlyPrerequisites = options.orderOnlyPrerequisites ?? [];
     this.recipes = options.recipes ?? [];
-    this.separator = options.separator;
+    this.separator = options.separator ?? RuleSeparator.SINGLE_COLON;
   }
 
   exec<T>(executor: Executor): T {

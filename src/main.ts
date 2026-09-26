@@ -12,14 +12,13 @@ const options = cli.opts();
 
 try {
   const buildFile = `
+.A = 10
 
-FILES := foo.c bar.txt baz.c
+app ::
+\t echo $(.A)
 
-RESULT := $(sort $(filter %.c,$(FILES)))
-
-app: 
-\t echo '$(RESULT)' 
-
+app ::
+\t echo app2
 
 `;
 

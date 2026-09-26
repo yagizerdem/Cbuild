@@ -69,6 +69,7 @@ export class ImplicitRuleResolver {
           shellCommands: [],
           vpathRules: candidate.pattern.vpathRules,
           stem: candidate.stem,
+          ruleSeperator: "::",
         });
         if (explicit.length > 0) {
           const firstIndex = this.rules.indexOf(explicit[0]!);
