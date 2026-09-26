@@ -5,83 +5,20 @@ import {
 import { topologicalSort } from "@cbuild-backend/depq-graph.js";
 import { NormalRule } from "@cbuild-backend/model.js";
 import { Env } from "@cbuild-backend/env.js";
-import { ProcessRunner } from "@cbuild-backend/process.js";
-import {
-  CbuildException,
-  ErrorType,
-  MachineCode,
-} from "@src/cbuild-exception.js";
-import {
-  PreqResolution,
-  PreqResolver,
-} from "@cbuild-backend/execution/preq-resolver.js";
+import { resolvePreqs } from "@src/cbuild-backend/execution/preq-resolution/preq-resolver.js";
 import {
   isOutOfDateAsync,
   isOutOfDateSync,
-} from "@cbuild-backend/execution/out-of-date.js";
+} from "@src/cbuild-backend/execution/preq-resolution/out-of-date.js";
 import { createProcessEnv } from "./create-process-env.js";
 import CommandRunner from "./command-runner.js";
 
-export type Pair<T1, T2> = {
-  first: T1;
-  second: T2;
-};
-
 export class Build {
   private readonly context: Env;
-  private readonly rulePatterns: NormalRule[];
-  public constructor(context: Env, rulePatterns: NormalRule[]) {
+  private readonly explicitRules: NormalRule[];
+  public constructor(context: Env, explicitRules: NormalRule[]) {
     this.context = context;
-    this.rulePatterns = rulePatterns;
-  }
-
-  public resolvePreqs(
-    rule: NormalRule,
-  ): Pair<PreqResolution[], PreqResolution[]> {
-    const preqResolver = new PreqResolver(
-      this.rulePatterns,
-      rule.vpathRules ?? [],
-    );
-
-    const preqResolutions = rule.prerequisites.map((preq) =>
-      preqResolver.resolve(preq),
-    );
-
-    const orderOnlyPreqResolutions = rule.orderOnlyPrerequisites.map((preq) =>
-      preqResolver.resolve(preq),
-    );
-
-    const notFound = [...preqResolutions, ...orderOnlyPreqResolutions].find(
-      (resolution) => resolution.origin.type === "not-found",
-    );
-
-    if (notFound) {
-      throw CbuildException.from({
-        errorType: ErrorType.PROCESS,
-        machineCode: MachineCode.DEPQ_NOT_FOUND,
-        message: `cbuild: No rule to make target '${notFound.preqName}', needed by '${rule.target}'. Stop.`,
-        column: -1,
-        row: -1,
-      });
-    }
-
-    return {
-      first: preqResolutions,
-      second: orderOnlyPreqResolutions,
-    };
-  }
-
-  public async shouldRebuildAsync(rule: NormalRule): Promise<boolean> {
-    // resolve preqs
-    const preqResolutions = this.resolvePreqs(rule).first;
-    return await isOutOfDateAsync(rule, preqResolutions);
-  }
-
-  public shouldRebuildSync(rule: NormalRule): boolean {
-    // resolve preqs
-    const preqResolutions = this.resolvePreqs(rule).first;
-    // apply out of date check for only prequestes NOT order-only prerequisites
-    return isOutOfDateSync(rule, preqResolutions);
+    this.explicitRules = explicitRules;
   }
 
   // maps rule uuid to preq rules
@@ -190,7 +127,9 @@ export class Build {
   }
 
   public buildTargetSync(rule: NormalRule) {
-    if (!this.shouldRebuildSync(rule)) {
+    const preqResolutions = resolvePreqs(this.explicitRules, rule).first;
+
+    if (preqResolutions.some((preq) => preq.meta?.outOfDate)) {
       return;
     }
 
@@ -223,7 +162,9 @@ export class Build {
   }
 
   public async buildTargetAsync(rule: NormalRule) {
-    if (!(await this.shouldRebuildAsync(rule))) {
+    const preqResolutions = resolvePreqs(this.explicitRules, rule).first;
+
+    if (preqResolutions.some((preq) => preq.meta?.outOfDate)) {
       return;
     }
 

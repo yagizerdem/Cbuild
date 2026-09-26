@@ -12,13 +12,11 @@ const options = cli.opts();
 
 try {
   const buildFile = `
-.A = 10
 
-app ::
+
+app : bar.txt
 \t echo $(.A)
 
-app ::
-\t echo app2
 
 `;
 
