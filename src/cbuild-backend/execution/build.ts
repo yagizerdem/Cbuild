@@ -2,13 +2,25 @@ import {
   RecipeExpansionEngine,
   ValueExpansionEngine,
 } from "@cbuild-backend/expansion.js";
-import { topologicalSort } from "@cbuild-backend/depq-graph.js";
 import { NormalRule } from "@cbuild-backend/model.js";
 import { Env } from "@cbuild-backend/env.js";
 import { resolvePreqs } from "@src/cbuild-backend/execution/preq-resolution/preq-resolver.js";
 import { createProcessEnv } from "@src/cbuild-backend/execution/create-process-env.js";
-import CommandRunner from "@src/cbuild-backend/execution/command-runner.js";
 import AutomaticVariableEnv from "@src/cbuild-backend/execution/auto-variable.js";
+import { ProcessResult } from "@src/cbuild-backend/process.js";
+import {
+  CbuildException,
+  ErrorType,
+  MachineCode,
+} from "@src/cbuild-exception.js";
+import { ProcessRunner } from "@cbuild-backend/process.js";
+
+interface CommandRunnerOptions {
+  shellPath: string | null;
+  command: string;
+  processEnv: NodeJS.ProcessEnv;
+  srcRule: NormalRule;
+}
 
 export class Build {
   private readonly context: Env;
@@ -50,14 +62,30 @@ export class Build {
       // send variables that marked as exported to child processes
       const processEnv = createProcessEnv(this.context, valueExpansionEngine);
 
-      const commandRunner = new CommandRunner({
-        command,
-        processEnv,
-        srcRule: rule,
-        context: this.context,
-        shellPath,
-      });
-      commandRunner.runCommandSync();
+      if (
+        !(
+          this.context.cliOptions.dryRun ||
+          this.context.cliOptions.justPrint ||
+          this.context.cliOptions.recon
+        )
+      ) {
+        const commandRunnerOptions: CommandRunnerOptions = {
+          command,
+          processEnv,
+          shellPath,
+          srcRule: rule,
+        };
+        const result: ProcessResult = this.runCommandSync(commandRunnerOptions);
+
+        if (!this.context.cliOptions.silent) {
+          console.log(`${command}`);
+        }
+
+        this.handleProcessResult(commandRunnerOptions, result);
+      } else {
+        // just print the command that would be executed in a dry run
+        console.log(`${command}`);
+      }
     }
   }
 
@@ -93,14 +121,95 @@ export class Build {
       // send variables that marked as exported to child processes
       const processEnv = createProcessEnv(this.context, valueExpansionEngine);
 
-      const commandRunner = new CommandRunner({
-        command,
-        processEnv,
-        srcRule: rule,
-        context: this.context,
-        shellPath,
-      });
-      await commandRunner.runCommandAsync();
+      if (!this.context.cliOptions.dryRun) {
+        const commandRunnerOptions: CommandRunnerOptions = {
+          command,
+          processEnv,
+          shellPath,
+          srcRule: rule,
+        };
+        const result: ProcessResult =
+          await this.runCommandAsync(commandRunnerOptions);
+
+        if (!this.context.cliOptions.silent) {
+          console.log(`${command}`);
+        }
+
+        this.handleProcessResult(commandRunnerOptions, result);
+      } else {
+        // just print the command that would be executed in a dry run
+        console.log(`${command}`);
+      }
     }
+  }
+
+  private handleProcessResult(
+    options: CommandRunnerOptions,
+    result: ProcessResult,
+  ) {
+    if (result.stdout) {
+      process.stdout.write(result.stdout);
+    }
+
+    if (result.stderr) {
+      process.stderr.write(result.stderr);
+    }
+
+    if (result.exitCode == null || result.exitCode !== 0) {
+      throw CbuildException.from({
+        column: -1,
+        row: -1,
+        errorType: ErrorType.PROCESS,
+        machineCode: MachineCode.SHELL_COMMAND_FAILED,
+        message:
+          `cbuild: Build failed for target '${options.srcRule.target}': ` +
+          `${options.command}`,
+      });
+    }
+  }
+
+  async runCommandAsync(options: CommandRunnerOptions): Promise<ProcessResult> {
+    const processRunner = new ProcessRunner();
+
+    const result = await (options.shellPath != null
+      ? processRunner.runAsync(options.command, {
+          shell: {
+            executable: options.shellPath,
+            args: [],
+          },
+          cwd: process.cwd(),
+          env: options.processEnv,
+          output: "capture",
+        })
+      : processRunner.runAsync(options.command, {
+          cwd: process.cwd(),
+          env: options.processEnv,
+          output: "capture",
+        }));
+
+    return result;
+  }
+
+  runCommandSync(options: CommandRunnerOptions): ProcessResult {
+    const processRunner = new ProcessRunner();
+
+    const result =
+      options.shellPath != null
+        ? processRunner.runSync(options.command, {
+            shell: {
+              executable: options.shellPath,
+              args: [],
+            },
+            cwd: process.cwd(),
+            env: options.processEnv,
+            output: "capture",
+          })
+        : processRunner.runSync(options.command, {
+            cwd: process.cwd(),
+            env: options.processEnv,
+            output: "capture",
+          });
+
+    return result;
   }
 }
