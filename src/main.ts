@@ -5,10 +5,12 @@ import { Env } from "@cbuild-backend/env.js";
 import { Core, type EnvVar, type CliVar } from "@cbuild-backend/core.js";
 import cli from "@src/cli.js";
 import handleError from "@src/error-handler.js";
+import type { CBuildOptions } from "@src/cli.js";
 
 cli.parse();
-const options = cli.opts();
-// console.log(options);
+const options: CBuildOptions = cli.opts<CBuildOptions>();
+
+console.log(options.jobs);
 
 try {
   const buildFile = `

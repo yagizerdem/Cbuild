@@ -1,4 +1,4 @@
-import { program } from "commander";
+import { OptionValues, program } from "commander";
 
 function collect(value: string, previous: string[]) {
   return previous.concat(value);
@@ -139,3 +139,56 @@ cli.option(
 );
 
 export default cli;
+
+export interface CBuildOptions extends OptionValues {
+  sequential?: boolean;
+  backend?: string;
+  jobs?: string;
+
+  directory: string[];
+
+  d?: boolean;
+  debug?: string | boolean;
+
+  environmentOverrides?: boolean;
+
+  file?: string;
+  buildfile?: string;
+
+  ignoreErrors?: boolean;
+
+  includeDir: string[];
+
+  loadAverage?: string | boolean;
+  maxLoad?: string | boolean;
+
+  dryRun?: boolean;
+  justPrint?: boolean;
+  recon?: boolean;
+
+  oldFile: string[];
+  assumeOld: string[];
+
+  printDataBase?: boolean;
+  question?: boolean;
+
+  builtinRules?: boolean;
+  builtinVariables?: boolean;
+
+  silent?: boolean;
+  quiet?: boolean;
+
+  keepGoing?: boolean;
+  stop?: boolean;
+
+  touch?: boolean;
+  version?: boolean;
+
+  printDirectory?: boolean;
+
+  whatIf: string[];
+  newFile: string[];
+  assumeNew: string[];
+
+  warnUndefinedVariables?: boolean;
+}
