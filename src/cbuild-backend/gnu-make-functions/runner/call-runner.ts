@@ -36,7 +36,7 @@ export default class CallRunner {
         envVars.push(this.valueExpansionEngine.expand(arg));
       }
     }
-    const env: Env = new Env(this.context.settings);
+    const env: Env = new Env(this.context.cliOptions);
     for (let i = 0; i < envVars.length; i++) {
       env.setRawVariable((i + 1).toString(), envVars.at(i)!, "file", false);
     }

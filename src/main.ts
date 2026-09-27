@@ -10,8 +10,6 @@ import type { CBuildOptions } from "@src/cli.js";
 cli.parse();
 const options: CBuildOptions = cli.opts<CBuildOptions>();
 
-console.log(options.jobs);
-
 try {
   const buildFile = `
 
@@ -24,12 +22,7 @@ app : bar.txt foo.txt foo.txt
 
   const irs = frontend(buildFile);
 
-  const context = new Env({
-    buildSequential: true,
-    backend: "cbuild",
-    parallelJobCount: 2,
-    silent: false,
-  });
+  const context = new Env(options);
 
   const core = new Core(context);
 

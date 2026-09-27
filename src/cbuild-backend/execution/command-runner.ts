@@ -58,7 +58,7 @@ export default class CommandRunner {
       );
     }
 
-    if (!this.options.context.settings.silent) {
+    if (!this.options.context.cliOptions.silent) {
       console.log(`${this.options.command}\n${normalizedStdout}`);
     } else {
       console.log(normalizedStdout);
@@ -97,7 +97,7 @@ export default class CommandRunner {
 
     let normalizedStdout: string = result.stdout.trim();
 
-    if (!this.options.context.settings.silent) {
+    if (!this.options.context.cliOptions.silent) {
       console.log(`${this.options.command}\n${normalizedStdout}`);
     } else {
       console.log(normalizedStdout);
