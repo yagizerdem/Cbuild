@@ -157,7 +157,7 @@ export default class Schedular {
       if (runningBuilds.size === 0) {
         if (completedBuilds.size < this.explicitRules.length) {
           throw new Error(
-            "Build graph is stuck. A circular dependency may exist.",
+            "cbuild: Build graph is stuck. A circular dependency or malformed cli option may exist.",
           );
         }
         break;
