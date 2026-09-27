@@ -8,7 +8,11 @@ const cli = program;
 
 cli.option("--sequential");
 cli.option("--backend <string>");
-cli.option("-j , --jobs <number>");
+cli.option(
+  "-j , --jobs <number>",
+  "Number of jobs to run concurrently",
+  parseInt,
+);
 cli.option("-C, --directory <dir>", "Change directory", collect, []);
 cli.option("-d", "Print all debugging information");
 cli.option("--debug [options]", "Print debugging information");
@@ -143,7 +147,7 @@ export default cli;
 export interface CBuildOptions extends OptionValues {
   sequential?: boolean;
   backend?: string;
-  jobs?: string;
+  jobs?: number;
 
   directory: string[];
 

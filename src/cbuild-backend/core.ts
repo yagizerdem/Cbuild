@@ -23,7 +23,7 @@ import {
   hasCircularDependency,
 } from "@cbuild-backend/depq-graph.js";
 
-import { Build } from "@cbuild-backend/execution/build.js";
+import Schedular from "@cbuild-backend/execution/schedular.js";
 import BuildFileEvaluator from "@cbuild-backend/evaluator/core/buildfile-evaluator.js";
 import { ImplicitRuleResolver } from "@cbuild-backend/implicit-rule-resolver.js";
 import { BuildFileEvaluationState } from "@cbuild-backend/evaluator/core/type.js";
@@ -115,8 +115,8 @@ export class Core {
       });
     }
 
-    const builder = new Build(currentContext, resolution);
-    await builder.parallelBuildTargetAsync(rulesSubGraph, 2);
+    const schedular = new Schedular(this.context, resolution);
+    await schedular.parallelSchedule();
   }
 
   public collectNormalRuleModels(baseModesl: BaseModel[]): NormalRule[] {
