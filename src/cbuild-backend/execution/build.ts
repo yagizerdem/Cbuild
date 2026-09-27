@@ -77,7 +77,9 @@ export class Build {
         };
         const result: ProcessResult = this.runCommandSync(commandRunnerOptions);
 
-        if (!this.context.cliOptions.silent) {
+        if (
+          !(this.context.cliOptions.silent || this.context.cliOptions.quiet)
+        ) {
           console.log(`${command}`);
         }
 
@@ -131,7 +133,9 @@ export class Build {
         const result: ProcessResult =
           await this.runCommandAsync(commandRunnerOptions);
 
-        if (!this.context.cliOptions.silent) {
+        if (
+          !(this.context.cliOptions.silent || this.context.cliOptions.quiet)
+        ) {
           console.log(`${command}`);
         }
 
