@@ -71,7 +71,7 @@ export function getTargetSubgraph(
   activeTarget?: string | null,
 ): NormalRule[] {
   if (arguments.length === 1) {
-    return getTargetSubgraph(rules, findDefaultTarget(rules));
+    return getTargetSubgraph(rules, findDefaultTargetName(rules));
   }
 
   const subGraph: NormalRule[] = [];
@@ -110,12 +110,15 @@ export function getTargetSubgraph(
   return subGraph;
 }
 
-export function findDefaultTarget(rules: NormalRule[]): string | null {
+export function findDefaultTargetName(rules: NormalRule[]): string | null {
   if (rules.length === 0) return null;
   return rules[0]!.target;
 }
 
-export function findTarget(rules: NormalRule[], target: string): NormalRule {
+export function findTargetRule(
+  rules: NormalRule[],
+  target: string,
+): NormalRule {
   for (const rule of rules) {
     if (rule.target === target) return rule;
   }
