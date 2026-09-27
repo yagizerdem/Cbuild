@@ -14,8 +14,8 @@ try {
   const buildFile = `
 
 
-app : bar.txt
-\t echo $%
+app : bar.txt foo.txt foo.txt
+\t echo $?
 
 
 `;

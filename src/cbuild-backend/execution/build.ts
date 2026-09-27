@@ -124,16 +124,17 @@ export class Build {
   }
 
   public buildTargetSync(rule: NormalRule) {
-    const preqResolutions = resolvePreqs(this.explicitRules, rule).first;
+    const preqResolutions = resolvePreqs(this.explicitRules, rule);
 
-    if (!preqResolutions.some((preq) => preq.meta?.outOfDate)) {
+    if (!preqResolutions.first.some((preq) => preq.meta?.outOfDate)) {
       return;
     }
 
     const automaticVariableEnv = new AutomaticVariableEnv(
       rule,
       this.context,
-      preqResolutions,
+      preqResolutions.first, // normal preq resolultions
+      preqResolutions.second, // order-only preq resolutions
     );
     const automaticEnv = automaticVariableEnv.generate();
 
@@ -166,16 +167,17 @@ export class Build {
   }
 
   public async buildTargetAsync(rule: NormalRule) {
-    const preqResolutions = resolvePreqs(this.explicitRules, rule).first;
+    const preqResolutions = resolvePreqs(this.explicitRules, rule);
 
-    if (!preqResolutions.some((preq) => preq.meta?.outOfDate)) {
+    if (!preqResolutions.first.some((preq) => preq.meta?.outOfDate)) {
       return;
     }
 
     const automaticVariableEnv = new AutomaticVariableEnv(
       rule,
       this.context,
-      preqResolutions,
+      preqResolutions.first, // normal preq resolutions
+      preqResolutions.second, // order-only preq resolutions
     );
     const automaticEnv = automaticVariableEnv.generate();
 
