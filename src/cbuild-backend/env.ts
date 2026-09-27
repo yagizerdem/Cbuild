@@ -1,6 +1,5 @@
 import { ValueIR, ValuePart } from "@compiler/ir.js";
 import { CBuildOptions } from "@src/cli.js";
-import { Tbackend } from "@src/type/tBackend.js";
 
 export type VariableFlavor = "raw" | "recursive";
 export type VariableOrigin =
