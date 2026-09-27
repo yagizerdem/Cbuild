@@ -23,6 +23,7 @@ export function getOsInfo() {
     release: os.release(),
     version: os.version(),
     hostname: os.hostname(),
+    loadAverage: os.loadavg(),
 
     architecture: {
       machine: os.machine(),

@@ -52,11 +52,8 @@ export default class Schedular {
         "Cannot perform parallel build when sequential mode is enabled",
       );
     }
-    const osInfo = getOsInfo();
-    const concurrency = Math.min(
-      this.context.cliOptions.jobs ?? 1,
-      osInfo.cpu.availableParallelism,
-    );
+    // const osInfo = getOsInfo();
+    const concurrency = this.context.cliOptions.jobs ?? 1;
 
     if (concurrency <= 0) {
       throw CbuildException.from({
@@ -142,7 +139,7 @@ export default class Schedular {
     };
 
     while (completedBuilds.size < this.explicitRules.length) {
-      if (currentBuilds.size < concurrency) {
+      if (currentBuilds.size < concurrency && this.canStartJob()) {
         const availableSlots = concurrency - currentBuilds.size;
         const nextBuilds = getNextBuilds(availableSlots);
 
@@ -246,5 +243,15 @@ export default class Schedular {
     }
 
     return reverseTargetMap;
+  }
+
+  private canStartJob(): boolean {
+    const maxLoad = this.context.cliOptions.loadAverage;
+    if (maxLoad == null) {
+      return true;
+    }
+    const osInfo = getOsInfo();
+    const currentLoad = osInfo.loadAverage[0];
+    return currentLoad < maxLoad;
   }
 }

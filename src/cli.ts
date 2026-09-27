@@ -41,10 +41,12 @@ cli
   .option(
     "-l, --load-average [load]",
     "Do not start new jobs if the system load average is at least the specified value",
+    parseInt,
   )
   .option(
     "--max-load [load]",
     "Do not start new jobs if the system load average is at least the specified value",
+    parseInt,
   );
 
 cli
@@ -163,8 +165,8 @@ export interface CBuildOptions extends OptionValues {
 
   includeDir: string[];
 
-  loadAverage?: string | boolean;
-  maxLoad?: string | boolean;
+  loadAverage?: number;
+  maxLoad?: number;
 
   dryRun?: boolean;
   justPrint?: boolean;
