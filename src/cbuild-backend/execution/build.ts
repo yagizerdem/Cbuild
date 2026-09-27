@@ -156,15 +156,15 @@ export class Build {
     }
 
     if (result.exitCode == null || result.exitCode !== 0) {
-      throw CbuildException.from({
-        column: -1,
-        row: -1,
-        errorType: ErrorType.PROCESS,
-        machineCode: MachineCode.SHELL_COMMAND_FAILED,
-        message:
-          `cbuild: Build failed for target '${options.srcRule.target}': ` +
-          `${options.command}`,
-      });
+      if (!this.context.cliOptions.ignoreErrors) {
+        throw CbuildException.from({
+          column: -1,
+          row: -1,
+          errorType: ErrorType.PROCESS,
+          machineCode: MachineCode.SHELL_COMMAND_FAILED,
+          message: `cbuild: *** [${options.srcRule.target}] Error ${result.exitCode}`,
+        });
+      }
     }
   }
 
