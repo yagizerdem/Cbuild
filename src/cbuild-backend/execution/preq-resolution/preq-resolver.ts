@@ -5,30 +5,17 @@ import {
   resolveAndGetAbsolutePath,
 } from "@src/file-utils.js";
 import { StemResolver } from "@src/cbuild-backend/stem-resolver.js";
-
-export type PreqType =
-  | "cwd"
-  | "absolute"
-  | "vpath"
-  | "target-rule" // does not has file but has target rule
-  | "not-found";
-
-export type PreqResolution = {
-  preqName: string;
-  vpathRules: VpathRule[];
-} & (
-  | {
-      origin: {
-        type: "target-rule" | "not-found";
-      };
-    }
-  | {
-      origin: {
-        type: Exclude<PreqType, "target-rule" | "not-found">;
-        absolutePath: string;
-      };
-    }
-);
+import { Pair } from "@cbuild-backend/execution/type.js";
+import {
+  CbuildException,
+  ErrorType,
+  MachineCode,
+} from "@src/cbuild-exception.js";
+import { OutOfDateChecker } from "@src/cbuild-backend/execution/preq-resolution/out-of-date.js";
+import {
+  PreqMeta,
+  PreqResolution,
+} from "@src/cbuild-backend/execution/preq-resolution/type.js";
 
 export class PreqResolver {
   private readonly normalRules: NormalRule[];
@@ -39,7 +26,7 @@ export class PreqResolver {
     this.vpathRules = vpathRules;
   }
 
-  public resolve(preqName: string): PreqResolution {
+  public resolve(preqName: string): PreqResolution<PreqMeta> {
     const isAbsolute = path.isAbsolute(preqName);
 
     if (isAbsolute) {
@@ -130,4 +117,41 @@ export class PreqResolver {
       },
     };
   }
+}
+
+export function resolvePreqs(
+  explicitRules: NormalRule[],
+  rule: NormalRule,
+): Pair<PreqResolution<PreqMeta>[], PreqResolution<PreqMeta>[]> {
+  const preqResolver = new PreqResolver(explicitRules, rule.vpathRules ?? []);
+
+  const preqResolutions = rule.prerequisites.map((preq) =>
+    preqResolver.resolve(preq),
+  );
+
+  const orderOnlyPreqResolutions = rule.orderOnlyPrerequisites.map((preq) =>
+    preqResolver.resolve(preq),
+  );
+
+  const notFound = [...preqResolutions, ...orderOnlyPreqResolutions].find(
+    (resolution) => resolution.origin.type === "not-found",
+  );
+
+  if (notFound) {
+    throw CbuildException.from({
+      errorType: ErrorType.PROCESS,
+      machineCode: MachineCode.DEPQ_NOT_FOUND,
+      message: `cbuild: No rule to make target '${notFound.preqName}', needed by '${rule.target}'. Stop.`,
+      column: -1,
+      row: -1,
+    });
+  }
+
+  const outOfDateChecker = new OutOfDateChecker(rule, preqResolutions);
+  outOfDateChecker.resolveOutOfDateSync(rule, preqResolutions);
+
+  return {
+    first: preqResolutions,
+    second: orderOnlyPreqResolutions,
+  };
 }

@@ -5,80 +5,17 @@ import {
 import { topologicalSort } from "@cbuild-backend/depq-graph.js";
 import { NormalRule } from "@cbuild-backend/model.js";
 import { Env } from "@cbuild-backend/env.js";
-import { ProcessRunner } from "@cbuild-backend/process.js";
-import {
-  CbuildException,
-  ErrorType,
-  MachineCode,
-} from "@src/cbuild-exception.js";
-import {
-  PreqResolution,
-  PreqResolver,
-} from "@cbuild-backend/execution/preq-resolver.js";
-import {
-  isOutOfDateAsync,
-  isOutOfDateSync,
-} from "@cbuild-backend/execution/out-of-date.js";
-
-export type Pair<T1, T2> = {
-  first: T1;
-  second: T2;
-};
+import { resolvePreqs } from "@src/cbuild-backend/execution/preq-resolution/preq-resolver.js";
+import { createProcessEnv } from "@src/cbuild-backend/execution/create-process-env.js";
+import CommandRunner from "@src/cbuild-backend/execution/command-runner.js";
+import AutomaticVariableEnv from "@src/cbuild-backend/execution/auto-variable.js";
 
 export class Build {
   private readonly context: Env;
-  private readonly rulePatterns: NormalRule[];
-  public constructor(context: Env, rulePatterns: NormalRule[]) {
+  private readonly explicitRules: NormalRule[];
+  public constructor(context: Env, explicitRules: NormalRule[]) {
     this.context = context;
-    this.rulePatterns = rulePatterns;
-  }
-
-  public resolvePreqs(
-    rule: NormalRule,
-  ): Pair<PreqResolution[], PreqResolution[]> {
-    const preqResolver = new PreqResolver(
-      this.rulePatterns,
-      rule.vpathRules ?? [],
-    );
-
-    const preqResolutions = rule.prerequisites.map((preq) =>
-      preqResolver.resolve(preq),
-    );
-
-    const orderOnlyPreqResolutions = rule.orderOnlyPrerequisites.map((preq) =>
-      preqResolver.resolve(preq),
-    );
-
-    const notFound = [...preqResolutions, ...orderOnlyPreqResolutions].find(
-      (resolution) => resolution.origin.type === "not-found",
-    );
-
-    if (notFound) {
-      throw CbuildException.from({
-        errorType: ErrorType.PROCESS,
-        machineCode: MachineCode.DEPQ_NOT_FOUND,
-        message: `cbuild: No rule to make target '${notFound.preqName}', needed by '${rule.target}'. Stop.`,
-        column: -1,
-        row: -1,
-      });
-    }
-
-    return {
-      first: preqResolutions,
-      second: orderOnlyPreqResolutions,
-    };
-  }
-
-  public async shouldRebuildAsync(rule: NormalRule): Promise<boolean> {
-    // resolve preqs
-    const preqResolutions = this.resolvePreqs(rule).first;
-    return await isOutOfDateAsync(rule, preqResolutions);
-  }
-
-  public shouldRebuildSync(rule: NormalRule): boolean {
-    // resolve preqs
-    const preqResolutions = this.resolvePreqs(rule).first;
-    return isOutOfDateSync(rule, preqResolutions);
+    this.explicitRules = explicitRules;
   }
 
   // maps rule uuid to preq rules
@@ -187,14 +124,22 @@ export class Build {
   }
 
   public buildTargetSync(rule: NormalRule) {
-    if (!this.shouldRebuildSync(rule)) {
+    const preqResolutions = resolvePreqs(this.explicitRules, rule);
+
+    if (!preqResolutions.first.some((preq) => preq.meta?.outOfDate)) {
       return;
     }
 
-    const recipeExpansionEngine = new RecipeExpansionEngine(this.context);
-    const valueExpansionEngine = new ValueExpansionEngine(this.context);
+    const automaticVariableEnv = new AutomaticVariableEnv(
+      rule,
+      this.context,
+      preqResolutions.first, // normal preq resolultions
+      preqResolutions.second, // order-only preq resolutions
+    );
+    const automaticEnv = automaticVariableEnv.generate();
 
-    const processRunner = new ProcessRunner();
+    const recipeExpansionEngine = new RecipeExpansionEngine(automaticEnv);
+    const valueExpansionEngine = new ValueExpansionEngine(this.context);
 
     for (const recipeIR of rule.evaluatedRecipeIRs) {
       // expand recipe before executing
@@ -208,61 +153,36 @@ export class Build {
       }
 
       // send variables that marked as exported to child processes
-      const exportedVariablesEntries = this.context.getExportedVariables();
-      const exportedVarsMap: Record<string, string> = {};
-      for (const [identifier, exportedVariable] of exportedVariablesEntries) {
-        const expandedVariable = valueExpansionEngine.expand(
-          exportedVariable.value,
-        );
-        exportedVarsMap[identifier] = expandedVariable;
-      }
+      const processEnv = createProcessEnv(this.context, valueExpansionEngine);
 
-      const result =
-        shellPath != null
-          ? processRunner.runSync(command, {
-              shell: {
-                executable: shellPath,
-                args: [],
-              },
-              cwd: process.cwd(),
-              env: { ...process.env, ...exportedVarsMap },
-              output: "capture",
-            })
-          : processRunner.runSync(command, {
-              cwd: process.cwd(),
-              env: { ...process.env, ...exportedVarsMap },
-              output: "capture",
-            });
-
-      if (result.exitCode == null || result.exitCode !== 0) {
-        throw CbuildException.from({
-          column: -1,
-          row: -1,
-          errorType: ErrorType.PROCESS,
-          machineCode: MachineCode.SHELL_COMMAND_FAILED,
-          message: `Build failed for target '${rule.target}': ${command}, message : ${result.stderr}`,
-        });
-      }
-
-      let normalizedStdout: string = result.stdout.trim();
-
-      if (!this.context.settings.silent) {
-        console.log(`${command}\n${normalizedStdout}`);
-      } else {
-        console.log(normalizedStdout);
-      }
+      const commandRunner = new CommandRunner({
+        command,
+        processEnv,
+        srcRule: rule,
+        context: this.context,
+        shellPath,
+      });
+      commandRunner.runCommandSync();
     }
   }
 
   public async buildTargetAsync(rule: NormalRule) {
-    if (!(await this.shouldRebuildAsync(rule))) {
+    const preqResolutions = resolvePreqs(this.explicitRules, rule);
+
+    if (!preqResolutions.first.some((preq) => preq.meta?.outOfDate)) {
       return;
     }
 
-    const recipeExpansionEngine = new RecipeExpansionEngine(this.context);
-    const valueExpansionEngine = new ValueExpansionEngine(this.context);
+    const automaticVariableEnv = new AutomaticVariableEnv(
+      rule,
+      this.context,
+      preqResolutions.first, // normal preq resolutions
+      preqResolutions.second, // order-only preq resolutions
+    );
+    const automaticEnv = automaticVariableEnv.generate();
 
-    const processRunner = new ProcessRunner();
+    const recipeExpansionEngine = new RecipeExpansionEngine(automaticEnv);
+    const valueExpansionEngine = new ValueExpansionEngine(this.context);
 
     for (const recipeIR of rule.evaluatedRecipeIRs) {
       // expand recipe before executing
@@ -276,54 +196,16 @@ export class Build {
       }
 
       // send variables that marked as exported to child processes
-      const exportedVariablesEntries = this.context.getExportedVariables();
-      const exportedVarsMap: Record<string, string> = {};
-      for (const [identifier, exportedVariable] of exportedVariablesEntries) {
-        const expandedVariable = valueExpansionEngine.expand(
-          exportedVariable.value,
-        );
-        exportedVarsMap[identifier] = expandedVariable;
-      }
+      const processEnv = createProcessEnv(this.context, valueExpansionEngine);
 
-      const result = await (shellPath != null
-        ? processRunner.runAsync(command, {
-            shell: {
-              executable: shellPath,
-              args: [],
-            },
-            cwd: process.cwd(),
-            env: { ...process.env, ...exportedVarsMap },
-            output: "capture",
-          })
-        : processRunner.runAsync(command, {
-            cwd: process.cwd(),
-            env: { ...process.env, ...exportedVarsMap },
-            output: "capture",
-          }));
-
-      if (result.exitCode == null || result.exitCode !== 0) {
-        throw CbuildException.from({
-          column: -1,
-          row: -1,
-          errorType: ErrorType.PROCESS,
-          machineCode: MachineCode.SHELL_COMMAND_FAILED,
-          message: `Build failed for target '${rule.target}': ${command}, message : ${result.stderr}`,
-        });
-      }
-
-      let normalizedStdout: string = result.stdout.trim();
-      if (normalizedStdout.endsWith("\n")) {
-        normalizedStdout = normalizedStdout.substring(
-          0,
-          normalizedStdout.length - 1,
-        );
-      }
-
-      if (!this.context.settings.silent) {
-        console.log(`${command}\n${normalizedStdout}`);
-      } else {
-        console.log(normalizedStdout);
-      }
+      const commandRunner = new CommandRunner({
+        command,
+        processEnv,
+        srcRule: rule,
+        context: this.context,
+        shellPath,
+      });
+      await commandRunner.runCommandAsync();
     }
   }
 

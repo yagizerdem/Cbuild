@@ -1,6 +1,10 @@
 import { Env } from "@cbuild-backend/env.js";
 import { ValueExpansionEngine } from "@cbuild-backend/expansion.js";
-import { RecipeIR, StaticPatternRuleIR } from "@src/compiler/ir.js";
+import {
+  RecipeIR,
+  RuleSeparator,
+  StaticPatternRuleIR,
+} from "@src/compiler/ir.js";
 import { StemResolver } from "@cbuild-backend/stem-resolver.js";
 import { NormalRule } from "@cbuild-backend/model.js";
 import {
@@ -109,6 +113,7 @@ export default class StaticPatternIREvaluator {
             recipeIRs: [...this.ir.recipes],
             evaluatedRecipeIRs: [...recipeIRresolutions],
             shellCommands: [],
+            ruleSeperator: this.ir.separator,
           }),
         );
       }

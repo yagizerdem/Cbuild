@@ -13,12 +13,9 @@ const options = cli.opts();
 try {
   const buildFile = `
 
-FILES := foo.c bar.txt baz.c
 
-RESULT := $(sort $(filter %.c,$(FILES)))
-
-app: 
-\t echo '$(RESULT)' 
+app : bar.txt foo.txt foo.txt
+\t echo $?
 
 
 `;
