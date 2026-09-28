@@ -31,7 +31,11 @@ export class Build {
   }
 
   public buildTargetSync(rule: NormalRule) {
-    const preqResolutions = resolvePreqs(this.explicitRules, rule);
+    const preqResolutions = resolvePreqs(
+      this.explicitRules,
+      rule,
+      this.context,
+    );
 
     if (!preqResolutions.first.some((preq) => preq.meta?.outOfDate)) {
       return;
@@ -92,7 +96,11 @@ export class Build {
   }
 
   public async buildTargetAsync(rule: NormalRule) {
-    const preqResolutions = resolvePreqs(this.explicitRules, rule);
+    const preqResolutions = resolvePreqs(
+      this.explicitRules,
+      rule,
+      this.context,
+    );
 
     if (!preqResolutions.first.some((preq) => preq.meta?.outOfDate)) {
       return;

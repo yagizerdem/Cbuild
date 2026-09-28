@@ -16,6 +16,7 @@ import {
   PreqMeta,
   PreqResolution,
 } from "@src/cbuild-backend/execution/preq-resolution/type.js";
+import { Env } from "@src/cbuild-backend/env.js";
 
 export class PreqResolver {
   private readonly normalRules: NormalRule[];
@@ -122,6 +123,7 @@ export class PreqResolver {
 export function resolvePreqs(
   explicitRules: NormalRule[],
   rule: NormalRule,
+  context: Env,
 ): Pair<PreqResolution<PreqMeta>[], PreqResolution<PreqMeta>[]> {
   const preqResolver = new PreqResolver(explicitRules, rule.vpathRules ?? []);
 
@@ -147,7 +149,7 @@ export function resolvePreqs(
     });
   }
 
-  const outOfDateChecker = new OutOfDateChecker(rule, preqResolutions);
+  const outOfDateChecker = new OutOfDateChecker(rule, preqResolutions, context);
   outOfDateChecker.resolveOutOfDateSync(rule, preqResolutions);
 
   return {
