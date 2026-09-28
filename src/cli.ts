@@ -1,4 +1,4 @@
-import { program } from "commander";
+import { OptionValues, program } from "commander";
 
 function collect(value: string, previous: string[]) {
   return previous.concat(value);
@@ -8,7 +8,11 @@ const cli = program;
 
 cli.option("--sequential");
 cli.option("--backend <string>");
-cli.option("-j , --jobs <number>");
+cli.option(
+  "-j , --jobs <number>",
+  "Number of jobs to run concurrently",
+  parseInt,
+);
 cli.option("-C, --directory <dir>", "Change directory", collect, []);
 cli.option("-d", "Print all debugging information");
 cli.option("--debug [options]", "Print debugging information");
@@ -37,10 +41,12 @@ cli
   .option(
     "-l, --load-average [load]",
     "Do not start new jobs if the system load average is at least the specified value",
+    parseInt,
   )
   .option(
     "--max-load [load]",
     "Do not start new jobs if the system load average is at least the specified value",
+    parseInt,
   );
 
 cli
@@ -139,3 +145,56 @@ cli.option(
 );
 
 export default cli;
+
+export interface CBuildOptions extends OptionValues {
+  sequential?: boolean;
+  backend?: string;
+  jobs?: number;
+
+  directory: string[];
+
+  d?: boolean;
+  debug?: string | boolean;
+
+  environmentOverrides?: boolean;
+
+  file?: string;
+  buildfile?: string;
+
+  ignoreErrors?: boolean;
+
+  includeDir: string[];
+
+  loadAverage?: number;
+  maxLoad?: number;
+
+  dryRun?: boolean;
+  justPrint?: boolean;
+  recon?: boolean;
+
+  oldFile: string[];
+  assumeOld: string[];
+
+  printDataBase?: boolean;
+  question?: boolean;
+
+  builtinRules?: boolean;
+  builtinVariables?: boolean;
+
+  silent?: boolean;
+  quiet?: boolean;
+
+  keepGoing?: boolean;
+  stop?: boolean;
+
+  touch?: boolean;
+  version?: boolean;
+
+  printDirectory?: boolean;
+
+  whatIf: string[];
+  newFile: string[];
+  assumeNew: string[];
+
+  warnUndefinedVariables?: boolean;
+}

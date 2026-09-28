@@ -24,7 +24,7 @@ export default class AutomaticVariableEnv {
   }
 
   public generate(): Env {
-    const env: Env = new Env(this.enclosing.settings);
+    const env: Env = new Env(this.enclosing.cliOptions);
     env.enclosing = this.enclosing;
 
     env.setRawVariable("%", this.generatePercentVar(), "automatic", false);

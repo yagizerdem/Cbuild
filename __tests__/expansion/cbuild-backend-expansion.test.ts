@@ -1,7 +1,8 @@
 import { expect, test } from "vitest";
 import { ValueIR } from "@src/compiler/ir.js";
 import { ExpansionEngine } from "@src/cbuild-backend/expansion.js";
-import { Env, Settings, SymbolTableVariable } from "@src/cbuild-backend/env.js";
+import { Env, SymbolTableVariable } from "@src/cbuild-backend/env.js";
+import { CBuildOptions } from "@src/cli.js";
 
 test("simple-text-expansion", () => {
   const f_name: ValueIR = new ValueIR([{ kind: "text", lexeme: "jhon" }]);
@@ -12,7 +13,7 @@ test("simple-text-expansion", () => {
     { kind: "text", lexeme: "doe" },
   ]);
 
-  const context = new Env({} as Settings);
+  const context = new Env({} as CBuildOptions);
 
   const engine = new ExpansionEngine(context);
   const expanded_f_name = engine.expand(f_name);
@@ -40,7 +41,7 @@ test("var-ref expansion", () => {
     },
   ]);
 
-  const context = new Env({} as Settings);
+  const context = new Env({} as CBuildOptions);
 
   context.setVariable("f_name", SymbolTableVariable.rawVariable("yagiz"));
   context.setVariable("l_name", SymbolTableVariable.rawVariable("erdem"));
@@ -100,7 +101,7 @@ test("deep recursive var-ref expansion", () => {
       ]),
     },
   ]);
-  const context = new Env({} as Settings);
+  const context = new Env({} as CBuildOptions);
   context.setVariable(
     "f_name_ref",
     SymbolTableVariable.rawVariable("f_name_alias"),
@@ -142,7 +143,7 @@ test("deferred var-ref expansion simple", () => {
     },
   ]);
 
-  const context = new Env({} as Settings);
+  const context = new Env({} as CBuildOptions);
 
   context.setVariable(
     "f_name",
@@ -182,7 +183,7 @@ test("deep recursive deferred var-ref expansion", () => {
       nameExpr: new ValueIR([{ kind: "text", lexeme: "full_name" }]),
     },
   ]);
-  const context = new Env({} as Settings);
+  const context = new Env({} as CBuildOptions);
   context.setVariable("f_name", SymbolTableVariable.rawVariable("yagiz"));
   context.setVariable("l_name", SymbolTableVariable.rawVariable("erdem"));
   context.setVariable(

@@ -1,9 +1,10 @@
 import { expect, test } from "vitest";
 import { compile } from "@tests/util/compile.js";
-import { Env, Settings } from "@src/cbuild-backend/env.js";
+import { Env } from "@src/cbuild-backend/env.js";
 import BuildFileEvaluator from "@src/cbuild-backend/evaluator/core/buildfile-evaluator.js";
 import { expandRecipe } from "@src/cbuild-backend/expansion.js";
 import { NormalRuleIR } from "@src/compiler/ir.js";
+import { CBuildOptions } from "@src/cli.js";
 
 test.each([
   ["echo $$(RESULT)", "echo $(RESULT)"],
@@ -18,7 +19,7 @@ test.each([
   const program = compile(
     `A = ok\nRESULT = $(A)$(A)\nDOLLARS := $$$$\napp:\n\t ${command}\n`,
   );
-  const context = new Env(new Settings(true, 1, ".", "cbuild", true));
+  const context = new Env({} as CBuildOptions);
   const evaluationState = {
     resolvedModels: [],
     vpaths: [],

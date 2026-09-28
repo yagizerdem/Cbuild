@@ -5,10 +5,10 @@ import { Env } from "@cbuild-backend/env.js";
 import { Core, type EnvVar, type CliVar } from "@cbuild-backend/core.js";
 import cli from "@src/cli.js";
 import handleError from "@src/error-handler.js";
+import type { CBuildOptions } from "@src/cli.js";
 
 cli.parse();
-const options = cli.opts();
-// console.log(options);
+const options: CBuildOptions = cli.opts<CBuildOptions>();
 
 try {
   const buildFile = `
@@ -22,12 +22,7 @@ app : bar.txt foo.txt foo.txt
 
   const irs = frontend(buildFile);
 
-  const context = new Env({
-    buildSequential: true,
-    backend: "cbuild",
-    parallelJobCount: 2,
-    silent: false,
-  });
+  const context = new Env(options);
 
   const core = new Core(context);
 

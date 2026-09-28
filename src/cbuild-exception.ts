@@ -20,6 +20,7 @@ export enum MachineCode {
   STEM_RESOLUTION_FAILED,
   ERROR_FN,
   FUNCTION_RUNTIME_ERROR,
+  BUILD_FAILED,
 
   // depq graph
   NO_TARGET_FOUND,

@@ -17,13 +17,13 @@ import {
   MachineCode,
 } from "@src/cbuild-exception.js";
 import {
-  findDefaultTarget,
-  findTarget,
+  findDefaultTargetName,
+  findTargetRule,
   getTargetSubgraph,
   hasCircularDependency,
 } from "@cbuild-backend/depq-graph.js";
 
-import { Build } from "@cbuild-backend/execution/build.js";
+import Schedular from "@cbuild-backend/execution/schedular.js";
 import BuildFileEvaluator from "@cbuild-backend/evaluator/core/buildfile-evaluator.js";
 import { ImplicitRuleResolver } from "@cbuild-backend/implicit-rule-resolver.js";
 import { BuildFileEvaluationState } from "@cbuild-backend/evaluator/core/type.js";
@@ -69,7 +69,7 @@ export class Core {
       vpaths: [],
     };
     const evaluator = new BuildFileEvaluator(
-      this.context,
+      currentContext,
       rules,
       evaluationState,
     );
@@ -83,8 +83,9 @@ export class Core {
     const normalization = new NormalizeModels(explicitRules);
     const normalizedExplicitRules = normalization.normalize();
 
-    const target = findDefaultTarget(normalizedExplicitRules);
-    if (!target) {
+    const targetName = findDefaultTargetName(normalizedExplicitRules);
+    const targetRule = findTargetRule(normalizedExplicitRules, targetName!);
+    if (!targetName) {
       throw CbuildException.from({
         errorType: ErrorType.SEMANTIC,
         machineCode: MachineCode.NO_TARGET_FOUND,
@@ -98,13 +99,11 @@ export class Core {
       normalizedExplicitRules,
       patterns,
       process.cwd(),
-    ).resolve(target);
+    ).resolve(targetName);
 
     // contains only the rules relevant to the target
-    const rulesSubGraph = getTargetSubgraph(resolution, target);
-
+    const rulesSubGraph = getTargetSubgraph(resolution, targetName);
     const flag = hasCircularDependency(rulesSubGraph);
-
     if (flag) {
       throw CbuildException.from({
         errorType: ErrorType.SEMANTIC,
@@ -115,8 +114,15 @@ export class Core {
       });
     }
 
-    const builder = new Build(currentContext, resolution);
-    await builder.parallelBuildTargetAsync(rulesSubGraph, 2);
+    const schedular = new Schedular(currentContext, resolution);
+
+    if (currentContext.cliOptions.sequential) {
+      await schedular.sequentialScheduleAsync(
+        findTargetRule(resolution, targetName!),
+      );
+    } else {
+      await schedular.parallelSchedule();
+    }
   }
 
   public collectNormalRuleModels(baseModesl: BaseModel[]): NormalRule[] {

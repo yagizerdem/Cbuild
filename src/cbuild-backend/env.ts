@@ -1,29 +1,5 @@
 import { ValueIR, ValuePart } from "@compiler/ir.js";
-import { Tbackend } from "@src/type/tBackend.js";
-
-export class Settings {
-  public readonly buildSequential: boolean;
-  public readonly parallelJobCount: number;
-  public readonly backend: Tbackend;
-  public readonly silent: boolean;
-
-  public constructor(
-    buildSequential: boolean,
-    parallelJobCount: number,
-    cwd: string,
-    backend: Tbackend,
-    silent: boolean,
-  ) {
-    this.buildSequential = buildSequential;
-    this.parallelJobCount = parallelJobCount;
-    this.backend = backend;
-    this.silent = silent;
-  }
-
-  // public get defaultSettings(): Settings {
-  //   return new
-  // }
-}
+import { CBuildOptions } from "@src/cli.js";
 
 export type VariableFlavor = "raw" | "recursive";
 export type VariableOrigin =
@@ -137,11 +113,11 @@ export class SymbolTableVariable {
 
 export class Env {
   private readonly symbolTable = new Map<string, SymbolTableVariable>();
-  public readonly settings: Settings;
+  public readonly cliOptions: CBuildOptions;
   public enclosingEnv?: Env;
 
-  public constructor(setting: Settings) {
-    this.settings = setting;
+  public constructor(cliOptions: CBuildOptions) {
+    this.cliOptions = cliOptions;
   }
 
   public get enclosing(): Env | undefined {

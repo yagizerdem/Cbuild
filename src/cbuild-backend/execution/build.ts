@@ -2,13 +2,25 @@ import {
   RecipeExpansionEngine,
   ValueExpansionEngine,
 } from "@cbuild-backend/expansion.js";
-import { topologicalSort } from "@cbuild-backend/depq-graph.js";
 import { NormalRule } from "@cbuild-backend/model.js";
 import { Env } from "@cbuild-backend/env.js";
 import { resolvePreqs } from "@src/cbuild-backend/execution/preq-resolution/preq-resolver.js";
 import { createProcessEnv } from "@src/cbuild-backend/execution/create-process-env.js";
-import CommandRunner from "@src/cbuild-backend/execution/command-runner.js";
 import AutomaticVariableEnv from "@src/cbuild-backend/execution/auto-variable.js";
+import { ProcessResult } from "@src/cbuild-backend/process.js";
+import {
+  CbuildException,
+  ErrorType,
+  MachineCode,
+} from "@src/cbuild-exception.js";
+import { ProcessRunner } from "@cbuild-backend/process.js";
+
+interface CommandRunnerOptions {
+  shellPath: string | null;
+  command: string;
+  processEnv: NodeJS.ProcessEnv;
+  srcRule: NormalRule;
+}
 
 export class Build {
   private readonly context: Env;
@@ -16,111 +28,6 @@ export class Build {
   public constructor(context: Env, explicitRules: NormalRule[]) {
     this.context = context;
     this.explicitRules = explicitRules;
-  }
-
-  // maps rule uuid to preq rules
-  public createTargetMap(rules: NormalRule[]): Map<string, NormalRule[]> {
-    const rulesByTarget = new Map<string, NormalRule[]>();
-
-    // merges rules with same target names into array
-    for (const rule of rules) {
-      const existing = rulesByTarget.get(rule.target);
-
-      if (existing) {
-        existing.push(rule);
-      } else {
-        rulesByTarget.set(rule.target, [rule]);
-      }
-    }
-
-    const targetMap = new Map<string, NormalRule[]>();
-
-    for (const rule of rules) {
-      const dependencies: NormalRule[] = [];
-
-      for (const prerequisite of [
-        ...rule.prerequisites,
-        ...rule.orderOnlyPrerequisites,
-      ]) {
-        const matches = rulesByTarget.get(prerequisite);
-
-        if (matches) {
-          dependencies.push(...matches);
-        }
-      }
-
-      targetMap.set(rule.uuid, dependencies);
-    }
-
-    return targetMap;
-  }
-
-  public createReverseTargetMap(
-    rules: NormalRule[],
-  ): Map<string, NormalRule[]> {
-    const rulesByTarget = new Map<string, NormalRule[]>();
-
-    // merges rules with same target names into array
-    for (const rule of rules) {
-      const existing = rulesByTarget.get(rule.target);
-
-      if (existing) {
-        existing.push(rule);
-      } else {
-        rulesByTarget.set(rule.target, [rule]);
-      }
-    }
-
-    const reverseTargetMap = new Map<string, NormalRule[]>();
-
-    for (const rule of rules) {
-      for (const preq of [
-        ...rule.prerequisites,
-        ...rule.orderOnlyPrerequisites,
-      ]) {
-        const preqRules = rulesByTarget.get(preq);
-        if (!preqRules) continue; // No rule produces this prerequisite; it may be a filesystem or external dependency.
-
-        for (const preqRule of preqRules) {
-          const existing = reverseTargetMap.get(preqRule.uuid);
-          if (existing) {
-            existing.push(rule);
-          } else {
-            reverseTargetMap.set(preqRule.uuid, [rule]);
-          }
-        }
-      }
-    }
-
-    return reverseTargetMap;
-  }
-
-  // sequuential build
-
-  public buildTargetsSequentialSync(
-    rules: NormalRule[],
-    targetRule: NormalRule,
-  ): void {
-    // should not have circular dependencies to sort
-    const sortedRules = topologicalSort(rules, targetRule);
-
-    for (let i = 0; i < sortedRules.length; i++) {
-      const current: NormalRule = sortedRules[i]!;
-      this.buildTargetSync(current);
-    }
-  }
-
-  public async buildTargetsSequentialAsync(
-    rules: NormalRule[],
-    targetRule: NormalRule,
-  ): Promise<void> {
-    // should not have circular dependencies to sort
-    const sortedRules = topologicalSort(rules, targetRule);
-
-    for (let i = 0; i < sortedRules.length; i++) {
-      const current: NormalRule = sortedRules[i]!;
-      await this.buildTargetAsync(current);
-    }
   }
 
   public buildTargetSync(rule: NormalRule) {
@@ -155,14 +62,32 @@ export class Build {
       // send variables that marked as exported to child processes
       const processEnv = createProcessEnv(this.context, valueExpansionEngine);
 
-      const commandRunner = new CommandRunner({
-        command,
-        processEnv,
-        srcRule: rule,
-        context: this.context,
-        shellPath,
-      });
-      commandRunner.runCommandSync();
+      if (
+        !(
+          this.context.cliOptions.dryRun ||
+          this.context.cliOptions.justPrint ||
+          this.context.cliOptions.recon
+        )
+      ) {
+        const commandRunnerOptions: CommandRunnerOptions = {
+          command,
+          processEnv,
+          shellPath,
+          srcRule: rule,
+        };
+        const result: ProcessResult = this.runCommandSync(commandRunnerOptions);
+
+        if (
+          !(this.context.cliOptions.silent || this.context.cliOptions.quiet)
+        ) {
+          console.log(`${command}`);
+        }
+
+        this.handleProcessResult(commandRunnerOptions, result);
+      } else {
+        // just print the command that would be executed in a dry run
+        console.log(`${command}`);
+      }
     }
   }
 
@@ -198,125 +123,97 @@ export class Build {
       // send variables that marked as exported to child processes
       const processEnv = createProcessEnv(this.context, valueExpansionEngine);
 
-      const commandRunner = new CommandRunner({
-        command,
-        processEnv,
-        srcRule: rule,
-        context: this.context,
-        shellPath,
-      });
-      await commandRunner.runCommandAsync();
+      if (!this.context.cliOptions.dryRun) {
+        const commandRunnerOptions: CommandRunnerOptions = {
+          command,
+          processEnv,
+          shellPath,
+          srcRule: rule,
+        };
+        const result: ProcessResult =
+          await this.runCommandAsync(commandRunnerOptions);
+
+        if (
+          !(this.context.cliOptions.silent || this.context.cliOptions.quiet)
+        ) {
+          console.log(`${command}`);
+        }
+
+        this.handleProcessResult(commandRunnerOptions, result);
+      } else {
+        // just print the command that would be executed in a dry run
+        console.log(`${command}`);
+      }
     }
   }
 
-  // parallel build
-
-  public async parallelBuildTargetAsync(
-    rules: NormalRule[],
-    concurrency: number,
+  private handleProcessResult(
+    options: CommandRunnerOptions,
+    result: ProcessResult,
   ) {
-    if (concurrency <= 0) {
-      throw new Error("Concurrency must be greater than 0");
+    if (result.stdout) {
+      process.stdout.write(result.stdout);
     }
 
-    const targetMap = this.createTargetMap(rules);
-    const reverseTargetMap = this.createReverseTargetMap(rules);
-
-    const rulesByUuid = new Map<string, NormalRule>();
-    for (const rule of rules) {
-      rulesByUuid.set(rule.uuid, rule);
+    if (result.stderr) {
+      process.stderr.write(result.stderr);
     }
 
-    const targetPreqCount = new Map<string, number>();
-
-    for (const rule of rules) {
-      const targetPrerequisites = targetMap.get(rule.uuid) ?? [];
-      targetPreqCount.set(
-        rule.uuid,
-        new Set(targetPrerequisites.map((preqRule) => preqRule.uuid)).size,
-      );
+    if (result.exitCode == null || result.exitCode !== 0) {
+      if (!this.context.cliOptions.ignoreErrors) {
+        throw CbuildException.from({
+          column: -1,
+          row: -1,
+          errorType: ErrorType.PROCESS,
+          machineCode: MachineCode.SHELL_COMMAND_FAILED,
+          message: `cbuild: *** [${options.srcRule.target}] Error ${result.exitCode}`,
+        });
+      }
     }
+  }
 
-    const currentBuilds = new Set<string>();
-    const completedBuilds = new Set<string>();
-    const runningBuilds = new Set<Promise<void>>();
+  async runCommandAsync(options: CommandRunnerOptions): Promise<ProcessResult> {
+    const processRunner = new ProcessRunner();
 
-    const getRulesWithNoPrerequisites = () => {
-      const rulesWithNoPrerequisites: string[] = [];
-      for (const [uuid, count] of targetPreqCount.entries()) {
-        if (
-          count === 0 &&
-          !completedBuilds.has(uuid) &&
-          !currentBuilds.has(uuid)
-        ) {
-          rulesWithNoPrerequisites.push(uuid);
-        }
-      }
-      return rulesWithNoPrerequisites;
-    };
+    const result = await (options.shellPath != null
+      ? processRunner.runAsync(options.command, {
+          shell: {
+            executable: options.shellPath,
+            args: [],
+          },
+          cwd: process.cwd(),
+          env: options.processEnv,
+          output: "capture",
+        })
+      : processRunner.runAsync(options.command, {
+          cwd: process.cwd(),
+          env: options.processEnv,
+          output: "capture",
+        }));
 
-    const getNextBuilds = (count: number) => {
-      const nextBuilds: string[] = [];
-      const nextRules = getRulesWithNoPrerequisites();
-      for (let i = 0; i < count; i++) {
-        const nextRuleUuid = nextRules.pop();
-        if (!nextRuleUuid) {
-          break;
-        }
-        nextBuilds.push(nextRuleUuid);
-      }
-      return nextBuilds;
-    };
+    return result;
+  }
 
-    const buildRule = async (uuid: string) => {
-      const rule = rulesByUuid.get(uuid);
-      if (!rule) {
-        throw new Error(`Rule with uuid "${uuid}" does not exist`);
-      }
-      currentBuilds.add(uuid);
-      try {
-        await this.buildTargetAsync(rule);
-        completedBuilds.add(uuid);
-        const dependents = reverseTargetMap.get(uuid) ?? [];
-        for (const dependent of dependents) {
-          const count = targetPreqCount.get(dependent.uuid);
-          if (count === undefined) {
-            continue;
-          }
-          targetPreqCount.set(dependent.uuid, Math.max(0, count - 1));
-        }
-      } finally {
-        currentBuilds.delete(uuid);
-      }
-    };
+  runCommandSync(options: CommandRunnerOptions): ProcessResult {
+    const processRunner = new ProcessRunner();
 
-    while (completedBuilds.size < rules.length) {
-      if (currentBuilds.size < concurrency) {
-        const availableSlots = concurrency - currentBuilds.size;
-        const nextBuilds = getNextBuilds(availableSlots);
-
-        for (const uuid of nextBuilds) {
-          currentBuilds.add(uuid);
-          let buildPromise!: Promise<void>;
-          buildPromise = buildRule(uuid).finally(() => {
-            runningBuilds.delete(buildPromise);
+    const result =
+      options.shellPath != null
+        ? processRunner.runSync(options.command, {
+            shell: {
+              executable: options.shellPath,
+              args: [],
+            },
+            cwd: process.cwd(),
+            env: options.processEnv,
+            output: "capture",
+          })
+        : processRunner.runSync(options.command, {
+            cwd: process.cwd(),
+            env: options.processEnv,
+            output: "capture",
           });
 
-          runningBuilds.add(buildPromise);
-        }
-      }
-
-      if (runningBuilds.size === 0) {
-        if (completedBuilds.size < rules.length) {
-          throw new Error(
-            "Build graph is stuck. A circular dependency may exist.",
-          );
-        }
-        break;
-      }
-
-      // Wake the scheduler immediately when any build finishes.
-      await Promise.race(runningBuilds);
-    }
+    return result;
   }
 }
