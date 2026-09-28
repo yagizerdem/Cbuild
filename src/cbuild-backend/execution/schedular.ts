@@ -87,6 +87,9 @@ export default class Schedular {
 
     const currentBuilds = new Set<string>();
     const completedBuilds = new Set<string>();
+    const failedBuilds = new Set<string>();
+    const blockedBuilds = new Set<string>();
+
     const runningBuilds = new Set<Promise<void>>();
 
     const getRulesWithNoPrerequisites = () => {
@@ -105,7 +108,9 @@ export default class Schedular {
 
     const getNextBuilds = (count: number) => {
       const nextBuilds: string[] = [];
-      const nextRules = getRulesWithNoPrerequisites();
+      const nextRules = getRulesWithNoPrerequisites().filter(
+        (uuid) => !failedBuilds.has(uuid) && !blockedBuilds.has(uuid),
+      );
       for (let i = 0; i < count; i++) {
         const nextRuleUuid = nextRules.pop();
         if (!nextRuleUuid) {
@@ -114,6 +119,25 @@ export default class Schedular {
         nextBuilds.push(nextRuleUuid);
       }
       return nextBuilds;
+    };
+
+    // recursively block dependents of a failed build
+    const blockDependents = (uuid: string) => {
+      const dependents = reverseTargetMap.get(uuid) ?? [];
+
+      for (const dependent of dependents) {
+        const dependentUuid = dependent.uuid;
+
+        if (
+          blockedBuilds.has(dependentUuid) ||
+          failedBuilds.has(dependentUuid)
+        ) {
+          continue;
+        }
+
+        blockedBuilds.add(dependentUuid);
+        blockDependents(dependentUuid);
+      }
     };
 
     const buildRule = async (uuid: string) => {
@@ -133,13 +157,27 @@ export default class Schedular {
           }
           targetPreqCount.set(dependent.uuid, Math.max(0, count - 1));
         }
+      } catch (error) {
+        if (this.context.cliOptions.keepGoing) {
+          failedBuilds.add(uuid);
+          blockDependents(uuid);
+        } else {
+          throw error;
+        }
       } finally {
         currentBuilds.delete(uuid);
       }
     };
 
-    while (completedBuilds.size < this.explicitRules.length) {
-      if (currentBuilds.size < concurrency && this.canStartJob()) {
+    while (
+      completedBuilds.size + failedBuilds.size + blockedBuilds.size <
+      this.explicitRules.length
+    ) {
+      if (currentBuilds.size < concurrency) {
+        if (!this.canStartJob()) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          continue;
+        }
         const availableSlots = concurrency - currentBuilds.size;
         const nextBuilds = getNextBuilds(availableSlots);
 
@@ -155,7 +193,10 @@ export default class Schedular {
       }
 
       if (runningBuilds.size === 0) {
-        if (completedBuilds.size < this.explicitRules.length) {
+        if (
+          completedBuilds.size + failedBuilds.size + blockedBuilds.size <
+          this.explicitRules.length
+        ) {
           throw new Error(
             "cbuild: Build graph is stuck. A circular dependency or malformed cli option may exist.",
           );
@@ -165,6 +206,16 @@ export default class Schedular {
 
       // Wake the scheduler immediately when any build finishes.
       await Promise.race(runningBuilds);
+    }
+
+    if (failedBuilds.size > 0) {
+      throw CbuildException.from({
+        column: -1,
+        row: -1,
+        errorType: ErrorType.PROCESS,
+        machineCode: MachineCode.BUILD_FAILED,
+        message: "cbuild: Target(s) failed; build incomplete.",
+      });
     }
   }
 
