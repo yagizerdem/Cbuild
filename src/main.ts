@@ -6,12 +6,19 @@ import { Core, type EnvVar, type CliVar } from "@cbuild-backend/core.js";
 import cli from "@src/cli.js";
 import handleError from "@src/error-handler.js";
 import type { CBuildOptions } from "@src/cli.js";
+import { printVersionInfo } from "@src/version.js";
 
-cli.parse();
-const options: CBuildOptions = cli.opts<CBuildOptions>();
+async function main() {
+  cli.parse();
+  const options: CBuildOptions = cli.opts<CBuildOptions>();
 
-try {
-  const buildFile = `
+  if (options.version) {
+    printVersionInfo();
+    return;
+  }
+
+  try {
+    const buildFile = `
 
 
 app : bar.txt foo.txt foo.txt
@@ -20,16 +27,19 @@ app : bar.txt foo.txt foo.txt
 
 `;
 
-  const irs = frontend(buildFile);
+    const irs = frontend(buildFile);
 
-  const context = new Env(options);
+    const context = new Env(options);
 
-  const core = new Core(context);
+    const core = new Core(context);
 
-  await core.runAsync(irs, {
-    envVars: [],
-    cliVars: [],
-  });
-} catch (error) {
-  handleError(error);
+    await core.runAsync(irs, {
+      envVars: [],
+      cliVars: [],
+    });
+  } catch (error) {
+    handleError(error);
+  }
 }
+
+await main();

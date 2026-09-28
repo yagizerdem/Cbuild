@@ -183,6 +183,11 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
 
       return this.context.requireVariable(identifier).getRawValue()!;
     }
+
+    if (this.context.cliOptions.warnUndefinedVariables) {
+      console.warn(`cbuild: warning: undefined variable '${identifier}'`);
+    }
+
     return "";
   }
 }
