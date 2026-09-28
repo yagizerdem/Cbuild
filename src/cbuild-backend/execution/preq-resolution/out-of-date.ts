@@ -18,17 +18,9 @@ import {
 import { Env } from "@src/cbuild-backend/env.js";
 
 export class OutOfDateChecker {
-  private readonly rule: NormalRule;
-  private readonly preqResolutions: PreqResolution<PreqMeta>[];
   private readonly context: Env;
 
-  constructor(
-    rule: NormalRule,
-    preqResolutions: PreqResolution<PreqMeta>[],
-    context: Env,
-  ) {
-    this.rule = rule;
-    this.preqResolutions = preqResolutions;
+  constructor(context: Env) {
     this.context = context;
   }
 

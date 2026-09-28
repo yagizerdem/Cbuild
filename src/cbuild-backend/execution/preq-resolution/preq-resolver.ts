@@ -149,7 +149,7 @@ export function resolvePreqs(
     });
   }
 
-  const outOfDateChecker = new OutOfDateChecker(rule, preqResolutions, context);
+  const outOfDateChecker = new OutOfDateChecker(context);
   outOfDateChecker.resolveOutOfDateSync(rule, preqResolutions);
 
   return {
