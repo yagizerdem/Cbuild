@@ -23,7 +23,8 @@ import {
   hasCircularDependency,
 } from "@cbuild-backend/depq-graph.js";
 
-import Schedular from "@cbuild-backend/execution/schedular.js";
+import SequentialSchedular from "@cbuild-backend/execution/schedular/sequential-schedular.js";
+import ParallelSchedular from "@cbuild-backend/execution/schedular/parallel-scheduler.js";
 import BuildFileEvaluator from "@cbuild-backend/evaluator/core/buildfile-evaluator.js";
 import { ImplicitRuleResolver } from "@cbuild-backend/implicit-rule-resolver.js";
 import { BuildFileEvaluationState } from "@cbuild-backend/evaluator/core/type.js";
@@ -114,13 +115,13 @@ export class Core {
       });
     }
 
-    const schedular = new Schedular(currentContext, resolution);
-
     if (currentContext.cliOptions.sequential) {
+      const schedular = new SequentialSchedular(currentContext, resolution);
       await schedular.sequentialScheduleAsync(
         findTargetRule(resolution, targetName!),
       );
     } else {
+      const schedular = new ParallelSchedular(currentContext, resolution);
       await schedular.parallelSchedule();
     }
   }
