@@ -44,6 +44,16 @@ export class OutOfDateChecker {
 
     if (!lastModifiedDateOfTarget) return true;
 
+    const oldFilesFromCli: string[] = [
+      ...this.context.cliOptions.oldFile,
+      ...this.context.cliOptions.assumeOld,
+    ];
+
+    const newFilesFromCli: string[] = [
+      ...this.context.cliOptions.newFile,
+      ...this.context.cliOptions.assumeNew,
+    ];
+
     for (const preq of preqResolutions) {
       if (preq.origin.type === "target-rule") return true;
       const preqAbsolutePath =
@@ -74,7 +84,7 @@ export class OutOfDateChecker {
         });
       }
 
-      const isVeryOldFile = this.context.cliOptions.oldFile.some(
+      const isVeryOldFile = oldFilesFromCli.some(
         (oldFile) =>
           resolveAndGetAbsolutePath(process.cwd(), oldFile) ===
           preqAbsolutePath,
@@ -89,7 +99,7 @@ export class OutOfDateChecker {
       if (lastModifiedDateOfPreq > lastModifiedDateOfTarget) return true;
 
       // chedk if file is assumed as new file or not
-      for (const newFile of this.context.cliOptions.newFile) {
+      for (const newFile of newFilesFromCli) {
         const absPathOfNewFile = resolveAndGetAbsolutePath(
           process.cwd(),
           newFile,
@@ -123,6 +133,16 @@ export class OutOfDateChecker {
 
     if (!lastModifiedDateOfTarget) return true;
 
+    const oldFilesFromCli: string[] = [
+      ...this.context.cliOptions.oldFile,
+      ...this.context.cliOptions.assumeOld,
+    ];
+
+    const newFilesFromCli: string[] = [
+      ...this.context.cliOptions.newFile,
+      ...this.context.cliOptions.assumeNew,
+    ];
+
     for (const preq of preqResolutions) {
       if (preq.origin.type === "target-rule") return true;
       const preqAbsolutePath =
@@ -154,7 +174,7 @@ export class OutOfDateChecker {
         });
       }
 
-      const isVeryOldFile = this.context.cliOptions.oldFile.some(
+      const isVeryOldFile = oldFilesFromCli.some(
         (oldFile) =>
           resolveAndGetAbsolutePath(process.cwd(), oldFile) ===
           preqAbsolutePath,
@@ -169,7 +189,7 @@ export class OutOfDateChecker {
       if (lastModifiedDateOfPreq > lastModifiedDateOfTarget) return true;
 
       // chedk if file is assumed as new file or not
-      for (const newFile of this.context.cliOptions.newFile) {
+      for (const newFile of newFilesFromCli) {
         const absPathOfNewFile = resolveAndGetAbsolutePath(
           process.cwd(),
           newFile,
