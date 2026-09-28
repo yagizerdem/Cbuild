@@ -6,16 +6,12 @@ import { Core, type EnvVar, type CliVar } from "@cbuild-backend/core.js";
 import cli from "@src/cli.js";
 import handleError from "@src/error-handler.js";
 import type { CBuildOptions } from "@src/cli.js";
-import { printVersionInfo } from "@src/version.js";
+import { handleCliOptions } from "@src/handle-cli-options.js";
 
 async function main() {
   cli.parse();
   const options: CBuildOptions = cli.opts<CBuildOptions>();
-
-  if (options.version) {
-    printVersionInfo();
-    return;
-  }
+  handleCliOptions(options);
 
   try {
     const buildFile = `
