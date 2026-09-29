@@ -25,7 +25,7 @@ app :
 
 `;
 
-    const envVars = collectEnvVars();
+    const envVars = collectEnvVars(options);
 
     const irs = frontend(buildFile);
 
