@@ -8,6 +8,7 @@ import {
   compareVarPriority,
   Env,
   SymbolTableVariable,
+  VariableOrigin,
 } from "@cbuild-backend/env.js";
 import { IR } from "@src/compiler/ir.js";
 import { isCompatible } from "@cbuild-backend/semantic.js";
@@ -137,16 +138,23 @@ export class Core {
   }
 
   public mergeEnvVars(envVars: EnvVar[]) {
+    const envOrigin: Extract<
+      VariableOrigin,
+      "environment" | "environment-overridden"
+    > = this.context.cliOptions.environmentOverrides
+      ? "environment-overridden"
+      : "environment";
+
     for (const envVar of envVars) {
       if (this.context.hasVariable(envVar.key)) {
         const symbolTableVar: SymbolTableVariable = this.context.getVariable(
           envVar.key,
         )!;
-        if (compareVarPriority(symbolTableVar.origin, "environment") < 0) {
-          this.context.setRawVariable(envVar.key, envVar.value, "environment");
+        if (compareVarPriority(symbolTableVar.origin, envOrigin) < 0) {
+          this.context.setRawVariable(envVar.key, envVar.value, envOrigin);
         }
       } else {
-        this.context.setRawVariable(envVar.key, envVar.value, "environment");
+        this.context.setRawVariable(envVar.key, envVar.value, envOrigin);
       }
     }
   }

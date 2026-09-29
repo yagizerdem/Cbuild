@@ -163,8 +163,8 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
       throw new RecursiveVariableExpansionException(identifier);
     }
 
-    if (this.context.hasVariable(identifier)) {
-      const variable = this.context.requireVariable(identifier);
+    if (this.context.hasVariableRecursive(identifier)) {
+      const variable = this.context.requireVariableRecursive(identifier);
       if (variable.isDeferred()) {
         const valueIR = variable.getDeferredValue()!;
         activeLookups.add(identifier);
@@ -181,7 +181,7 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
         return rawValue;
       }
 
-      return this.context.requireVariable(identifier).getRawValue()!;
+      return this.context.requireVariableRecursive(identifier).getRawValue()!;
     }
 
     if (this.context.cliOptions.warnUndefinedVariables) {

@@ -18,8 +18,9 @@ async function main() {
   try {
     const buildFile = `
 
+NAM := "erdem"
 app : 
-\t echo $(NAME)
+\t echo $(NAM)
 
 
 `;
