@@ -52,6 +52,7 @@ export class OutOfDateChecker {
     const newFilesFromCli: string[] = [
       ...this.context.cliOptions.newFile,
       ...this.context.cliOptions.assumeNew,
+      ...this.context.cliOptions.whatIf,
     ];
 
     for (const preq of preqResolutions) {
@@ -141,6 +142,7 @@ export class OutOfDateChecker {
     const newFilesFromCli: string[] = [
       ...this.context.cliOptions.newFile,
       ...this.context.cliOptions.assumeNew,
+      ...this.context.cliOptions.whatIf,
     ];
 
     for (const preq of preqResolutions) {
