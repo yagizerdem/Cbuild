@@ -31,6 +31,8 @@ export enum MachineCode {
   SHELL_COMMAND_ABORTED,
   INVALID_SHELL_PATH,
 
+  BUILD_FILE_NOT_FOUND,
+
   UNSUPPORTED,
 }
 

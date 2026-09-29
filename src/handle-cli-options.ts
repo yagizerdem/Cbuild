@@ -1,6 +1,10 @@
 import { CBuildOptions } from "@src/cli.js";
 import packageJson from "../package.json" with { type: "json" };
-import { resolveAndGetAbsolutePath } from "@src/file-utils.js";
+import {
+  fileExistbyAbsolutePath,
+  resolveAndGetAbsolutePath,
+} from "@src/file-utils.js";
+import { CbuildException, ErrorType, MachineCode } from "./cbuild-exception.js";
 
 export function handleCliOptions(options: CBuildOptions) {
   handleVersionCliOption(options);
@@ -29,4 +33,52 @@ function handleDirectoryCliOption(options: CBuildOptions) {
       process.chdir(cwdAbsPath);
     }
   }
+}
+
+export function resolveBuildFilePath(options: CBuildOptions): string[] {
+  const buildFiles = [...(options.file || []), ...(options.buildfile || [])];
+  const resolvedBuildFilePaths: string[] = [];
+
+  // use default buildFile path
+  if (buildFiles.length === 0) {
+    const defaultFileNames = ["CBuildfile", "cbuildfile", "Buildfile"];
+    for (const buildFile of defaultFileNames) {
+      const resolvedBuildFilePath = resolveAndGetAbsolutePath(
+        process.cwd(),
+        buildFile,
+      );
+
+      if (fileExistbyAbsolutePath(resolvedBuildFilePath)) {
+        return [resolvedBuildFilePath];
+      }
+    }
+    throw CbuildException.from({
+      row: -1,
+      column: -1,
+      errorType: ErrorType.PROCESS,
+      machineCode: MachineCode.BUILD_FILE_NOT_FOUND,
+      message: "cbuild: *** No targets specified and no makefile found.  Stop.",
+    });
+  } else {
+    for (const buildFile of buildFiles) {
+      const resolvedBuildFilePath = resolveAndGetAbsolutePath(
+        process.cwd(),
+        buildFile,
+      );
+
+      if (!fileExistbyAbsolutePath(resolvedBuildFilePath)) {
+        throw CbuildException.from({
+          message: `cbuild: ${buildFile}: No such file or directory`,
+          column: -1,
+          row: -1,
+          errorType: ErrorType.PROCESS,
+          machineCode: MachineCode.BUILD_FILE_NOT_FOUND,
+        });
+      }
+
+      resolvedBuildFilePaths.push(resolvedBuildFilePath);
+    }
+  }
+
+  return resolvedBuildFilePaths;
 }
