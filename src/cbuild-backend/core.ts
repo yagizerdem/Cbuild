@@ -2,6 +2,7 @@ import {
   BaseModel,
   ImplicitPatterRule,
   NormalRule,
+  VpathRule,
 } from "@cbuild-backend/model.js";
 
 import {
@@ -30,6 +31,7 @@ import BuildFileEvaluator from "@cbuild-backend/evaluator/core/buildfile-evaluat
 import { ImplicitRuleResolver } from "@cbuild-backend/implicit-rule-resolver.js";
 import { BuildFileEvaluationState } from "@cbuild-backend/evaluator/core/type.js";
 import { NormalizeModels } from "@cbuild-backend/normalize-models.js";
+import { DatabasePrinter } from "./database-printer.js";
 
 export interface CliVar {
   key: string;
@@ -84,6 +86,25 @@ export class Core {
     // add seperate resolutino step and normalize rules
     const normalization = new NormalizeModels(explicitRules);
     const normalizedExplicitRules = normalization.normalize();
+
+    if (this.context.cliOptions.printDataBase) {
+      const databasePrinter = new DatabasePrinter();
+      databasePrinter.print({
+        context: this.context,
+        explicitRules: normalizedExplicitRules,
+        implicitRules: patterns,
+        vpaths: normalizedExplicitRules.reduce((acc: VpathRule[], rule) => {
+          if (rule.vpathRules) {
+            for (const vpathRule of rule.vpathRules) {
+              acc.push(vpathRule);
+            }
+          }
+          return acc;
+        }, []),
+      });
+
+      process.exit(0);
+    }
 
     const targetName = findDefaultTargetName(normalizedExplicitRules);
     const targetRule = findTargetRule(normalizedExplicitRules, targetName!);
