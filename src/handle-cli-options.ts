@@ -4,7 +4,11 @@ import {
   fileExistbyAbsolutePath,
   resolveAndGetAbsolutePath,
 } from "@src/file-utils.js";
-import { CbuildException, ErrorType, MachineCode } from "./cbuild-exception.js";
+import {
+  CbuildException,
+  ErrorType,
+  MachineCode,
+} from "@src/cbuild-exception.js";
 
 export function handleCliOptions(options: CBuildOptions) {
   handleVersionCliOption(options);

@@ -4,7 +4,7 @@ import { frontend } from "@src/frontend.js";
 import { Env } from "@cbuild-backend/env.js";
 import { Core } from "@cbuild-backend/core.js";
 import cli from "@src/cli.js";
-import handleError from "@src/error-handler.js";
+import ErrorHandler from "@src/error-handler.js";
 import type { CBuildOptions } from "@src/cli.js";
 import {
   handleCliOptions,
@@ -19,6 +19,8 @@ export async function readBuildFile(buildFilePath: string): Promise<string> {
 }
 
 async function main() {
+  let context: Env | null = null;
+
   try {
     cli.parse();
     const options: CBuildOptions = cli.opts<CBuildOptions>();
@@ -32,14 +34,20 @@ async function main() {
     }
 
     const envVars = collectEnvVars(options);
-    const context = new Env(options);
+    context = new Env(options);
     const core = new Core(context);
     await core.runAsync(intermediateRepresentation, {
       envVars,
       cliVars: [],
     });
-  } catch (error) {
-    handleError(error);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      const errorHandler = new ErrorHandler();
+      errorHandler.handleError(error);
+    } else {
+      console.error("cbuild: *** Unknown error.");
+      process.exit(1);
+    }
   }
 }
 

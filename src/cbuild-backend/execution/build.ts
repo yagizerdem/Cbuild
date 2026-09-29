@@ -49,6 +49,18 @@ export class Build {
       return;
     }
 
+    // build required
+    if (this.context.cliOptions.question) {
+      throw CbuildException.from({
+        column: -1,
+        row: -1,
+        errorType: ErrorType.PROCESS,
+        machineCode: MachineCode.REBUILD_REQUIRED,
+        message: `cbuild: Rebuild required for target ${rule.target}`,
+        exitCode: 1,
+      });
+    }
+
     const automaticVariableEnv = new AutomaticVariableEnv(
       rule,
       this.context,
@@ -112,6 +124,18 @@ export class Build {
 
     if (!this.shouldBuildRule(rule, preqResolutions.first)) {
       return;
+    }
+
+    // build required
+    if (this.context.cliOptions.question) {
+      throw CbuildException.from({
+        column: -1,
+        row: -1,
+        errorType: ErrorType.PROCESS,
+        machineCode: MachineCode.REBUILD_REQUIRED,
+        message: `cbuild: Rebuild required for target ${rule.target}`,
+        exitCode: 1,
+      });
     }
 
     const automaticVariableEnv = new AutomaticVariableEnv(
