@@ -2,26 +2,29 @@
 
 import { frontend } from "@src/frontend.js";
 import { Env } from "@cbuild-backend/env.js";
-import { Core, type EnvVar, type CliVar } from "@cbuild-backend/core.js";
+import { Core } from "@cbuild-backend/core.js";
 import cli from "@src/cli.js";
 import handleError from "@src/error-handler.js";
 import type { CBuildOptions } from "@src/cli.js";
 import { handleCliOptions } from "@src/handle-cli-options.js";
+import { collectEnvVars } from "./collect-vars.js";
 
 async function main() {
   cli.parse();
   const options: CBuildOptions = cli.opts<CBuildOptions>();
+
   handleCliOptions(options);
 
   try {
     const buildFile = `
 
-
-app : bar.txt foo.txt foo.txt
-\t echo $?
+app : 
+\t echo $(NAME)
 
 
 `;
+
+    const envVars = collectEnvVars();
 
     const irs = frontend(buildFile);
 
@@ -30,7 +33,7 @@ app : bar.txt foo.txt foo.txt
     const core = new Core(context);
 
     await core.runAsync(irs, {
-      envVars: [],
+      envVars,
       cliVars: [],
     });
   } catch (error) {

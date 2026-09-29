@@ -8,6 +8,7 @@ import { CbuildException, ErrorType, MachineCode } from "./cbuild-exception.js";
 
 export function handleCliOptions(options: CBuildOptions) {
   handleVersionCliOption(options);
+  handleDirectoryCliOption(options);
 }
 
 function handleVersionCliOption(options: CBuildOptions) {
@@ -21,8 +22,6 @@ publish, distribute, sublicense, and/or sell copies of the Software.
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.`);
     process.exit(0);
   }
-
-  handleDirectoryCliOption(options);
 }
 
 function handleDirectoryCliOption(options: CBuildOptions) {
