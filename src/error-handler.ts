@@ -1,10 +1,10 @@
 import { CbuildException } from "@src/cbuild-exception.js";
 
 export default function handleError(error: unknown): void {
-  if (error instanceof Error) {
-    handleBaseError(error);
-  } else if (error instanceof CbuildException) {
+  if (error instanceof CbuildException) {
     handleCbuildError(error);
+  } else if (error instanceof Error) {
+    handleBaseError(error);
   } else {
     handleUnknownError(error);
   }
