@@ -15,13 +15,11 @@ import {
 } from "@src/cbuild-exception.js";
 import { ProcessRunner } from "@cbuild-backend/process.js";
 import {
-  fileExistbyAbsolutePath,
   resolveAndGetAbsolutePath,
+  touchFileAsync,
+  touchFileSync,
 } from "@src/file-utils.js";
-import {
-  PreqResolution,
-  TargetResolution,
-} from "@cbuild-backend/execution/preq-resolution/type.js";
+import { TargetResolution } from "@cbuild-backend/execution/preq-resolution/type.js";
 import { OutOfDateChecker } from "./preq-resolution/out-of-date.js";
 import { resolveTarget } from "./preq-resolution/target-resolver.js";
 
@@ -60,6 +58,20 @@ export class Build {
     );
 
     if (!outOfDateResolution.isTargetOutOfDate) {
+      return;
+    }
+
+    if (this.context.cliOptions.touch) {
+      if (targetResolution.origin.type === "not-found") {
+        const targetAbsPath = resolveAndGetAbsolutePath(
+          process.cwd(),
+          targetResolution.targetName,
+        );
+
+        touchFileSync(targetAbsPath);
+      } else {
+        touchFileSync(targetResolution.origin.absolutePath);
+      }
       return;
     }
 
@@ -154,6 +166,19 @@ export class Build {
       return;
     }
 
+    if (this.context.cliOptions.touch) {
+      if (targetResolution.origin.type === "not-found") {
+        const targetAbsPath = resolveAndGetAbsolutePath(
+          process.cwd(),
+          targetResolution.targetName,
+        );
+        await touchFileAsync(targetAbsPath);
+      } else {
+        await touchFileAsync(targetResolution.origin.absolutePath);
+      }
+      return;
+    }
+
     // build required
     if (this.context.cliOptions.question) {
       throw CbuildException.from({
@@ -241,14 +266,6 @@ export class Build {
       }
     }
   }
-
-  // private shouldBuildRule(
-  //   targetResolution: TargetResolution,
-  //   preqResolutions: PreqResolution[],
-  // ): boolean {
-  //   const outOfDateChecker = new OutOfDateChecker(this.context);
-  //   return outOfDateChecker.isOutOfDateSync(targetResolution, preqResolutions);
-  // }
 
   async runCommandAsync(options: CommandRunnerOptions): Promise<ProcessResult> {
     const processRunner = new ProcessRunner();
