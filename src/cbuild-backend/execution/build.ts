@@ -19,9 +19,11 @@ import {
   resolveAndGetAbsolutePath,
 } from "@src/file-utils.js";
 import {
-  PreqMeta,
   PreqResolution,
+  TargetResolution,
 } from "@cbuild-backend/execution/preq-resolution/type.js";
+import { OutOfDateChecker } from "./preq-resolution/out-of-date.js";
+import { resolveTarget } from "./preq-resolution/target-resolver.js";
 
 interface CommandRunnerOptions {
   shellPath: string | null;
@@ -39,13 +41,19 @@ export class Build {
   }
 
   public buildTargetSync(rule: NormalRule) {
+    const targetResolution: TargetResolution = resolveTarget(
+      this.explicitRules,
+      rule,
+      this.context,
+    );
+
     const preqResolutions = resolvePreqs(
       this.explicitRules,
       rule,
       this.context,
     );
 
-    if (!this.shouldBuildRule(rule, preqResolutions.first)) {
+    if (!this.shouldBuildRule(targetResolution, preqResolutions.first)) {
       return;
     }
 
@@ -64,6 +72,7 @@ export class Build {
     const automaticVariableEnv = new AutomaticVariableEnv(
       rule,
       this.context,
+      targetResolution,
       preqResolutions.first, // normal preq resolultions
       preqResolutions.second, // order-only preq resolutions
     );
@@ -116,13 +125,19 @@ export class Build {
   }
 
   public async buildTargetAsync(rule: NormalRule) {
+    const targetResolution: TargetResolution = resolveTarget(
+      this.explicitRules,
+      rule,
+      this.context,
+    );
+
     const preqResolutions = resolvePreqs(
       this.explicitRules,
       rule,
       this.context,
     );
 
-    if (!this.shouldBuildRule(rule, preqResolutions.first)) {
+    if (!this.shouldBuildRule(targetResolution, preqResolutions.first)) {
       return;
     }
 
@@ -141,6 +156,7 @@ export class Build {
     const automaticVariableEnv = new AutomaticVariableEnv(
       rule,
       this.context,
+      targetResolution,
       preqResolutions.first, // normal preq resolutions
       preqResolutions.second, // order-only preq resolutions
     );
@@ -213,16 +229,11 @@ export class Build {
   }
 
   private shouldBuildRule(
-    rule: NormalRule,
-    preqResolutions: PreqResolution<PreqMeta>[],
+    targetResolution: TargetResolution,
+    preqResolutions: PreqResolution[],
   ): boolean {
-    const targetPath = resolveAndGetAbsolutePath(process.cwd(), rule.target);
-
-    if (!fileExistbyAbsolutePath(targetPath)) {
-      return true;
-    }
-
-    return preqResolutions.some((preq) => preq.meta?.outOfDate);
+    const outOfDateChecker = new OutOfDateChecker(this.context);
+    return outOfDateChecker.isOutOfDateSync(targetResolution, preqResolutions);
   }
 
   async runCommandAsync(options: CommandRunnerOptions): Promise<ProcessResult> {

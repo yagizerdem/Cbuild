@@ -5,10 +5,9 @@ import {
   getModifiedTimeNsAsync,
   resolveAndGetAbsolutePath,
 } from "@src/file-utils.js";
-import { NormalRule } from "@cbuild-backend/model.js";
 import {
-  PreqMeta,
   PreqResolution,
+  TargetResolution,
 } from "@src/cbuild-backend/execution/preq-resolution/type.js";
 import {
   CbuildException,
@@ -24,23 +23,21 @@ export class OutOfDateChecker {
     this.context = context;
   }
 
-  private isOutOfDateSync(
-    rule: NormalRule,
-    preqResolutions: PreqResolution<PreqMeta> | PreqResolution<PreqMeta>[],
+  public isOutOfDateSync(
+    target: TargetResolution,
+    preqResolutions: PreqResolution | PreqResolution[],
   ): boolean {
-    const targetEntryPath: string = resolveAndGetAbsolutePath(
-      process.cwd(),
-      rule.target,
-    );
-
     if (Array.isArray(preqResolutions) === false) {
-      return this.isOutOfDateSync(rule, [preqResolutions]);
+      return this.isOutOfDateSync(target, [preqResolutions]);
     }
 
-    if (!fileExistbyAbsolutePath(targetEntryPath)) return true;
+    if (target.origin.type === "not-found") return true;
+    const targetAbsolutePath: string = target.origin.absolutePath;
+
+    if (!fileExistbyAbsolutePath(targetAbsolutePath)) return true;
 
     const lastModifiedDateOfTarget: bigint | undefined =
-      getModifiedTimeNs(targetEntryPath);
+      getModifiedTimeNs(targetAbsolutePath);
 
     if (!lastModifiedDateOfTarget) return true;
 
@@ -68,7 +65,7 @@ export class OutOfDateChecker {
                   throw CbuildException.from({
                     errorType: ErrorType.PROCESS,
                     machineCode: MachineCode.DEPQ_NOT_FOUND,
-                    message: `cbuild: No rule to make target '${preq.preqName}', needed by '${rule.target}'. Stop.`,
+                    message: `cbuild: No rule to make target '${preq.preqName}', needed by '${target.targetName}'. Stop.`,
                     column: -1,
                     row: -1,
                   });
@@ -79,7 +76,7 @@ export class OutOfDateChecker {
         throw CbuildException.from({
           errorType: ErrorType.PROCESS,
           machineCode: MachineCode.DEPQ_NOT_FOUND,
-          message: `cbuild: No rule to make target '${preq.preqName}', needed by '${rule.target}'. Stop.`,
+          message: `cbuild: No rule to make target '${preq.preqName}', needed by '${target.targetName}'. Stop.`,
           column: -1,
           row: -1,
         });
@@ -113,24 +110,21 @@ export class OutOfDateChecker {
     return false;
   }
 
-  private async isOutOfDateAsync(
-    rule: NormalRule,
-    preqResolutions: PreqResolution<PreqMeta> | PreqResolution<PreqMeta>[],
+  public async isOutOfDateAsync(
+    target: TargetResolution,
+    preqResolutions: PreqResolution | PreqResolution[],
   ): Promise<boolean> {
     if (Array.isArray(preqResolutions) === false) {
-      return this.isOutOfDateAsync(rule, [preqResolutions]);
+      return this.isOutOfDateAsync(target, [preqResolutions]);
     }
 
-    const targetEntryAbsolutePath: string = resolveAndGetAbsolutePath(
-      process.cwd(),
-      rule.target,
-    );
+    if (target.origin.type === "not-found") return true;
+    const targetAbsolutePath: string = target.origin.absolutePath;
 
-    if (!(await fileExistbyAbsolutePathAsync(targetEntryAbsolutePath)))
-      return true;
+    if (!fileExistbyAbsolutePath(targetAbsolutePath)) return true;
 
     const lastModifiedDateOfTarget: bigint | undefined =
-      await getModifiedTimeNsAsync(targetEntryAbsolutePath);
+      await getModifiedTimeNsAsync(targetAbsolutePath);
 
     if (!lastModifiedDateOfTarget) return true;
 
@@ -158,7 +152,7 @@ export class OutOfDateChecker {
                   throw CbuildException.from({
                     errorType: ErrorType.PROCESS,
                     machineCode: MachineCode.DEPQ_NOT_FOUND,
-                    message: `cbuild: No rule to make target '${preq.preqName}', needed by '${rule.target}'. Stop.`,
+                    message: `cbuild: No rule to make target '${preq.preqName}', needed by '${target.targetName}'. Stop.`,
                     column: -1,
                     row: -1,
                   });
@@ -170,7 +164,7 @@ export class OutOfDateChecker {
         throw CbuildException.from({
           errorType: ErrorType.PROCESS,
           machineCode: MachineCode.DEPQ_NOT_FOUND,
-          message: `cbuild: No rule to make target '${preq.preqName}', needed by '${rule.target}'. Stop.`,
+          message: `cbuild: No rule to make target '${preq.preqName}', needed by '${target.targetName}'. Stop.`,
           column: -1,
           row: -1,
         });
@@ -201,63 +195,5 @@ export class OutOfDateChecker {
       }
     }
     return false;
-  }
-
-  public async resolveOutOfDateAsync(
-    rule: NormalRule,
-    preqs: PreqResolution<PreqMeta> | PreqResolution<PreqMeta>[],
-  ) {
-    if (Array.isArray(preqs)) {
-      for (const preq of preqs) {
-        if (await this.isOutOfDateAsync(rule, preq)) {
-          preq.meta = {
-            outOfDate: true,
-          };
-        } else {
-          preq.meta = {
-            outOfDate: false,
-          };
-        }
-      }
-    } else {
-      if (await this.isOutOfDateAsync(rule, preqs)) {
-        preqs.meta = {
-          outOfDate: true,
-        };
-      } else {
-        preqs.meta = {
-          outOfDate: false,
-        };
-      }
-    }
-  }
-
-  public resolveOutOfDateSync(
-    rule: NormalRule,
-    preqs: PreqResolution<PreqMeta> | PreqResolution<PreqMeta>[],
-  ) {
-    if (Array.isArray(preqs)) {
-      for (const preq of preqs) {
-        if (this.isOutOfDateSync(rule, preq)) {
-          preq.meta = {
-            outOfDate: true,
-          };
-        } else {
-          preq.meta = {
-            outOfDate: false,
-          };
-        }
-      }
-    } else {
-      if (this.isOutOfDateSync(rule, preqs)) {
-        preqs.meta = {
-          outOfDate: true,
-        };
-      } else {
-        preqs.meta = {
-          outOfDate: false,
-        };
-      }
-    }
   }
 }
