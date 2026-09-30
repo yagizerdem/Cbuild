@@ -53,7 +53,13 @@ export class Build {
       this.context,
     );
 
-    if (!this.shouldBuildRule(targetResolution, preqResolutions.first)) {
+    const outOfDateChecker = new OutOfDateChecker(this.context);
+    const outOfDateResolution = outOfDateChecker.resolveOutOfDateSync(
+      targetResolution,
+      preqResolutions.first,
+    );
+
+    if (!outOfDateResolution.isTargetOutOfDate) {
       return;
     }
 
@@ -75,6 +81,7 @@ export class Build {
       targetResolution,
       preqResolutions.first, // normal preq resolultions
       preqResolutions.second, // order-only preq resolutions
+      outOfDateResolution,
     );
     const automaticEnv = automaticVariableEnv.generate();
 
@@ -137,7 +144,13 @@ export class Build {
       this.context,
     );
 
-    if (!this.shouldBuildRule(targetResolution, preqResolutions.first)) {
+    const outOfDateChecker = new OutOfDateChecker(this.context);
+    const outOfDateResolution = await outOfDateChecker.resolveOutOfDateAsync(
+      targetResolution,
+      preqResolutions.first,
+    );
+
+    if (!outOfDateResolution.isTargetOutOfDate) {
       return;
     }
 
@@ -159,6 +172,7 @@ export class Build {
       targetResolution,
       preqResolutions.first, // normal preq resolutions
       preqResolutions.second, // order-only preq resolutions
+      outOfDateResolution,
     );
     const automaticEnv = automaticVariableEnv.generate();
 
@@ -228,13 +242,13 @@ export class Build {
     }
   }
 
-  private shouldBuildRule(
-    targetResolution: TargetResolution,
-    preqResolutions: PreqResolution[],
-  ): boolean {
-    const outOfDateChecker = new OutOfDateChecker(this.context);
-    return outOfDateChecker.isOutOfDateSync(targetResolution, preqResolutions);
-  }
+  // private shouldBuildRule(
+  //   targetResolution: TargetResolution,
+  //   preqResolutions: PreqResolution[],
+  // ): boolean {
+  //   const outOfDateChecker = new OutOfDateChecker(this.context);
+  //   return outOfDateChecker.isOutOfDateSync(targetResolution, preqResolutions);
+  // }
 
   async runCommandAsync(options: CommandRunnerOptions): Promise<ProcessResult> {
     const processRunner = new ProcessRunner();

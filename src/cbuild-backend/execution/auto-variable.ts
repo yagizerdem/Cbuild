@@ -1,6 +1,7 @@
 import { Env } from "@cbuild-backend/env.js";
 import { NormalRule } from "@cbuild-backend/model.js";
 import {
+  OutOfDateResolution,
   PreqResolution,
   TargetResolution,
 } from "@cbuild-backend/execution/preq-resolution/type.js";
@@ -11,6 +12,7 @@ export default class AutomaticVariableEnv {
   private readonly resolvedPreqs: PreqResolution[];
   private readonly resolvedOrderOnlyPreqs: PreqResolution[];
   private readonly resolvedTarget: TargetResolution | null = null;
+  private readonly outOfDateResolution: OutOfDateResolution | null = null;
 
   constructor(
     rule: NormalRule,
@@ -18,12 +20,14 @@ export default class AutomaticVariableEnv {
     resolvedTarget: TargetResolution | null,
     resolvedPreqs: PreqResolution[],
     resolvedOrderOnlyPreqs: PreqResolution[],
+    outOfDateResolution: OutOfDateResolution | null,
   ) {
     this.rule = rule;
     this.enclosing = enclosing;
     this.resolvedTarget = resolvedTarget;
     this.resolvedPreqs = resolvedPreqs;
     this.resolvedOrderOnlyPreqs = resolvedOrderOnlyPreqs;
+    this.outOfDateResolution = outOfDateResolution;
   }
 
   public generate(): Env {
@@ -63,12 +67,10 @@ export default class AutomaticVariableEnv {
 
   // $?
   public generateQuestionMarkVar() {
-    const outOfDatePreqs = this.resolvedPreqs.filter(
-      (preq) => preq.meta?.outOfDate,
+    const outOfDatePreqNames = this.outOfDateResolution?.outOfDatePreqs.map(
+      (preq) => preq.preqName,
     );
-    const outOfDatePreqNames = outOfDatePreqs.map(
-      (preq) => preq.preqName ?? "",
-    );
+
     // filter duplicates
     const uniqueOutOfDatePreqNames = Array.from(new Set(outOfDatePreqNames));
     return uniqueOutOfDatePreqNames.join(" ");
@@ -156,12 +158,10 @@ export default class AutomaticVariableEnv {
 
   // ?D
   public generateQuestionDVar() {
-    const outOfDatePreqs = this.resolvedPreqs.filter(
-      (preq) => preq.meta?.outOfDate,
+    const outOfDatePreqNames = this.outOfDateResolution?.outOfDatePreqs.map(
+      (preq) => preq.preqName,
     );
-    const outOfDatePreqNames = outOfDatePreqs.map(
-      (preq) => preq.preqName ?? "",
-    );
+
     // filter duplicates
     const uniqueOutOfDatePreqNames = Array.from(new Set(outOfDatePreqNames));
     return uniqueOutOfDatePreqNames.map((preq) => this.dirPart(preq)).join(" ");
@@ -169,12 +169,10 @@ export default class AutomaticVariableEnv {
 
   // ?F
   public generateQuestionFVar() {
-    const outOfDatePreqs = this.resolvedPreqs.filter(
-      (preq) => preq.meta?.outOfDate,
+    const outOfDatePreqNames = this.outOfDateResolution?.outOfDatePreqs.map(
+      (preq) => preq.preqName,
     );
-    const outOfDatePreqNames = outOfDatePreqs.map(
-      (preq) => preq.preqName ?? "",
-    );
+
     // filter duplicates
     const uniqueOutOfDatePreqNames = Array.from(new Set(outOfDatePreqNames));
     return uniqueOutOfDatePreqNames

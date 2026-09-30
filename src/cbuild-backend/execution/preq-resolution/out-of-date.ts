@@ -6,6 +6,7 @@ import {
   resolveAndGetAbsolutePath,
 } from "@src/file-utils.js";
 import {
+  OutOfDateResolution,
   PreqResolution,
   TargetResolution,
 } from "@src/cbuild-backend/execution/preq-resolution/type.js";
@@ -195,5 +196,77 @@ export class OutOfDateChecker {
       }
     }
     return false;
+  }
+
+  public async resolveOutOfDateAsync(
+    targetResolution: TargetResolution,
+    preqResolutions: PreqResolution[],
+  ): Promise<OutOfDateResolution> {
+    let isTargetOutOfDate = false;
+    const outOfDatePreqs: PreqResolution[] = [];
+
+    if (targetResolution.origin.type === "not-found") {
+      isTargetOutOfDate = true;
+    }
+
+    if (targetResolution.origin.type !== "not-found") {
+      const absPath = targetResolution.origin.absolutePath;
+      if (!fileExistbyAbsolutePath(absPath)) {
+        isTargetOutOfDate = true;
+      }
+    }
+
+    for (let i = 0; i < preqResolutions.length; i++) {
+      const preq = preqResolutions[i];
+      const isPreqOutOfDate = await this.isOutOfDateAsync(targetResolution, [
+        preq,
+      ]);
+      if (isPreqOutOfDate) {
+        isTargetOutOfDate = true;
+        outOfDatePreqs.push(preq);
+      }
+    }
+
+    return {
+      isTargetOutOfDate,
+      resolvedPreqs: preqResolutions,
+      resolvedTarget: targetResolution,
+      outOfDatePreqs,
+    } as OutOfDateResolution;
+  }
+
+  public resolveOutOfDateSync(
+    targetResolution: TargetResolution,
+    preqResolutions: PreqResolution[],
+  ): OutOfDateResolution {
+    let isTargetOutOfDate = false;
+
+    if (targetResolution.origin.type === "not-found") {
+      isTargetOutOfDate = true;
+    }
+
+    if (targetResolution.origin.type !== "not-found") {
+      const absPath = targetResolution.origin.absolutePath;
+      if (!fileExistbyAbsolutePath(absPath)) {
+        isTargetOutOfDate = true;
+      }
+    }
+
+    const outOfDatePreqs: PreqResolution[] = [];
+    for (let i = 0; i < preqResolutions.length; i++) {
+      const preq = preqResolutions[i];
+      const isPreqOutOfDate = this.isOutOfDateSync(targetResolution, [preq]);
+      if (isPreqOutOfDate) {
+        isTargetOutOfDate = true;
+        outOfDatePreqs.push(preq);
+      }
+    }
+
+    return {
+      isTargetOutOfDate,
+      resolvedPreqs: preqResolutions,
+      resolvedTarget: targetResolution,
+      outOfDatePreqs,
+    } as OutOfDateResolution;
   }
 }

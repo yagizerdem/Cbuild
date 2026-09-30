@@ -42,3 +42,10 @@ export type TargetResolution = {
       };
     }
 );
+
+export type OutOfDateResolution = {
+  resolvedTarget: TargetResolution;
+  resolvedPreqs: PreqResolution[];
+  isTargetOutOfDate: boolean;
+  outOfDatePreqs: PreqResolution[];
+};
