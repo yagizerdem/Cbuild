@@ -100,6 +100,18 @@ public class cbuildBaseListener implements cbuildListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterDefine_body(cbuildParser.Define_bodyContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitDefine_body(cbuildParser.Define_bodyContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterDefinition(cbuildParser.DefinitionContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -592,6 +604,18 @@ public class cbuildBaseListener implements cbuildListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterUndefine(cbuildParser.UndefineContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitUndefine(cbuildParser.UndefineContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterSpecifiers(cbuildParser.SpecifiersContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -796,49 +820,25 @@ public class cbuildBaseListener implements cbuildListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterYsharp_hook(cbuildParser.Ysharp_hookContext ctx) { }
+	@Override public void enterHook(cbuildParser.HookContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitYsharp_hook(cbuildParser.Ysharp_hookContext ctx) { }
+	@Override public void exitHook(cbuildParser.HookContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterYsharp_program(cbuildParser.Ysharp_programContext ctx) { }
+	@Override public void enterHook_program(cbuildParser.Hook_programContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitYsharp_program(cbuildParser.Ysharp_programContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterLua_hook(cbuildParser.Lua_hookContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitLua_hook(cbuildParser.Lua_hookContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterLua_program(cbuildParser.Lua_programContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitLua_program(cbuildParser.Lua_programContext ctx) { }
+	@Override public void exitHook_program(cbuildParser.Hook_programContext ctx) { }
 
 	/**
 	 * {@inheritDoc}
