@@ -31,7 +31,8 @@ import BuildFileEvaluator from "@cbuild-backend/evaluator/core/buildfile-evaluat
 import { ImplicitRuleResolver } from "@cbuild-backend/implicit-rule-resolver.js";
 import { BuildFileEvaluationState } from "@cbuild-backend/evaluator/core/type.js";
 import { NormalizeModels } from "@cbuild-backend/normalize-models.js";
-import { DatabasePrinter } from "./database-printer.js";
+import { DatabasePrinter } from "@cbuild-backend/database-printer.js";
+import { registerBuiltInVariables } from "@cbuild-backend/built-in.js";
 
 export interface CliVar {
   key: string;
@@ -64,6 +65,8 @@ export class Core {
       })();
 
     isCompatible(rules);
+
+    registerBuiltInVariables(this.context);
 
     this.mergeEnvVars(options?.envVars ?? []);
     this.mergeCliVars(options?.cliVars ?? []);
