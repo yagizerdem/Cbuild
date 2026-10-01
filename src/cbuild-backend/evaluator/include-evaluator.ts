@@ -16,6 +16,8 @@ import fsPromises from "fs/promises";
 import { frontend } from "@src/frontend.js";
 import BuildFileEvaluator from "@cbuild-backend/evaluator/core/buildfile-evaluator.js";
 import { BuildFileEvaluationState } from "@cbuild-backend/evaluator/core/type.js";
+import { BuildFileMeta } from "@src/type/buildfile-meta.js";
+import path from "path";
 
 export default class IncludeIREvaluator {
   private readonly context: Env;
@@ -71,10 +73,18 @@ export default class IncludeIREvaluator {
         });
       }
 
-      const buildFile = await fsPromises.readFile(
+      const buildFileContent = await fsPromises.readFile(
         resolvedBuildFilePath,
         "utf-8",
       );
+
+      const buildFile: BuildFileMeta = {
+        absolutePath: resolvedBuildFilePath,
+        rawContent: buildFileContent,
+        size: (await fsPromises.stat(resolvedBuildFilePath)).size,
+        relativePath: path.relative(process.cwd(), resolvedBuildFilePath),
+        name: path.basename(resolvedBuildFilePath),
+      };
 
       const ir = frontend(buildFile);
 
