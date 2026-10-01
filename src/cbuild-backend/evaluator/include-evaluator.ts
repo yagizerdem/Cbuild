@@ -44,14 +44,20 @@ export default class IncludeIREvaluator {
     const filePaths = expandedFilePaths.trim().split(/\s+/).filter(Boolean);
 
     const models: BaseModel[] = [];
+    const loopUpDests = [process.cwd()];
+    for (const includedDest of this.context.cliOptions.includeDir) {
+      loopUpDests.push(resolveAndGetAbsolutePath(process.cwd(), includedDest));
+    }
 
     for (const filePath of filePaths) {
-      const resolvedBuildFilePath = resolveAndGetAbsolutePath(
-        process.cwd(),
-        filePath,
+      const resolvedBuildFilePaths: string[] = loopUpDests.map((dest) =>
+        resolveAndGetAbsolutePath(dest, filePath),
+      );
+      const resolvedBuildFilePath = resolvedBuildFilePaths.find(
+        fileExistbyAbsolutePath,
       );
 
-      if (!fileExistbyAbsolutePath(resolvedBuildFilePath)) {
+      if (!resolvedBuildFilePath) {
         if (silent) {
           continue;
         }
