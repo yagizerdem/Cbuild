@@ -95,7 +95,9 @@ export class Build {
       preqResolutions.second, // order-only preq resolutions
       outOfDateResolution,
     );
-    const automaticEnv = automaticVariableEnv.generate();
+    const automaticEnv = automaticVariableEnv.generate(
+      this.context.targetEnvs[rule.target] ?? undefined,
+    );
 
     const recipeExpansionEngine = new RecipeExpansionEngine(automaticEnv);
     const valueExpansionEngine = new ValueExpansionEngine(this.context);
@@ -199,7 +201,9 @@ export class Build {
       preqResolutions.second, // order-only preq resolutions
       outOfDateResolution,
     );
-    const automaticEnv = automaticVariableEnv.generate();
+    const automaticEnv = automaticVariableEnv.generate(
+      this.context.targetEnvs[rule.target] ?? undefined,
+    );
 
     const recipeExpansionEngine = new RecipeExpansionEngine(automaticEnv);
     const valueExpansionEngine = new ValueExpansionEngine(this.context);

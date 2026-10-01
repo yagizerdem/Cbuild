@@ -30,9 +30,10 @@ export default class AutomaticVariableEnv {
     this.outOfDateResolution = outOfDateResolution;
   }
 
-  public generate(): Env {
+  // can accept more spesific enclosing
+  public generate(enclosing: Env | undefined = undefined): Env {
     const env: Env = new Env(this.enclosing.cliOptions);
-    env.enclosing = this.enclosing;
+    env.enclosing = enclosing ?? this.enclosing;
 
     env.setRawVariable("%", this.generatePercentVar(), "automatic", false);
     env.setRawVariable("<", this.generateLessThanVar(), "automatic", false);
