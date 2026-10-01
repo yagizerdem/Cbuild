@@ -1,5 +1,2 @@
-app: | bar
-	echo app $|
-
-bar:
-	echo bar	
+app: 
+	@echo app
