@@ -77,6 +77,16 @@ public interface cbuildListener extends ParseTreeListener {
 	 */
 	void exitDefine(cbuildParser.DefineContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link cbuildParser#define_body}.
+	 * @param ctx the parse tree
+	 */
+	void enterDefine_body(cbuildParser.Define_bodyContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link cbuildParser#define_body}.
+	 * @param ctx the parse tree
+	 */
+	void exitDefine_body(cbuildParser.Define_bodyContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link cbuildParser#definition}.
 	 * @param ctx the parse tree
 	 */
@@ -487,6 +497,16 @@ public interface cbuildListener extends ParseTreeListener {
 	 */
 	void exitRecipe(cbuildParser.RecipeContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link cbuildParser#undefine}.
+	 * @param ctx the parse tree
+	 */
+	void enterUndefine(cbuildParser.UndefineContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link cbuildParser#undefine}.
+	 * @param ctx the parse tree
+	 */
+	void exitUndefine(cbuildParser.UndefineContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link cbuildParser#specifiers}.
 	 * @param ctx the parse tree
 	 */
@@ -657,43 +677,23 @@ public interface cbuildListener extends ParseTreeListener {
 	 */
 	void exitWs(cbuildParser.WsContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link cbuildParser#ysharp_hook}.
+	 * Enter a parse tree produced by {@link cbuildParser#hook}.
 	 * @param ctx the parse tree
 	 */
-	void enterYsharp_hook(cbuildParser.Ysharp_hookContext ctx);
+	void enterHook(cbuildParser.HookContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link cbuildParser#ysharp_hook}.
+	 * Exit a parse tree produced by {@link cbuildParser#hook}.
 	 * @param ctx the parse tree
 	 */
-	void exitYsharp_hook(cbuildParser.Ysharp_hookContext ctx);
+	void exitHook(cbuildParser.HookContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link cbuildParser#ysharp_program}.
+	 * Enter a parse tree produced by {@link cbuildParser#hook_program}.
 	 * @param ctx the parse tree
 	 */
-	void enterYsharp_program(cbuildParser.Ysharp_programContext ctx);
+	void enterHook_program(cbuildParser.Hook_programContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link cbuildParser#ysharp_program}.
+	 * Exit a parse tree produced by {@link cbuildParser#hook_program}.
 	 * @param ctx the parse tree
 	 */
-	void exitYsharp_program(cbuildParser.Ysharp_programContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link cbuildParser#lua_hook}.
-	 * @param ctx the parse tree
-	 */
-	void enterLua_hook(cbuildParser.Lua_hookContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link cbuildParser#lua_hook}.
-	 * @param ctx the parse tree
-	 */
-	void exitLua_hook(cbuildParser.Lua_hookContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link cbuildParser#lua_program}.
-	 * @param ctx the parse tree
-	 */
-	void enterLua_program(cbuildParser.Lua_programContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link cbuildParser#lua_program}.
-	 * @param ctx the parse tree
-	 */
-	void exitLua_program(cbuildParser.Lua_programContext ctx);
+	void exitHook_program(cbuildParser.Hook_programContext ctx);
 }

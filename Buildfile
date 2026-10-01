@@ -1,2 +1,2 @@
-app:
-	echo app
+app: 
+	@echo app

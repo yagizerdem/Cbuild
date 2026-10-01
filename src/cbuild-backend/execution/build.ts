@@ -228,8 +228,14 @@ export class Build {
         const result: ProcessResult =
           await this.runCommandAsync(commandRunnerOptions);
 
+        const startWithAtSymbol = command.startsWith("@");
+
         if (
-          !(this.context.cliOptions.silent || this.context.cliOptions.quiet)
+          !(
+            this.context.cliOptions.silent ||
+            this.context.cliOptions.quiet ||
+            startWithAtSymbol
+          )
         ) {
           console.log(`${command}`);
         }
