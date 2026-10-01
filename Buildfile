@@ -1,3 +1,2 @@
-app: bar
-	echo hit
-
+app:
+	echo app
