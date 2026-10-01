@@ -1,6 +1,2 @@
-app.o: 
-	echo $(CPP)
-
-
-# %o: %.c
-# 	echo hit implict rule
+app:
+	echo app

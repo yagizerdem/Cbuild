@@ -122,7 +122,7 @@ export class Core {
       normalizedExplicitRules,
       patterns,
       process.cwd(),
-    ).resolve(targetName);
+    ).resolve();
 
     // contains only the rules relevant to the target
     const rulesSubGraph = getTargetSubgraph(resolution, targetName);
