@@ -22,8 +22,18 @@ cli.option(
 );
 
 cli
-  .option("-f, --file <file>", "Read the specified file as a build file")
-  .option("--buildfile <file>", "Read the specified file as a build file");
+  .option(
+    "-f, --file <file>",
+    "Read the specified file as a build file",
+    collect,
+    [],
+  )
+  .option(
+    "--buildfile <file>",
+    "Read the specified file as a build file",
+    collect,
+    [],
+  );
 
 cli.option(
   "-i, --ignore-errors",
@@ -158,8 +168,8 @@ export interface CBuildOptions extends OptionValues {
 
   environmentOverrides?: boolean;
 
-  file?: string;
-  buildfile?: string;
+  file?: string[];
+  buildfile?: string[];
 
   ignoreErrors?: boolean;
 

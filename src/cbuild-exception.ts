@@ -31,6 +31,11 @@ export enum MachineCode {
   SHELL_COMMAND_ABORTED,
   INVALID_SHELL_PATH,
 
+  BUILD_FILE_NOT_FOUND,
+
+  // -q flag
+  REBUILD_REQUIRED,
+
   UNSUPPORTED,
 }
 
@@ -40,6 +45,7 @@ export interface CbuildExceptionOptions {
   machineCode: MachineCode;
   row: number;
   column: number;
+  exitCode?: number | null;
 }
 
 export class CbuildException extends Error {
@@ -49,6 +55,7 @@ export class CbuildException extends Error {
     public readonly machineCode: MachineCode,
     public readonly row: number,
     public readonly column: number,
+    public exitCode: number | null = null,
   ) {
     super(message);
     this.name = "CbuildException";
@@ -62,7 +69,15 @@ export class CbuildException extends Error {
     machineCode,
     row,
     column,
+    exitCode,
   }: CbuildExceptionOptions): CbuildException {
-    return new CbuildException(message, errorType, machineCode, row, column);
+    return new CbuildException(
+      message,
+      errorType,
+      machineCode,
+      row,
+      column,
+      exitCode,
+    );
   }
 }

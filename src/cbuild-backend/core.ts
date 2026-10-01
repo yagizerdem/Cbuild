@@ -2,12 +2,14 @@ import {
   BaseModel,
   ImplicitPatterRule,
   NormalRule,
+  VpathRule,
 } from "@cbuild-backend/model.js";
 
 import {
   compareVarPriority,
   Env,
   SymbolTableVariable,
+  VariableOrigin,
 } from "@cbuild-backend/env.js";
 import { IR } from "@src/compiler/ir.js";
 import { isCompatible } from "@cbuild-backend/semantic.js";
@@ -29,6 +31,7 @@ import BuildFileEvaluator from "@cbuild-backend/evaluator/core/buildfile-evaluat
 import { ImplicitRuleResolver } from "@cbuild-backend/implicit-rule-resolver.js";
 import { BuildFileEvaluationState } from "@cbuild-backend/evaluator/core/type.js";
 import { NormalizeModels } from "@cbuild-backend/normalize-models.js";
+import { DatabasePrinter } from "./database-printer.js";
 
 export interface CliVar {
   key: string;
@@ -84,6 +87,25 @@ export class Core {
     const normalization = new NormalizeModels(explicitRules);
     const normalizedExplicitRules = normalization.normalize();
 
+    if (this.context.cliOptions.printDataBase) {
+      const databasePrinter = new DatabasePrinter();
+      databasePrinter.print({
+        context: this.context,
+        explicitRules: normalizedExplicitRules,
+        implicitRules: patterns,
+        vpaths: normalizedExplicitRules.reduce((acc: VpathRule[], rule) => {
+          if (rule.vpathRules) {
+            for (const vpathRule of rule.vpathRules) {
+              acc.push(vpathRule);
+            }
+          }
+          return acc;
+        }, []),
+      });
+
+      process.exit(0);
+    }
+
     const targetName = findDefaultTargetName(normalizedExplicitRules);
     const targetRule = findTargetRule(normalizedExplicitRules, targetName!);
     if (!targetName) {
@@ -137,16 +159,23 @@ export class Core {
   }
 
   public mergeEnvVars(envVars: EnvVar[]) {
+    const envOrigin: Extract<
+      VariableOrigin,
+      "environment" | "environment-overridden"
+    > = this.context.cliOptions.environmentOverrides
+      ? "environment-overridden"
+      : "environment";
+
     for (const envVar of envVars) {
       if (this.context.hasVariable(envVar.key)) {
         const symbolTableVar: SymbolTableVariable = this.context.getVariable(
           envVar.key,
         )!;
-        if (compareVarPriority(symbolTableVar.origin, "environment") < 0) {
-          this.context.setRawVariable(envVar.key, envVar.value, "environment");
+        if (compareVarPriority(symbolTableVar.origin, envOrigin) < 0) {
+          this.context.setRawVariable(envVar.key, envVar.value, envOrigin);
         }
       } else {
-        this.context.setRawVariable(envVar.key, envVar.value, "environment");
+        this.context.setRawVariable(envVar.key, envVar.value, envOrigin);
       }
     }
   }

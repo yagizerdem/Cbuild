@@ -12,10 +12,10 @@ import {
   MachineCode,
 } from "@src/cbuild-exception.js";
 import { OutOfDateChecker } from "@src/cbuild-backend/execution/preq-resolution/out-of-date.js";
-import { PreqResolution } from "@src/cbuild-backend/execution/preq-resolution/type.js";
+import { TargetResolution } from "@src/cbuild-backend/execution/preq-resolution/type.js";
 import { Env } from "@src/cbuild-backend/env.js";
 
-export class PreqResolver {
+export class TargetResolver {
   private readonly normalRules: NormalRule[];
   private readonly vpathRules: VpathRule[];
 
@@ -24,22 +24,22 @@ export class PreqResolver {
     this.vpathRules = vpathRules;
   }
 
-  public resolve(preqName: string): PreqResolution {
-    const isAbsolute = path.isAbsolute(preqName);
+  public resolve(targetName: string): TargetResolution {
+    const isAbsolute = path.isAbsolute(targetName);
 
     if (isAbsolute) {
-      if (fileExistbyAbsolutePath(preqName)) {
+      if (fileExistbyAbsolutePath(targetName)) {
         return {
-          preqName,
+          targetName,
           vpathRules: this.vpathRules,
           origin: {
             type: "absolute",
-            absolutePath: preqName,
+            absolutePath: targetName,
           },
         };
       } else {
         return {
-          preqName,
+          targetName,
           vpathRules: this.vpathRules,
           origin: {
             type: "not-found",
@@ -53,12 +53,12 @@ export class PreqResolver {
     // 1 check by cwd
     const resolvedAbsolutePath = resolveAndGetAbsolutePath(
       process.cwd(),
-      preqName,
+      targetName,
     );
 
     if (fileExistbyAbsolutePath(resolvedAbsolutePath)) {
       return {
-        preqName,
+        targetName,
         vpathRules: this.vpathRules,
         origin: {
           type: "cwd",
@@ -70,18 +70,18 @@ export class PreqResolver {
     const vpathStemResolver = new StemResolver();
     // check by vpath rules
     for (const vpathRule of this.vpathRules) {
-      if (!vpathStemResolver.match(vpathRule.pattern, preqName)) {
+      if (!vpathStemResolver.match(vpathRule.pattern, targetName)) {
         continue;
       }
       for (const vpathBaseDir of vpathRule.dirs) {
         const resolvedAbsolutePathByVpath = resolveAndGetAbsolutePath(
           vpathBaseDir,
-          preqName,
+          targetName,
         );
 
         if (fileExistbyAbsolutePath(resolvedAbsolutePathByVpath)) {
           return {
-            preqName,
+            targetName,
             vpathRules: this.vpathRules,
             origin: {
               type: "vpath",
@@ -92,23 +92,8 @@ export class PreqResolver {
       }
     }
 
-    // chekc for target-rule names
-    // does not exist in file system but mathes a target-rule pattern
-
-    for (const normalRule of this.normalRules) {
-      if (normalRule.target === preqName) {
-        return {
-          preqName,
-          vpathRules: this.vpathRules,
-          origin: {
-            type: "target-rule",
-          },
-        };
-      }
-    }
-
     return {
-      preqName,
+      targetName,
       vpathRules: this.vpathRules,
       origin: {
         type: "not-found",
@@ -117,37 +102,17 @@ export class PreqResolver {
   }
 }
 
-export function resolvePreqs(
+export function resolveTarget(
   explicitRules: NormalRule[],
   rule: NormalRule,
   context: Env,
-): Pair<PreqResolution[], PreqResolution[]> {
-  const preqResolver = new PreqResolver(explicitRules, rule.vpathRules ?? []);
-
-  const preqResolutions = rule.prerequisites.map((preq) =>
-    preqResolver.resolve(preq),
+): TargetResolution {
+  const targetResolver = new TargetResolver(
+    explicitRules,
+    rule.vpathRules ?? [],
   );
 
-  const orderOnlyPreqResolutions = rule.orderOnlyPrerequisites.map((preq) =>
-    preqResolver.resolve(preq),
-  );
+  const targetResolution = targetResolver.resolve(rule.target);
 
-  const notFound = [...preqResolutions, ...orderOnlyPreqResolutions].find(
-    (resolution) => resolution.origin.type === "not-found",
-  );
-
-  if (notFound) {
-    throw CbuildException.from({
-      errorType: ErrorType.PROCESS,
-      machineCode: MachineCode.DEPQ_NOT_FOUND,
-      message: `cbuild: No rule to make target '${notFound.preqName}', needed by '${rule.target}'. Stop.`,
-      column: -1,
-      row: -1,
-    });
-  }
-
-  return {
-    first: preqResolutions,
-    second: orderOnlyPreqResolutions,
-  };
+  return targetResolution;
 }

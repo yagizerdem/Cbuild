@@ -14,6 +14,14 @@ import {
   MachineCode,
 } from "@src/cbuild-exception.js";
 import { ProcessRunner } from "@cbuild-backend/process.js";
+import {
+  resolveAndGetAbsolutePath,
+  touchFileAsync,
+  touchFileSync,
+} from "@src/file-utils.js";
+import { TargetResolution } from "@cbuild-backend/execution/preq-resolution/type.js";
+import { OutOfDateChecker } from "./preq-resolution/out-of-date.js";
+import { resolveTarget } from "./preq-resolution/target-resolver.js";
 
 interface CommandRunnerOptions {
   shellPath: string | null;
@@ -31,17 +39,61 @@ export class Build {
   }
 
   public buildTargetSync(rule: NormalRule) {
-    const preqResolutions = resolvePreqs(this.explicitRules, rule);
+    const targetResolution: TargetResolution = resolveTarget(
+      this.explicitRules,
+      rule,
+      this.context,
+    );
 
-    if (!preqResolutions.first.some((preq) => preq.meta?.outOfDate)) {
+    const preqResolutions = resolvePreqs(
+      this.explicitRules,
+      rule,
+      this.context,
+    );
+
+    const outOfDateChecker = new OutOfDateChecker(this.context);
+    const outOfDateResolution = outOfDateChecker.resolveOutOfDateSync(
+      targetResolution,
+      preqResolutions.first,
+    );
+
+    if (!outOfDateResolution.isTargetOutOfDate) {
       return;
+    }
+
+    if (this.context.cliOptions.touch) {
+      if (targetResolution.origin.type === "not-found") {
+        const targetAbsPath = resolveAndGetAbsolutePath(
+          process.cwd(),
+          targetResolution.targetName,
+        );
+
+        touchFileSync(targetAbsPath);
+      } else {
+        touchFileSync(targetResolution.origin.absolutePath);
+      }
+      return;
+    }
+
+    // build required
+    if (this.context.cliOptions.question) {
+      throw CbuildException.from({
+        column: -1,
+        row: -1,
+        errorType: ErrorType.PROCESS,
+        machineCode: MachineCode.REBUILD_REQUIRED,
+        message: `cbuild: Rebuild required for target ${rule.target}`,
+        exitCode: 1,
+      });
     }
 
     const automaticVariableEnv = new AutomaticVariableEnv(
       rule,
       this.context,
+      targetResolution,
       preqResolutions.first, // normal preq resolultions
       preqResolutions.second, // order-only preq resolutions
+      outOfDateResolution,
     );
     const automaticEnv = automaticVariableEnv.generate();
 
@@ -92,17 +144,60 @@ export class Build {
   }
 
   public async buildTargetAsync(rule: NormalRule) {
-    const preqResolutions = resolvePreqs(this.explicitRules, rule);
+    const targetResolution: TargetResolution = resolveTarget(
+      this.explicitRules,
+      rule,
+      this.context,
+    );
 
-    if (!preqResolutions.first.some((preq) => preq.meta?.outOfDate)) {
+    const preqResolutions = resolvePreqs(
+      this.explicitRules,
+      rule,
+      this.context,
+    );
+
+    const outOfDateChecker = new OutOfDateChecker(this.context);
+    const outOfDateResolution = await outOfDateChecker.resolveOutOfDateAsync(
+      targetResolution,
+      preqResolutions.first,
+    );
+
+    if (!outOfDateResolution.isTargetOutOfDate) {
       return;
+    }
+
+    if (this.context.cliOptions.touch) {
+      if (targetResolution.origin.type === "not-found") {
+        const targetAbsPath = resolveAndGetAbsolutePath(
+          process.cwd(),
+          targetResolution.targetName,
+        );
+        await touchFileAsync(targetAbsPath);
+      } else {
+        await touchFileAsync(targetResolution.origin.absolutePath);
+      }
+      return;
+    }
+
+    // build required
+    if (this.context.cliOptions.question) {
+      throw CbuildException.from({
+        column: -1,
+        row: -1,
+        errorType: ErrorType.PROCESS,
+        machineCode: MachineCode.REBUILD_REQUIRED,
+        message: `cbuild: Rebuild required for target ${rule.target}`,
+        exitCode: 1,
+      });
     }
 
     const automaticVariableEnv = new AutomaticVariableEnv(
       rule,
       this.context,
+      targetResolution,
       preqResolutions.first, // normal preq resolutions
       preqResolutions.second, // order-only preq resolutions
+      outOfDateResolution,
     );
     const automaticEnv = automaticVariableEnv.generate();
 

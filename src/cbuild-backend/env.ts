@@ -177,6 +177,16 @@ export class Env {
     return this.symbolTable.get(name);
   }
 
+  public requireVariableRecursive(name: string): SymbolTableVariable {
+    const variable = this.getVariableRecursive(name);
+
+    if (variable === undefined) {
+      throw new Error(`Undefined variable: ${name}`);
+    }
+
+    return variable;
+  }
+
   public requireVariable(name: string): SymbolTableVariable {
     const variable = this.getVariable(name);
 
