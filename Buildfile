@@ -1,6 +1,6 @@
 
-all: bar/fucker
-	@echo $(+F)
+strip = yagiz erdem
+a =  $(strip)
 
-bar/fucker:
-	@echo bar
+all :
+	echo $(a)

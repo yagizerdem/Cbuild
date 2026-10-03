@@ -1,6 +1,5 @@
 import { FunctionIR } from "@compiler/ir.js";
 import { FunctionContext } from "@parser/cbuildParser.js";
-import { MakeFunctionHandler } from "@gnu-make-functions/make_function_dispatcher.js";
 import { compile_subst } from "@gnu-make-functions/compiler/overwrite/compile_subst.js";
 import { compile_patsubst } from "@gnu-make-functions/compiler/overwrite/compile_patsubst.js";
 import { compile_strip } from "@gnu-make-functions/compiler/overwrite/compile_strip.js";
@@ -37,8 +36,13 @@ import { compile_file } from "@gnu-make-functions/compiler/overwrite/compile_fil
 import { compile_value } from "@gnu-make-functions/compiler/overwrite/compile_value.js";
 import type { FnRunner } from "@gnu-make-functions/runner.js";
 
-export interface MakeFunction extends MakeFunctionHandler {
+export interface MakeFunctionHandler {
+  compile(ctx: FunctionContext): FunctionIR;
+  resolveRunner(runner: FnRunner): (ir: FunctionIR) => string;
   arity(): number;
+}
+
+export interface MakeFunction extends MakeFunctionHandler {
   getFnName(): string;
 }
 

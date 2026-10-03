@@ -92,10 +92,8 @@ import {
   GlobalUnexportIR,
   GlobalExportIR,
 } from "@compiler/ir.js";
-import {
-  make_function_dispatcher,
-  MakeFunctionHandler,
-} from "@src/gnu-make-functions/make_function_dispatcher.js";
+import { make_function_dispatcher } from "@src/gnu-make-functions/make_function_dispatcher.js";
+import { MakeFunctionHandler } from "@src/gnu-make-functions/type.js";
 
 type AssignmentPrefixPair = [AssignmentPrefix, ValuePart[]];
 
@@ -301,14 +299,23 @@ export class CBuildCompiler
     }
 
     const name = ctx.function_name()!.getText();
-    if (this.dispatcher.has(name)) {
-      const handler: MakeFunctionHandler = this.dispatcher.getHandler(name);
-      const functionIr: FunctionIR = handler.compile(ctx);
-      const calee: ValuePart = functionCallPart(functionIr);
-      return calee;
-    }
+    const raw = ctx.getText();
+    const slice = raw.slice(raw.indexOf(name) + name.length, -1);
+    const hasWSAfterFnName = /^\s/.test(slice);
 
     const parts: ValuePart[] = this.visitFunction_name(ctx.function_name()!);
+
+    if (this.dispatcher.has(name)) {
+      const handler: MakeFunctionHandler = this.dispatcher.getHandler(name);
+      if (handler.arity() !== 0 && !hasWSAfterFnName) {
+        const parenType = ctx.DOLLAR_LPAREN() != null ? "(" : "{";
+        return varRefPart(new ValueIR(parts), parenType);
+      } else {
+        const functionIr: FunctionIR = handler.compile(ctx);
+        const calee: ValuePart = functionCallPart(functionIr);
+        return calee;
+      }
+    }
 
     const parenType = ctx.DOLLAR_LPAREN() != null ? "(" : "{";
     return varRefPart(new ValueIR(parts), parenType);

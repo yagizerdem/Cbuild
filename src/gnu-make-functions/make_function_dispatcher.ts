@@ -2,11 +2,7 @@ import { FunctionContext } from "@parser/cbuildParser.js";
 import { FunctionIR } from "@compiler/ir.js";
 import * as type from "@gnu-make-functions/type.js";
 import { FnRunner } from "@gnu-make-functions/runner.js";
-
-export interface MakeFunctionHandler {
-  compile(ctx: FunctionContext): FunctionIR;
-  resolveRunner(runner: FnRunner): (ir: FunctionIR) => string;
-}
+import { MakeFunction, MakeFunctionHandler } from "@gnu-make-functions/type.js";
 
 export class make_function_dispatcher {
   private static readonly handlers = new Map<string, MakeFunctionHandler>();
@@ -62,6 +58,16 @@ export class make_function_dispatcher {
   public has(name: string): boolean {
     make_function_dispatcher.initialize();
     return make_function_dispatcher.handlers.has(name);
+  }
+
+  public isGNUMakeFunction(name: string, argSize: number): boolean {
+    let flag = this.has(name);
+    if (!flag) return false;
+    const fn = make_function_dispatcher.handlers.get(name);
+    if (!fn) return false;
+    if (argSize === 0 && fn.arity() !== 0) return false;
+
+    return flag;
   }
 
   public getHandler(name: string): MakeFunctionHandler {
