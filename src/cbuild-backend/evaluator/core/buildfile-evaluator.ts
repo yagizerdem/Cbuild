@@ -9,6 +9,7 @@ import {
   NormalRuleIR,
   RecipeIR,
   StaticPatternRuleIR,
+  TargetRuleIR,
   UndefineIR,
   VpathIR,
 } from "@src/compiler/ir.js";
@@ -25,7 +26,11 @@ import ModelResolver from "@cbuild-backend/evaluator/core/model-resolver.js";
 import VpathIREvaluator from "@cbuild-backend/evaluator/vpath-evaluator.js";
 import IncludeIREvaluator from "@cbuild-backend/evaluator/include-evaluator.js";
 import StaticPatternIREvaluator from "@cbuild-backend/evaluator/staticpattern-evaluator.js";
-import { BuildFileEvaluationState } from "@cbuild-backend/evaluator/core/type.js";
+import {
+  BuildFileEvaluationState,
+  TargetRuleEvaluationState,
+} from "@cbuild-backend/evaluator/core/type.js";
+import TargetRuleIREvaluator from "../targetrule-evaluator.js";
 
 export function unsupported(ir: IR) {
   // programmatic error should never send invalid irtype to cbuild backend
@@ -116,6 +121,20 @@ export default class BuildFileEvaluator {
         );
         const resolutionResult = staticPatternRuleIREvaluator.execute();
         this.evaluationState.resolvedModels.push(...resolutionResult);
+      } else if (ir instanceof TargetRuleIR) {
+        const targetRuleIREvaluator = new TargetRuleIREvaluator(
+          this.context,
+          ir,
+        );
+
+        const evaluationStates: TargetRuleEvaluationState[] =
+          await targetRuleIREvaluator.execute();
+
+        for (const evaluationState of evaluationStates) {
+          const targetContext: Env = evaluationState.evaluatedContext;
+          this.context.targetEnvs[evaluationState.targetRawName] =
+            targetContext;
+        }
       } else if (!allowedIR(ir)) {
         unsupported(ir);
       } else {

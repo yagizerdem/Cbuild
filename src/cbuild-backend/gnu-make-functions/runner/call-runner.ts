@@ -37,10 +37,19 @@ export default class CallRunner {
       }
     }
     const env: Env = new Env(this.context.cliOptions);
-    for (let i = 0; i < envVars.length; i++) {
-      env.setRawVariable((i + 1).toString(), envVars.at(i)!, "file", false);
-    }
     env.enclosing = this.context;
+
+    // positional parameters MUST NOT leak from outer call
+    for (let i = 1; i <= 9; i++) {
+      env.setRawVariable(i.toString(), "", "automatic", false);
+    }
+    // $(0) identifier name
+    env.setRawVariable("0", expandedBaseIdentifier, "automatic", false);
+
+    // overwrite supplied args
+    for (let i = 0; i < envVars.length; i++) {
+      env.setRawVariable((i + 1).toString(), envVars[i]!, "automatic", false);
+    }
 
     // create new expansion engine with active lookups
     const valueExpansionEngine = new ValueExpansionEngine(

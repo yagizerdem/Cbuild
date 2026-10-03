@@ -21,7 +21,7 @@ export default class EvalRunner {
     );
   }
 
-  public run(functionIr: FunctionIR) {
+  public run(functionIr: FunctionIR): string {
     throw CbuildException.from({
       column: functionIr.col,
       row: functionIr.row,

@@ -1,2 +1,6 @@
-app: 
-	@echo app
+
+all: bar/fucker
+	@echo $(+F)
+
+bar/fucker:
+	@echo bar

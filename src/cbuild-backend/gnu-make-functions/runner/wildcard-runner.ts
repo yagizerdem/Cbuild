@@ -20,8 +20,12 @@ export default class WildcardRunner {
   public run(functionIr: FunctionIR): string {
     const wildcardValue = functionIr.args.at(0)!; // argument must be present checked in parser/compilation steps
     const expandedWildcard = this.valueExpansionEngine.expand(wildcardValue);
-    const matchedFiles = resolveGlobPattern(expandedWildcard);
-
-    return matchedFiles.join(" ");
+    const globResolutions = [];
+    for (const pattern of expandedWildcard.split(/\s+/)) {
+      if (pattern.trim() === "") continue;
+      const resolutions = resolveGlobPattern(pattern);
+      globResolutions.push(...resolutions);
+    }
+    return globResolutions.join(" ");
   }
 }

@@ -115,9 +115,11 @@ export class Env {
   private readonly symbolTable = new Map<string, SymbolTableVariable>();
   public readonly cliOptions: CBuildOptions;
   public enclosingEnv?: Env;
+  public targetEnvs: Record<string, Env> = {};
 
   public constructor(cliOptions: CBuildOptions) {
     this.cliOptions = cliOptions;
+    this.targetEnvs = {};
   }
 
   public get enclosing(): Env | undefined {
@@ -423,6 +425,12 @@ export class Env {
       }
     }
     return exportedVariables;
+  }
+
+  public merge(env: Env): void {
+    for (const [name, variable] of env.variableEntries()) {
+      this.setVariable(name, variable);
+    }
   }
 }
 
