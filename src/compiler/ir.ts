@@ -1,4 +1,4 @@
-import { ParserRuleContext } from "antlr4ng";
+import { BuildFileMeta } from "@src/type/buildfile-meta.js";
 
 export interface Executor {
   exec<T>(node: IR): T;
@@ -8,6 +8,7 @@ export interface Executor {
 export interface IR {
   row: number;
   col: number;
+  buildFileMeta?: BuildFileMeta;
   exec<T>(executor: Executor): T;
   execAsync<T>(executor: Executor): Promise<T>;
 }
@@ -15,6 +16,7 @@ export interface IR {
 export abstract class BaseIR implements IR {
   public row: number;
   public col: number;
+  public buildFileMeta?: BuildFileMeta;
   constructor(row = 0, col = 0) {
     this.row = row;
     this.col = col;

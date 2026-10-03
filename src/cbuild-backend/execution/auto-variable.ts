@@ -5,6 +5,7 @@ import {
   PreqResolution,
   TargetResolution,
 } from "@cbuild-backend/execution/preq-resolution/type.js";
+import { BuildFileMeta } from "@src/type/buildfile-meta.js";
 
 export default class AutomaticVariableEnv {
   private readonly rule: NormalRule;
@@ -13,6 +14,7 @@ export default class AutomaticVariableEnv {
   private readonly resolvedOrderOnlyPreqs: PreqResolution[];
   private readonly resolvedTarget: TargetResolution | null = null;
   private readonly outOfDateResolution: OutOfDateResolution | null = null;
+  private readonly buildFileMeta?: BuildFileMeta;
 
   constructor(
     rule: NormalRule,
@@ -21,6 +23,7 @@ export default class AutomaticVariableEnv {
     resolvedPreqs: PreqResolution[],
     resolvedOrderOnlyPreqs: PreqResolution[],
     outOfDateResolution: OutOfDateResolution | null,
+    buildFileMeta?: BuildFileMeta,
   ) {
     this.rule = rule;
     this.enclosing = enclosing;
@@ -28,6 +31,7 @@ export default class AutomaticVariableEnv {
     this.resolvedPreqs = resolvedPreqs;
     this.resolvedOrderOnlyPreqs = resolvedOrderOnlyPreqs;
     this.outOfDateResolution = outOfDateResolution;
+    this.buildFileMeta = buildFileMeta;
   }
 
   // can accept more spesific enclosing
@@ -35,6 +39,7 @@ export default class AutomaticVariableEnv {
     const env: Env = new Env(this.enclosing.cliOptions);
     env.enclosing = enclosing ?? this.enclosing;
 
+    env.setRawVariable("@", this.generateAtVar(), "automatic", false);
     env.setRawVariable("%", this.generatePercentVar(), "automatic", false);
     env.setRawVariable("<", this.generateLessThanVar(), "automatic", false);
     env.setRawVariable("?", this.generateQuestionMarkVar(), "automatic", false);
@@ -53,6 +58,10 @@ export default class AutomaticVariableEnv {
     env.setRawVariable("?F", this.generateQuestionFVar(), "automatic", false);
 
     return env;
+  }
+
+  public generateAtVar() {
+    return this.resolvedTarget?.targetName ?? "";
   }
 
   // $%
