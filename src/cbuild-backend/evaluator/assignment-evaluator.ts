@@ -42,7 +42,7 @@ export default class AssignmentIREvaluator {
       );
       this.setRawVariable(identifier, value, this.shouldExport(prefix));
     } else if (this.assignmentIR.type === AssignmentType.CONDITIONAL) {
-      if (!this.context.hasVariable(identifier)) {
+      if (!this.context.hasVariableRecursive(identifier)) {
         this.setDeferredVariable(
           identifier,
           this.assignmentIR.right ??

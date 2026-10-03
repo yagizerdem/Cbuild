@@ -85,8 +85,7 @@ export default class BuildFileEvaluator {
           activeBranch,
           this.evaluationState,
         );
-        const evaluatedModels = await evaluator.evaluateAsync();
-        this.evaluationState.resolvedModels.push(...evaluatedModels);
+        await evaluator.evaluateAsync();
       } else if (ir instanceof DefineIR) {
         const expandedValue =
           ir.value?.exec<string>(valueExpansionEngine) ?? "";
@@ -113,8 +112,7 @@ export default class BuildFileEvaluator {
           ir,
           this.evaluationState,
         );
-        const includedModels = await includeIREvaluator.executeAsync();
-        this.evaluationState.resolvedModels.push(...includedModels);
+        await includeIREvaluator.executeAsync();
       } else if (ir instanceof StaticPatternRuleIR) {
         const staticPatternRuleIREvaluator = new StaticPatternIREvaluator(
           this.context,
