@@ -7,5 +7,8 @@ item = parent
 
 result := $(foreach item,a b,$(call format,$(item)))
 
+A = $(1)
+B := $(call A,yagiz,erdem)
+
 all:
-	@echo '$(result)'
+	@echo '$(B)'
