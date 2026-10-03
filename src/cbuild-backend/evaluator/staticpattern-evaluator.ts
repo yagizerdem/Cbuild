@@ -35,7 +35,12 @@ export default class StaticPatternIREvaluator {
     // targets(n) : pattern-rule(1) : preq-patterns(m) \n recipes(k)
 
     for (const target of this.ir.targets) {
-      targets.push(this.valueExpansionEngine.expand(target));
+      targets.push(
+        ...this.valueExpansionEngine
+          .expand(target)
+          .split(/\s+/)
+          .filter(Boolean),
+      );
     }
 
     // shoud have only 1 target pattern
@@ -44,7 +49,12 @@ export default class StaticPatternIREvaluator {
     );
 
     for (const preqPattern of this.ir.prerequisites) {
-      preqPatterns.push(this.valueExpansionEngine.expand(preqPattern));
+      preqPatterns.push(
+        ...this.valueExpansionEngine
+          .expand(preqPattern)
+          .split(/\s+/)
+          .filter(Boolean),
+      );
     }
 
     for (const orderOnlyPreqPattern of this.ir.orderOnlyPrerequisites) {

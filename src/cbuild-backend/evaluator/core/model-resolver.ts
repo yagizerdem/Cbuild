@@ -112,7 +112,7 @@ export default class ModelResolver implements Executor {
             recipeIRs: [...ir.recipes],
             evaluatedRecipeIRs: [...recipeIRresolutions],
             shellCommands: [], // do not use raw shell commands, expand from recipeIR before execution
-            vpathRules: this.evaluationState.vpaths ?? [],
+            vpathRules: [...(this.evaluationState.vpaths ?? [])],
             ruleSeperator: ir.separator,
           }),
     );

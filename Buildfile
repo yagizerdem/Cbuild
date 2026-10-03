@@ -1,5 +1,6 @@
+OBJECTS = a.o b.o
 
-a =  $(strip a  b)
+INPUTS = %.c common.h
 
-all :
-	echo $(@)
+$(OBJECTS): %.o: $(INPUTS)
+
