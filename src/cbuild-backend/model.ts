@@ -5,10 +5,11 @@ import type {
   StaticPatternRuleIR,
   RuleSeparator,
 } from "@compiler/ir.js";
-import { Env } from "./env.js";
+import { BuildFileMeta } from "@src/type/buildfile-meta.js";
 
 export abstract class BaseModel {
   public readonly uuid: string = randomUUID();
+  public buildFileMeta: BuildFileMeta | undefined;
 
   public toString(): string {
     return "<BaseModel>";

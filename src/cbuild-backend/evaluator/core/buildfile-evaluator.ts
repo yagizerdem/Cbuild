@@ -31,6 +31,7 @@ import {
   TargetRuleEvaluationState,
 } from "@cbuild-backend/evaluator/core/type.js";
 import TargetRuleIREvaluator from "../targetrule-evaluator.js";
+import { BuildFileMeta } from "@src/type/buildfile-meta.js";
 
 export function unsupported(ir: IR) {
   // programmatic error should never send invalid irtype to cbuild backend
@@ -141,6 +142,7 @@ export default class BuildFileEvaluator {
         unsupported(ir);
       }
     }
+
     return this.evaluationState.resolvedModels;
   }
 }
