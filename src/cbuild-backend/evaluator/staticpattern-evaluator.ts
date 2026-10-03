@@ -59,7 +59,10 @@ export default class StaticPatternIREvaluator {
 
     for (const orderOnlyPreqPattern of this.ir.orderOnlyPrerequisites) {
       orderOnlyPreqPatterns.push(
-        this.valueExpansionEngine.expand(orderOnlyPreqPattern),
+        ...this.valueExpansionEngine
+          .expand(orderOnlyPreqPattern)
+          .split(/\s+/)
+          .filter(Boolean),
       );
     }
 
