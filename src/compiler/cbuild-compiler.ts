@@ -92,10 +92,8 @@ import {
   GlobalUnexportIR,
   GlobalExportIR,
 } from "@compiler/ir.js";
-import {
-  make_function_dispatcher,
-  MakeFunctionHandler,
-} from "@src/gnu-make-functions/make_function_dispatcher.js";
+import { make_function_dispatcher } from "@src/gnu-make-functions/make_function_dispatcher.js";
+import { MakeFunctionHandler } from "@src/gnu-make-functions/type.js";
 
 type AssignmentPrefixPair = [AssignmentPrefix, ValuePart[]];
 
@@ -301,19 +299,22 @@ export class CBuildCompiler
     }
 
     const name = ctx.function_name()!.getText();
+    const raw = ctx.getText();
+    const slice = raw.slice(raw.indexOf(name) + name.length, -1);
+    const hasWSAfterFnName = /^\s/.test(slice);
+
+    const parts: ValuePart[] = this.visitFunction_name(ctx.function_name()!);
+
     if (this.dispatcher.has(name)) {
       const handler: MakeFunctionHandler = this.dispatcher.getHandler(name);
-      const functionIr: FunctionIR = handler.compile(ctx);
-      const calee: ValuePart = functionCallPart(functionIr);
-      return calee;
-    }
-
-    const parts: ValuePart[] = [];
-
-    for (let i = 0; i < ctx.getChildCount(); i++) {
-      const child = ctx.getChild(i) as ParseTree;
-      const result = child.accept(this);
-      this.collectValueParts(parts, result);
+      if (handler.arity() !== 0 && !hasWSAfterFnName) {
+        const parenType = ctx.DOLLAR_LPAREN() != null ? "(" : "{";
+        return varRefPart(new ValueIR(parts), parenType);
+      } else {
+        const functionIr: FunctionIR = handler.compile(ctx);
+        const calee: ValuePart = functionCallPart(functionIr);
+        return calee;
+      }
     }
 
     const parenType = ctx.DOLLAR_LPAREN() != null ? "(" : "{";
@@ -323,8 +324,11 @@ export class CBuildCompiler
   public visitFunction_name(ctx: Function_nameContext): ValuePart[] {
     const parts: ValuePart[] = [];
     for (const atom_ctx of ctx.function_name_atom()) {
-      const result = atom_ctx.accept(this);
-      this.collectValueParts(parts, result);
+      if (atom_ctx.function() != null) {
+        parts.push(this.visitFunction(atom_ctx.function()!));
+      } else {
+        parts.push(textPart(atom_ctx.getText()));
+      }
     }
 
     return parts;

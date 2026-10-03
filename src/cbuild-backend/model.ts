@@ -3,7 +3,9 @@ import type {
   RecipeIR,
   NormalRuleIR,
   StaticPatternRuleIR,
+  RuleSeparator,
 } from "@compiler/ir.js";
+import { Env } from "./env.js";
 
 export abstract class BaseModel {
   public readonly uuid: string = randomUUID();
@@ -21,6 +23,7 @@ export interface NormalRuleOptions {
   recipeIRs: RecipeIR[];
   ruleIR: NormalRuleIR | StaticPatternRuleIR;
   evaluatedRecipeIRs: RecipeIR[];
+  ruleSeperator: RuleSeparator;
   vpathRules?: VpathRule[];
   stem?: string;
 }
@@ -46,6 +49,7 @@ export class NormalRule extends BaseModel {
   public evaluatedRecipeIRs: RecipeIR[];
   public ruleIR: NormalRuleIR | StaticPatternRuleIR;
   public vpathRules: VpathRule[];
+  public ruleSeperator: RuleSeparator;
   public stem?: string;
 
   public constructor(options: NormalRuleOptions) {
@@ -60,6 +64,7 @@ export class NormalRule extends BaseModel {
     this.ruleIR = options.ruleIR;
 
     this.vpathRules = options.vpathRules ?? [];
+    this.ruleSeperator = options.ruleSeperator;
     this.stem = options.stem;
   }
 

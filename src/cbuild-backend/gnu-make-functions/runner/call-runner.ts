@@ -36,11 +36,17 @@ export default class CallRunner {
         envVars.push(this.valueExpansionEngine.expand(arg));
       }
     }
-    const env: Env = new Env(this.context.settings);
-    for (let i = 0; i < envVars.length; i++) {
-      env.setRawVariable((i + 1).toString(), envVars.at(i)!, "file", false);
-    }
+    const env: Env = new Env(this.context.cliOptions);
     env.enclosing = this.context;
+    env.islatePositionalVariables = true;
+
+    // $(0) identifier name
+    env.setRawVariable("0", expandedBaseIdentifier, "automatic", false);
+
+    // supplied args $(1) $(2) $(3) ...
+    for (let i = 0; i < envVars.length; i++) {
+      env.setRawVariable((i + 1).toString(), envVars[i]!, "automatic", false);
+    }
 
     // create new expansion engine with active lookups
     const valueExpansionEngine = new ValueExpansionEngine(

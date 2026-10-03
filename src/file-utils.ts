@@ -162,6 +162,16 @@ export async function touchFileAsync(
   }
 }
 
+export function touchFileSync(filePath: string, time = new Date()): void {
+  const fd = fs.openSync(filePath, "a");
+
+  try {
+    fs.futimesSync(fd, time, time);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
 /** Preserves mtime if generated contents have not changed. Returns true on write.
  * Parent must exist. Writes are not atomic; serialize writers for the same path.
  */

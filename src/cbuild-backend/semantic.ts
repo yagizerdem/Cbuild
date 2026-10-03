@@ -14,6 +14,7 @@ import {
   IR,
   NormalRuleIR,
   StaticPatternRuleIR,
+  TargetRuleIR,
   UndefineIR,
   ValuePart,
   VpathIR,
@@ -152,6 +153,7 @@ export function allowedIR(ir: IR): boolean {
     ir instanceof ExportIR ||
     ir instanceof VpathIR ||
     ir instanceof IncludeIR ||
-    ir instanceof StaticPatternRuleIR
+    ir instanceof StaticPatternRuleIR ||
+    ir instanceof TargetRuleIR
   );
 }

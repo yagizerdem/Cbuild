@@ -1,7 +1,7 @@
 {
   "name": "cbuild",
   "version": "1.0.0",
-  "description": "",
+  "description": "GNU-make inspired build system that can build projects efficiently",
   "type": "module",
   "main": "main.js",
   "bin": {

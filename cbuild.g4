@@ -188,6 +188,10 @@ function_name
 
 function_name_atom
     : CHARS
+    | PLUS
+    | QUESTION
+    | PIPE
+    | BANG
     | function
     ;
 
@@ -385,7 +389,7 @@ DOLLAR_LPAREN: '$(';
 DOLLAR_L_CURLY_BRACE: '${';
 
 VAR
-    : '$' [a-zA-Z0-9_@%<?^+*]
+    : '$' [a-zA-Z0-9_@%<?|^+*]
     ;
 
 DOUBLE_DOLLAR

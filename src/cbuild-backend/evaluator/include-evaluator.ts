@@ -12,20 +12,26 @@ import {
   MachineCode,
 } from "@src/cbuild-exception.js";
 import { BaseModel } from "@cbuild-backend/model.js";
-import { pCharBufferToString, preprocess } from "@src/preprocessor.js";
 import fsPromises from "fs/promises";
-import { compile } from "@src/test-util/compile.js";
-import BuildFileEvaluator from "./core/buildfile-evaluator.js";
+import { frontend } from "@src/frontend.js";
+import BuildFileEvaluator from "@cbuild-backend/evaluator/core/buildfile-evaluator.js";
+import { BuildFileEvaluationState } from "@cbuild-backend/evaluator/core/type.js";
+import { BuildFileMeta } from "@src/type/buildfile-meta.js";
+import path from "path";
 
 export default class IncludeIREvaluator {
   private readonly context: Env;
   private readonly valueExpansionEngine: ValueExpansionEngine;
   private readonly ir: IncludeIR;
-  private readonly vpaths: VpathRule[];
-  constructor(context: Env, ir: IncludeIR, vpaths: VpathRule[]) {
+  private readonly evaluationState: BuildFileEvaluationState;
+  constructor(
+    context: Env,
+    ir: IncludeIR,
+    evaluationState: BuildFileEvaluationState,
+  ) {
     this.context = context;
     this.ir = ir;
-    this.vpaths = vpaths;
+    this.evaluationState = evaluationState;
     this.valueExpansionEngine = new ValueExpansionEngine(context);
   }
 
@@ -40,14 +46,20 @@ export default class IncludeIREvaluator {
     const filePaths = expandedFilePaths.trim().split(/\s+/).filter(Boolean);
 
     const models: BaseModel[] = [];
+    const loopUpDests = [process.cwd()];
+    for (const includedDest of this.context.cliOptions.includeDir) {
+      loopUpDests.push(resolveAndGetAbsolutePath(process.cwd(), includedDest));
+    }
 
     for (const filePath of filePaths) {
-      const resolvedBuildFilePath = resolveAndGetAbsolutePath(
-        process.cwd(),
-        filePath,
+      const resolvedBuildFilePaths: string[] = loopUpDests.map((dest) =>
+        resolveAndGetAbsolutePath(dest, filePath),
+      );
+      const resolvedBuildFilePath = resolvedBuildFilePaths.find(
+        fileExistbyAbsolutePath,
       );
 
-      if (!fileExistbyAbsolutePath(resolvedBuildFilePath)) {
+      if (!resolvedBuildFilePath) {
         if (silent) {
           continue;
         }
@@ -61,19 +73,25 @@ export default class IncludeIREvaluator {
         });
       }
 
-      const buildFile = await fsPromises.readFile(
+      const buildFileContent = await fsPromises.readFile(
         resolvedBuildFilePath,
         "utf-8",
       );
 
-      const pCharBuffer = preprocess(buildFile);
-      const preprocessedProgram = pCharBufferToString(pCharBuffer);
-      const ir = compile(preprocessedProgram);
+      const buildFile: BuildFileMeta = {
+        absolutePath: resolvedBuildFilePath,
+        rawContent: buildFileContent,
+        size: (await fsPromises.stat(resolvedBuildFilePath)).size,
+        relativePath: path.relative(process.cwd(), resolvedBuildFilePath),
+        name: path.basename(resolvedBuildFilePath),
+      };
+
+      const ir = frontend(buildFile);
 
       const buildFileEvaluator = new BuildFileEvaluator(
         this.context,
         ir,
-        this.vpaths,
+        this.evaluationState,
       );
 
       const resolvedModels = await buildFileEvaluator.evaluateAsync();

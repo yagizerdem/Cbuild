@@ -35,6 +35,7 @@ import WildcardRunner from "@cbuild-backend/gnu-make-functions/runner/wildcard-r
 import WordRunner from "@cbuild-backend/gnu-make-functions/runner/word-runner.js";
 import WordListRunner from "@cbuild-backend/gnu-make-functions/runner/wordlist-runner.js";
 import WordsRunner from "@cbuild-backend/gnu-make-functions/runner/words-runner.js";
+import EvalRunner from "@cbuild-backend/gnu-make-functions/runner/eval-runner.js";
 
 export default class CbuildFnRunner extends BaseFnRunner {
   private readonly context: Env;
@@ -90,6 +91,11 @@ export default class CbuildFnRunner extends BaseFnRunner {
   errorFn(ir: FunctionIR): string {
     const errorRunner = new ErrorRunner(this.context, this.activeLookups);
     return errorRunner.run(ir);
+  }
+
+  evalFn(ir: FunctionIR): string {
+    const evalRunner = new EvalRunner(this.context, this.activeLookups);
+    return evalRunner.run(ir);
   }
 
   fileFn(ir: FunctionIR): string {

@@ -2,42 +2,64 @@
 
 import { frontend } from "@src/frontend.js";
 import { Env } from "@cbuild-backend/env.js";
-import { Core, type EnvVar, type CliVar } from "@cbuild-backend/core.js";
+import { Core } from "@cbuild-backend/core.js";
 import cli from "@src/cli.js";
-import handleError from "@src/error-handler.js";
+import ErrorHandler from "@src/error-handler.js";
+import type { CBuildOptions } from "@src/cli.js";
+import {
+  handleCliOptions,
+  resolveBuildFilePath,
+} from "@src/handle-cli-options.js";
+import { collectEnvVars } from "./collect-vars.js";
+import fs from "fs/promises";
+import { IR } from "@compiler/ir.js";
+import { BuildFileMeta } from "./type/buildfile-meta.js";
+import path from "path";
 
-cli.parse();
-const options = cli.opts();
-// console.log(options);
-
-try {
-  const buildFile = `
-
-FILES := foo.c bar.txt baz.c
-
-RESULT := $(sort $(filter %.c,$(FILES)))
-
-app: 
-\t echo '$(RESULT)' 
-
-
-`;
-
-  const irs = frontend(buildFile);
-
-  const context = new Env({
-    buildSequential: true,
-    backend: "cbuild",
-    parallelJobCount: 2,
-    silent: false,
-  });
-
-  const core = new Core(context);
-
-  await core.runAsync(irs, {
-    envVars: [],
-    cliVars: [],
-  });
-} catch (error) {
-  handleError(error);
+export async function readBuildFile(buildFilePath: string): Promise<string> {
+  return await fs.readFile(buildFilePath, "utf-8");
 }
+
+async function main() {
+  let context: Env | null = null;
+
+  try {
+    cli.parse();
+    const options: CBuildOptions = cli.opts<CBuildOptions>();
+    handleCliOptions(options);
+    const buildFileAbsolutePaths: string[] = resolveBuildFilePath(options);
+    const intermediateRepresentation: IR[] = [];
+    for (const buildFilePath of buildFileAbsolutePaths) {
+      const buildFileContent = await readBuildFile(buildFilePath);
+      const buildFileMeta: BuildFileMeta = {
+        absolutePath: buildFilePath,
+        rawContent: buildFileContent,
+        size: (await fs.stat(buildFilePath)).size,
+        relativePath: path.relative(process.cwd(), buildFilePath),
+        name: path.basename(buildFilePath),
+      };
+
+      const ir = frontend(buildFileMeta);
+      intermediateRepresentation.push(...ir);
+    }
+
+    const envVars = collectEnvVars(options);
+    context = new Env(options);
+
+    const core = new Core(context);
+    await core.runAsync(intermediateRepresentation, {
+      envVars,
+      cliVars: [],
+    });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      const errorHandler = new ErrorHandler();
+      errorHandler.handleError(error);
+    } else {
+      console.error("cbuild: *** Unknown error.");
+      process.exit(1);
+    }
+  }
+}
+
+await main();

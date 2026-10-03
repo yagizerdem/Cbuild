@@ -5,32 +5,17 @@ import {
   resolveAndGetAbsolutePath,
 } from "@src/file-utils.js";
 import { StemResolver } from "@src/cbuild-backend/stem-resolver.js";
+import { Pair } from "@cbuild-backend/execution/type.js";
+import {
+  CbuildException,
+  ErrorType,
+  MachineCode,
+} from "@src/cbuild-exception.js";
+import { OutOfDateChecker } from "@src/cbuild-backend/execution/preq-resolution/out-of-date.js";
+import { TargetResolution } from "@src/cbuild-backend/execution/preq-resolution/type.js";
+import { Env } from "@src/cbuild-backend/env.js";
 
-export type PreqType =
-  | "cwd"
-  | "absolute"
-  | "vpath"
-  | "target-rule" // does not has file but has target rule
-  | "not-found";
-
-export type PreqResolution = {
-  preqName: string;
-  vpathRules: VpathRule[];
-} & (
-  | {
-      origin: {
-        type: "target-rule" | "not-found";
-      };
-    }
-  | {
-      origin: {
-        type: Exclude<PreqType, "target-rule" | "not-found">;
-        absolutePath: string;
-      };
-    }
-);
-
-export class PreqResolver {
+export class TargetResolver {
   private readonly normalRules: NormalRule[];
   private readonly vpathRules: VpathRule[];
 
@@ -39,22 +24,22 @@ export class PreqResolver {
     this.vpathRules = vpathRules;
   }
 
-  public resolve(preqName: string): PreqResolution {
-    const isAbsolute = path.isAbsolute(preqName);
+  public resolve(targetName: string): TargetResolution {
+    const isAbsolute = path.isAbsolute(targetName);
 
     if (isAbsolute) {
-      if (fileExistbyAbsolutePath(preqName)) {
+      if (fileExistbyAbsolutePath(targetName)) {
         return {
-          preqName,
+          targetName,
           vpathRules: this.vpathRules,
           origin: {
             type: "absolute",
-            absolutePath: preqName,
+            absolutePath: targetName,
           },
         };
       } else {
         return {
-          preqName,
+          targetName,
           vpathRules: this.vpathRules,
           origin: {
             type: "not-found",
@@ -68,12 +53,12 @@ export class PreqResolver {
     // 1 check by cwd
     const resolvedAbsolutePath = resolveAndGetAbsolutePath(
       process.cwd(),
-      preqName,
+      targetName,
     );
 
     if (fileExistbyAbsolutePath(resolvedAbsolutePath)) {
       return {
-        preqName,
+        targetName,
         vpathRules: this.vpathRules,
         origin: {
           type: "cwd",
@@ -85,18 +70,18 @@ export class PreqResolver {
     const vpathStemResolver = new StemResolver();
     // check by vpath rules
     for (const vpathRule of this.vpathRules) {
-      if (!vpathStemResolver.match(vpathRule.pattern, preqName)) {
+      if (!vpathStemResolver.match(vpathRule.pattern, targetName)) {
         continue;
       }
       for (const vpathBaseDir of vpathRule.dirs) {
         const resolvedAbsolutePathByVpath = resolveAndGetAbsolutePath(
           vpathBaseDir,
-          preqName,
+          targetName,
         );
 
         if (fileExistbyAbsolutePath(resolvedAbsolutePathByVpath)) {
           return {
-            preqName,
+            targetName,
             vpathRules: this.vpathRules,
             origin: {
               type: "vpath",
@@ -107,27 +92,27 @@ export class PreqResolver {
       }
     }
 
-    // chekc for target-rule names
-    // does not exist in file system but mathes a target-rule pattern
-
-    for (const normalRule of this.normalRules) {
-      if (normalRule.target === preqName) {
-        return {
-          preqName,
-          vpathRules: this.vpathRules,
-          origin: {
-            type: "target-rule",
-          },
-        };
-      }
-    }
-
     return {
-      preqName,
+      targetName,
       vpathRules: this.vpathRules,
       origin: {
         type: "not-found",
       },
     };
   }
+}
+
+export function resolveTarget(
+  explicitRules: NormalRule[],
+  rule: NormalRule,
+  context: Env,
+): TargetResolution {
+  const targetResolver = new TargetResolver(
+    explicitRules,
+    rule.vpathRules ?? [],
+  );
+
+  const targetResolution = targetResolver.resolve(rule.target);
+
+  return targetResolution;
 }

@@ -1,29 +1,5 @@
 import { ValueIR, ValuePart } from "@compiler/ir.js";
-import { Tbackend } from "@src/type/tBackend.js";
-
-export class Settings {
-  public readonly buildSequential: boolean;
-  public readonly parallelJobCount: number;
-  public readonly backend: Tbackend;
-  public readonly silent: boolean;
-
-  public constructor(
-    buildSequential: boolean,
-    parallelJobCount: number,
-    cwd: string,
-    backend: Tbackend,
-    silent: boolean,
-  ) {
-    this.buildSequential = buildSequential;
-    this.parallelJobCount = parallelJobCount;
-    this.backend = backend;
-    this.silent = silent;
-  }
-
-  // public get defaultSettings(): Settings {
-  //   return new
-  // }
-}
+import { CBuildOptions } from "@src/cli.js";
 
 export type VariableFlavor = "raw" | "recursive";
 export type VariableOrigin =
@@ -137,11 +113,14 @@ export class SymbolTableVariable {
 
 export class Env {
   private readonly symbolTable = new Map<string, SymbolTableVariable>();
-  public readonly settings: Settings;
+  public readonly cliOptions: CBuildOptions;
   public enclosingEnv?: Env;
+  public targetEnvs: Record<string, Env> = {};
+  public islatePositionalVariables: boolean = false;
 
-  public constructor(setting: Settings) {
-    this.settings = setting;
+  public constructor(cliOptions: CBuildOptions) {
+    this.cliOptions = cliOptions;
+    this.targetEnvs = {};
   }
 
   public get enclosing(): Env | undefined {
@@ -165,6 +144,10 @@ export class Env {
       return true;
     }
 
+    if (this.islatePositionalVariables && /^\d+$/.test(name)) {
+      return false;
+    }
+
     if (this.enclosingEnv) {
       return this.enclosingEnv.hasVariableRecursive(name);
     }
@@ -176,6 +159,10 @@ export class Env {
     const variable = this.getVariable(name);
     if (variable !== undefined) {
       return variable;
+    }
+
+    if (this.islatePositionalVariables && /^\d+$/.test(name)) {
+      return undefined;
     }
 
     if (this.enclosingEnv) {
@@ -199,6 +186,16 @@ export class Env {
 
   public getVariable(name: string): SymbolTableVariable | undefined {
     return this.symbolTable.get(name);
+  }
+
+  public requireVariableRecursive(name: string): SymbolTableVariable {
+    const variable = this.getVariableRecursive(name);
+
+    if (variable === undefined) {
+      throw new Error(`Undefined variable: ${name}`);
+    }
+
+    return variable;
   }
 
   public requireVariable(name: string): SymbolTableVariable {
@@ -437,6 +434,12 @@ export class Env {
       }
     }
     return exportedVariables;
+  }
+
+  public merge(env: Env): void {
+    for (const [name, variable] of env.variableEntries()) {
+      this.setVariable(name, variable);
+    }
   }
 }
 

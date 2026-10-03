@@ -23,6 +23,7 @@ import {
   ErrorType,
   MachineCode,
 } from "@src/cbuild-exception.js";
+import { BuildFileMeta } from "./type/buildfile-meta.js";
 
 let BUILD_FILE_NAME = "buildfile";
 
@@ -293,9 +294,10 @@ export function compile(context: CbuildfileContext): IR[] {
   }
 }
 
-export function frontend(buildFile: string): IR[] {
+export function frontend(buildFile: BuildFileMeta): IR[] {
   try {
-    const pCharBuffer = preprocess(buildFile);
+    setBuildFileName(buildFile.name);
+    const pCharBuffer = preprocess(buildFile.rawContent);
     const preprocessedProgram = pCharBufferToString(pCharBuffer);
     const context = parseBuildFile(preprocessedProgram);
     return compile(context);

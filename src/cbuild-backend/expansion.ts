@@ -32,22 +32,23 @@ export class BaseExpansionEngine implements Executor {
 }
 
 export class ExpansionEngine extends BaseExpansionEngine {
-  private readonly valueExpansionEngine: ValueExpansionEngine;
   private readonly context: Env;
 
   public constructor(context: Env) {
     super();
-    this.valueExpansionEngine = new ValueExpansionEngine(context);
+
     this.context = context;
   }
 
   public expand<T>(ir: ValueIR | ValuePart | RecipeIR): T {
+    const valueExpansionEngine = new ValueExpansionEngine(this.context);
+
     if (ir instanceof RecipeIR) {
       return ir.exec<T>(new RecipeExpansionEngine(this.context));
     }
 
     if (ir instanceof ValueIR) {
-      return this.valueExpansionEngine.expand(ir) as T;
+      return valueExpansionEngine.expand(ir) as T;
     }
 
     // expand value parts
@@ -55,7 +56,7 @@ export class ExpansionEngine extends BaseExpansionEngine {
       "kind" in ir &&
       (ir.kind === "variable-reference" || ir.kind === "text")
     ) {
-      return this.valueExpansionEngine.expand(ir as VarRefPart) as T;
+      return valueExpansionEngine.expand(ir as VarRefPart) as T;
     }
 
     throw new Error("Unsupported IR node for expansion");
@@ -77,12 +78,18 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
   private readonly context: Env;
   private readonly activeLookups: Set<string>;
   private readonly make_fn_dispatcher: make_function_dispatcher;
+  private readonly recursiveFallback: boolean;
 
-  public constructor(context: Env, activeLookups = new Set<string>()) {
+  public constructor(
+    context: Env,
+    activeLookups = new Set<string>(),
+    recursiveFallback = true,
+  ) {
     super();
     this.context = context;
     this.activeLookups = activeLookups;
     this.make_fn_dispatcher = new make_function_dispatcher();
+    this.recursiveFallback = recursiveFallback;
   }
 
   public clearActiveLookups(): void {
@@ -163,14 +170,23 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
       throw new RecursiveVariableExpansionException(identifier);
     }
 
-    if (this.context.hasVariable(identifier)) {
-      const variable = this.context.requireVariable(identifier);
+    if (
+      this.recursiveFallback
+        ? this.context.hasVariableRecursive(identifier)
+        : this.context.hasVariable(identifier)
+    ) {
+      const variable = this.recursiveFallback
+        ? this.context.requireVariableRecursive(identifier)
+        : this.context.getVariable(identifier)!;
       if (variable.isDeferred()) {
         const valueIR = variable.getDeferredValue()!;
         activeLookups.add(identifier);
-        const rawValue = this.exec<string>(valueIR);
-        activeLookups.delete(identifier);
-
+        try {
+          const rawValue = this.exec<string>(valueIR);
+          return rawValue;
+        } finally {
+          activeLookups.delete(identifier);
+        }
         // do not replace with the expanded value in the symbol table
         // shoudl reevaluate in each recursive variable call
 
@@ -178,11 +194,17 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
         //   identifier,
         //   new SymbolTableVariable(rawValue, valueIR),
         // );
-        return rawValue;
       }
 
-      return this.context.requireVariable(identifier).getRawValue()!;
+      return this.recursiveFallback
+        ? this.context.requireVariableRecursive(identifier).getRawValue()!
+        : this.context.getVariable(identifier)!.getRawValue()!;
     }
+
+    if (this.context.cliOptions.warnUndefinedVariables) {
+      console.warn(`cbuild: warning: undefined variable '${identifier}'`);
+    }
+
     return "";
   }
 }
@@ -190,32 +212,9 @@ export class ValueExpansionEngine extends BaseExpansionEngine {
 export class RecipeExpansionEngine extends BaseExpansionEngine {
   private readonly context: Env;
 
-  public constructor(context: Env, rule?: NormalRule) {
+  public constructor(context: Env) {
     super();
-    if (!rule) {
-      this.context = context;
-      return;
-    }
-
-    // Automatic variables are local to one recipe, even when builds run in parallel.
-    const recipeContext = new Env(context.settings);
-    for (const [name, variable] of context.variableEntries()) {
-      recipeContext.setVariable(name, variable);
-    }
-    recipeContext.setRawVariable("@", rule.target, "automatic");
-    recipeContext.setRawVariable("<", rule.prerequisites[0] ?? "", "automatic");
-    recipeContext.setRawVariable("*", rule.stem ?? "", "automatic");
-    recipeContext.setRawVariable(
-      "^",
-      [...new Set(rule.prerequisites)].join(" "),
-      "automatic",
-    );
-    recipeContext.setRawVariable(
-      "+",
-      rule.prerequisites.join(" "),
-      "automatic",
-    );
-    this.context = recipeContext;
+    this.context = context;
   }
 
   public override exec<T>(ir: RecipeIR): T {
