@@ -188,6 +188,10 @@ function_name
 
 function_name_atom
     : CHARS
+    | PLUS
+    | QUESTION
+    | PIPE
+    | BANG
     | function
     ;
 

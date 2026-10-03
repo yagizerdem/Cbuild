@@ -308,13 +308,7 @@ export class CBuildCompiler
       return calee;
     }
 
-    const parts: ValuePart[] = [];
-
-    for (let i = 0; i < ctx.getChildCount(); i++) {
-      const child = ctx.getChild(i) as ParseTree;
-      const result = child.accept(this);
-      this.collectValueParts(parts, result);
-    }
+    const parts: ValuePart[] = this.visitFunction_name(ctx.function_name()!);
 
     const parenType = ctx.DOLLAR_LPAREN() != null ? "(" : "{";
     return varRefPart(new ValueIR(parts), parenType);
@@ -323,8 +317,11 @@ export class CBuildCompiler
   public visitFunction_name(ctx: Function_nameContext): ValuePart[] {
     const parts: ValuePart[] = [];
     for (const atom_ctx of ctx.function_name_atom()) {
-      const result = atom_ctx.accept(this);
-      this.collectValueParts(parts, result);
+      if (atom_ctx.function() != null) {
+        parts.push(this.visitFunction(atom_ctx.function()!));
+      } else {
+        parts.push(textPart(atom_ctx.getText()));
+      }
     }
 
     return parts;
