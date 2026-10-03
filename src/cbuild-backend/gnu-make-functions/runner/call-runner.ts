@@ -38,15 +38,12 @@ export default class CallRunner {
     }
     const env: Env = new Env(this.context.cliOptions);
     env.enclosing = this.context;
+    env.islatePositionalVariables = true;
 
-    // positional parameters MUST NOT leak from outer call
-    for (let i = 1; i <= 9; i++) {
-      env.setRawVariable(i.toString(), "", "automatic", false);
-    }
     // $(0) identifier name
     env.setRawVariable("0", expandedBaseIdentifier, "automatic", false);
 
-    // overwrite supplied args
+    // supplied args $(1) $(2) $(3) ...
     for (let i = 0; i < envVars.length; i++) {
       env.setRawVariable((i + 1).toString(), envVars[i]!, "automatic", false);
     }

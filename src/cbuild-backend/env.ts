@@ -116,6 +116,7 @@ export class Env {
   public readonly cliOptions: CBuildOptions;
   public enclosingEnv?: Env;
   public targetEnvs: Record<string, Env> = {};
+  public islatePositionalVariables: boolean = false;
 
   public constructor(cliOptions: CBuildOptions) {
     this.cliOptions = cliOptions;
@@ -143,6 +144,10 @@ export class Env {
       return true;
     }
 
+    if (this.islatePositionalVariables && /^\d+$/.test(name)) {
+      return false;
+    }
+
     if (this.enclosingEnv) {
       return this.enclosingEnv.hasVariableRecursive(name);
     }
@@ -154,6 +159,10 @@ export class Env {
     const variable = this.getVariable(name);
     if (variable !== undefined) {
       return variable;
+    }
+
+    if (this.islatePositionalVariables && /^\d+$/.test(name)) {
+      return undefined;
     }
 
     if (this.enclosingEnv) {
