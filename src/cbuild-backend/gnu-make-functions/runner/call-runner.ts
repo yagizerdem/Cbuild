@@ -46,6 +46,7 @@ export default class CallRunner {
     const valueExpansionEngine = new ValueExpansionEngine(
       env,
       this.activeLookups,
+      false, // disable recursive variable search
     );
 
     const result = valueExpansionEngine.expand(baseExpression);
