@@ -19,26 +19,31 @@ export default class TargetRuleIREvaluator {
 
     if (this.ir.assignment) {
       for (const targetValue of this.ir.targets) {
-        const targetName = this.valueExpansionEngine.expand(targetValue);
+        const targetNames: string[] = this.valueExpansionEngine
+          .expand(targetValue)
+          .split(/\s+/)
+          .filter(Boolean);
 
-        const targetRuleContext =
-          this.context.targetEnvs[targetName] ??
-          new Env(this.context.cliOptions);
+        for (const targetName of targetNames) {
+          const targetRuleContext =
+            this.context.targetEnvs[targetName] ??
+            new Env(this.context.cliOptions);
 
-        targetRuleContext.enclosing = this.context;
+          targetRuleContext.enclosing = this.context;
 
-        const assignmentEvaluator = new AssignmentIREvaluator(
-          targetRuleContext,
-          this.ir.assignment,
-        );
+          const assignmentEvaluator = new AssignmentIREvaluator(
+            targetRuleContext,
+            this.ir.assignment,
+          );
 
-        await assignmentEvaluator.evaluate();
+          await assignmentEvaluator.evaluate();
 
-        targetEvaluationStates.push({
-          evaluatedContext: targetRuleContext,
-          evaluatedTargetRuleIR: this.ir,
-          targetRawName: targetName,
-        });
+          targetEvaluationStates.push({
+            evaluatedContext: targetRuleContext,
+            evaluatedTargetRuleIR: this.ir,
+            targetRawName: targetName,
+          });
+        }
       }
     }
 
