@@ -2,6 +2,7 @@ import {
   AssignmentIR,
   AssignmentPrefix,
   AssignmentType,
+  textPart,
   ValueIR,
 } from "@src/compiler/ir.js";
 import {
@@ -197,7 +198,12 @@ export default class AssignmentIREvaluator {
         this.context
           .getVariable(identifier)!
           .appendValues(new ValueIR([{ kind: "text", lexeme: " " }]));
-        this.context.getVariable(identifier)!.appendValues(right);
+
+        let expandedRvalue = this.valueExpansionEngine.expand(right);
+
+        this.context
+          .getVariable(identifier)!
+          .appendValues(textPart(expandedRvalue));
       }
 
       this.context.setVariableOrigin(

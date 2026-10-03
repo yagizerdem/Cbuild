@@ -1,6 +1,9 @@
-OBJECTS = a.o b.o
+ BASE = old 
+ LIST := initial
+ 
+ LIST += $(BASE)
+ 
+ BASE = new
 
-INPUTS = %.c common.h
-
-$(OBJECTS): %.o: $(INPUTS)
-
+ app: 
+	echo $(LIST)
