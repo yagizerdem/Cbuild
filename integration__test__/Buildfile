@@ -1,5 +1,6 @@
-first: a.c
 
-vpath %.c sources
+include Buildfile2
 
-second: a.c
+app:
+	echo app
+

@@ -78,6 +78,7 @@ export class Core {
     const evaluationState: BuildFileEvaluationState = {
       resolvedModels: [],
       vpaths: [],
+      includeGuard: [],
     };
     const evaluator = new BuildFileEvaluator(
       currentContext,

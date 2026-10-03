@@ -1,4 +1,10 @@
-import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  utimesSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { vi } from "vitest";
@@ -8,11 +14,25 @@ import BuildFileEvaluator from "@src/cbuild-backend/evaluator/core/buildfile-eva
 import { NormalRule, ImplicitPatterRule } from "@src/cbuild-backend/model.js";
 import { NormalizeModels } from "@src/cbuild-backend/normalize-models.js";
 import { NormalRuleIR, RecipeIR, ValueIR } from "@src/compiler/ir.js";
-import { RecipeExpansionEngine, ValueExpansionEngine } from "@src/cbuild-backend/expansion.js";
+import {
+  RecipeExpansionEngine,
+  ValueExpansionEngine,
+} from "@src/cbuild-backend/expansion.js";
 import { compile } from "@src/test-util/compile.js";
 
-export function environment(options: Partial<CBuildOptions> = {}, parent?: Env): Env {
-  const env = new Env({ oldFile: [], assumeOld: [], newFile: [], assumeNew: [], whatIf: [], includeDir: [], ...options } as CBuildOptions);
+export function environment(
+  options: Partial<CBuildOptions> = {},
+  parent?: Env,
+): Env {
+  const env = new Env({
+    oldFile: [],
+    assumeOld: [],
+    newFile: [],
+    assumeNew: [],
+    whatIf: [],
+    includeDir: [],
+    ...options,
+  } as CBuildOptions);
   env.enclosing = parent;
   return env;
 }
@@ -20,10 +40,14 @@ export function environment(options: Partial<CBuildOptions> = {}, parent?: Env):
 // Use the real parser/compiler, rejecting syntax errors rather than manufacturing IR.
 export async function evaluate(source: string, env = environment()) {
   const irs = compile(source.endsWith("\n") ? source : `${source}\n`);
-  const state = { resolvedModels: [], vpaths: [] };
+  const state = { resolvedModels: [], vpaths: [], includeGuard: [] };
   const models = await new BuildFileEvaluator(env, irs, state).evaluateAsync();
-  const rules = models.filter((model): model is NormalRule => model instanceof NormalRule);
-  const patterns = models.filter((model): model is ImplicitPatterRule => model instanceof ImplicitPatterRule);
+  const rules = models.filter(
+    (model): model is NormalRule => model instanceof NormalRule,
+  );
+  const patterns = models.filter(
+    (model): model is ImplicitPatterRule => model instanceof ImplicitPatterRule,
+  );
   return { env, irs, state, models, rules, patterns };
 }
 
@@ -49,7 +73,9 @@ export function expand(expression: string, env: Env): string {
 }
 
 export function commands(rule: NormalRule, env: Env): string[] {
-  return rule.evaluatedRecipeIRs.map((ir) => ir.exec<string>(new RecipeExpansionEngine(env)));
+  return rule.evaluatedRecipeIRs.map((ir) =>
+    ir.exec<string>(new RecipeExpansionEngine(env)),
+  );
 }
 
 export function target(rules: NormalRule[], name: string): NormalRule {
@@ -69,14 +95,16 @@ export function fixture() {
     path(name: string) {
       const absolute = path.resolve(root, name);
       const relative = path.relative(root, absolute);
-      if (relative.startsWith("..") || path.isAbsolute(relative)) throw new Error("Fixture path escapes test root");
+      if (relative.startsWith("..") || path.isAbsolute(relative))
+        throw new Error("Fixture path escapes test root");
       return absolute;
     },
     write(name: string, content = "fixture", mtimeSeconds?: number) {
       const absolute = this.path(name);
       mkdirSync(path.dirname(absolute), { recursive: true });
       writeFileSync(absolute, content);
-      if (mtimeSeconds !== undefined) utimesSync(absolute, mtimeSeconds, mtimeSeconds);
+      if (mtimeSeconds !== undefined)
+        utimesSync(absolute, mtimeSeconds, mtimeSeconds);
       return absolute;
     },
     directory(name: string) {
@@ -95,8 +123,14 @@ export function cleanupFixtures() {
   vi.restoreAllMocks();
   for (const root of activeFixtures) {
     const relative = path.relative(resolutionRoot, path.resolve(root));
-    if (relative.startsWith("..") || path.isAbsolute(relative) || !relative.startsWith(".fixture-")) {
-      throw new Error("Refusing to remove a directory outside test/resolution fixtures");
+    if (
+      relative.startsWith("..") ||
+      path.isAbsolute(relative) ||
+      !relative.startsWith(".fixture-")
+    ) {
+      throw new Error(
+        "Refusing to remove a directory outside test/resolution fixtures",
+      );
     }
     rmSync(root, { recursive: true, force: true });
     activeFixtures.delete(root);
