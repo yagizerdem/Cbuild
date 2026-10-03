@@ -14,7 +14,11 @@ import type {
   PreqResolution,
   TargetResolution,
 } from "@src/cbuild-backend/execution/preq-resolution/type.js";
-import { CbuildException, ErrorType, MachineCode } from "@src/cbuild-exception.js";
+import {
+  CbuildException,
+  ErrorType,
+  MachineCode,
+} from "@src/cbuild-exception.js";
 
 // Only the eight requested gaps: every expression uses the real parser,
 // compiler and expansion engine. No shell execution or filesystem fixtures.
@@ -22,7 +26,11 @@ function environment(): Env {
   return new Env({} as CBuildOptions);
 }
 
-function compiledRule(command: string, target = "app", prerequisites = ""): NormalRuleIR {
+function compiledRule(
+  command: string,
+  target = "app",
+  prerequisites = "",
+): NormalRuleIR {
   const [ir] = compile(`${target}: ${prerequisites}\n\t${command}\n`);
   expect(ir).toBeInstanceOf(NormalRuleIR);
   return ir as NormalRuleIR;
@@ -59,7 +67,9 @@ function automatic(command: string, target = "app", stem?: string) {
   const rule = new NormalRule({
     target: engine.expand(ir.targets[0]!),
     prerequisites: ir.prerequisites.map((item) => engine.expand(item)),
-    orderOnlyPrerequisites: ir.orderOnlyPrerequisites.map((item) => engine.expand(item)),
+    orderOnlyPrerequisites: ir.orderOnlyPrerequisites.map((item) =>
+      engine.expand(item),
+    ),
     shellCommands: [],
     recipeIRs: ir.recipes,
     evaluatedRecipeIRs: ir.recipes,
@@ -80,7 +90,11 @@ function automatic(command: string, target = "app", stem?: string) {
   };
   // Freshness is deterministic; only automatic bindings and expansion are tested.
   const env = new AutomaticVariableEnv(
-    rule, parent, resolvedTarget, preqs, rule.orderOnlyPrerequisites.map(resolve),
+    rule,
+    parent,
+    resolvedTarget,
+    preqs,
+    rule.orderOnlyPrerequisites.map(resolve),
     {
       resolvedTarget,
       resolvedPreqs: preqs,
@@ -97,9 +111,14 @@ function automatic(command: string, target = "app", stem?: string) {
 
 describe("1. direct target automatic variable", () => {
   // Active regression tests: AutomaticVariableEnv currently omits the @ binding.
-  test.each(["$@", "$(@)", "${@}"])("%s expands to the actual target", (reference) => {
-    expect(automatic(`echo [${reference}]`, "build/app").run()).toBe("echo [build/app]");
-  });
+  test.each(["$@", "$(@)", "${@}"])(
+    "%s expands to the actual target",
+    (reference) => {
+      expect(automatic(`echo [${reference}]`, "build/app").run()).toBe(
+        "echo [build/app]",
+      );
+    },
+  );
 });
 
 describe("2. stem automatic variable: explicitly unsupported", () => {
@@ -115,12 +134,15 @@ describe("2. stem automatic variable: explicitly unsupported", () => {
 
 describe("3. single-character variable references", () => {
   test.each([
-    ["A", "uppercase"], ["x", "lowercase"], ["1", "positional"],
+    ["A", "uppercase"],
+    ["x", "lowercase"],
+    ["1", "positional"],
   ])("$%s agrees with both delimited references", (name, expected) => {
     const env = environment();
     env.setRawVariable(name, expected);
-    expect(expand(`[$${name}][$(${name})][\${${name}}]`, env))
-      .toBe(`[${expected}][${expected}][${expected}]`);
+    expect(expand(`[$${name}][$(${name})][\${${name}}]`, env)).toBe(
+      `[${expected}][${expected}][${expected}]`,
+    );
   });
 
   test("a short reference consumes exactly one character", () => {
@@ -129,15 +151,21 @@ describe("3. single-character variable references", () => {
     env.setRawVariable("AB", "long-name");
     env.setRawVariable("1", "one");
     env.setRawVariable("10", "ten");
-    expect(expand("$AB|$(AB)|$10|$(10)", env)).toBe("alphaB|long-name|one0|ten");
+    expect(expand("$AB|$(AB)|$10|$(10)", env)).toBe(
+      "alphaB|long-name|one0|ten",
+    );
   });
 
-  test.each(syntaxes)("$1 reads a call parameter using %s invocation", (syntax) => {
-    const env = environment();
-    deferred(env, "short", "$0:[$1][$2]");
-    expect(expand(invocation("call short,first,second", syntax), env))
-      .toBe("short:[first][second]");
-  });
+  test.each(syntaxes)(
+    "$1 reads a call parameter using %s invocation",
+    (syntax) => {
+      const env = environment();
+      deferred(env, "short", "$0:[$1][$2]");
+      expect(expand(invocation("call short,first,second", syntax), env)).toBe(
+        "short:[first][second]",
+      );
+    },
+  );
 });
 
 describe("4. brace function invocation", () => {
@@ -196,8 +224,9 @@ describe.each(syntaxes)("5. excess arguments (%s)", (syntax) => {
     const env = environment();
     deferred(env, "many", "[$(1)][$(9)][$(10)][$(12)]");
     const args = Array.from({ length: 12 }, (_, i) => `a${i + 1}`).join(",");
-    expect(expand(invocation(`call many,${args}`, syntax), env))
-      .toBe("[a1][a9][a10][a12]");
+    expect(expand(invocation(`call many,${args}`, syntax), env)).toBe(
+      "[a1][a9][a10][a12]",
+    );
   });
 });
 
@@ -220,22 +249,27 @@ describe.each(syntaxes)("6. empty and comma-heavy arguments (%s)", (syntax) => {
   test("commas produced by a variable remain inside one argument", () => {
     const env = environment();
     env.setRawVariable("PAIR", "a,b");
-    expect(expand(invocation("subst $(PAIR),Z,$(PAIR)", syntax), env)).toBe("Z");
+    expect(expand(invocation("subst $(PAIR),Z,$(PAIR)", syntax), env)).toBe(
+      "Z",
+    );
   });
 
   test("commas produced by a nested function do not change outer arity", () => {
     const env = environment();
     env.setRawVariable("COMMA", ",");
     const nested = invocation("subst x,$(COMMA),axb", syntax);
-    expect(expand(invocation(`subst ${nested},Z,${nested}`, syntax), env)).toBe("Z");
+    expect(expand(invocation(`subst ${nested},Z,${nested}`, syntax), env)).toBe(
+      "Z",
+    );
   });
 
   test("nested function separator commas do not split enclosing call parameters", () => {
     const env = environment();
     deferred(env, "pair", "[$1][$2]");
     const nested = invocation("subst a,z,banana", syntax);
-    expect(expand(invocation(`call pair,${nested},tail`, syntax), env))
-      .toBe("[bznznz][tail]");
+    expect(expand(invocation(`call pair,${nested},tail`, syntax), env)).toBe(
+      "[bznznz][tail]",
+    );
   });
 });
 
@@ -246,55 +280,83 @@ describe.each(syntaxes)("7. empty call positional slots (%s)", (syntax) => {
     ["first,second,", "[first][second][][]", ["first", "second", ""]],
     ["first,,,fourth", "[first][][][fourth]", ["first", "", "", "fourth"]],
     [",,", "[][][][]", ["", "", ""]],
-  ] as const)("call slots,%s retains parameter indices", (args, expected, slots) => {
-    const env = environment();
-    deferred(env, "slots", "[$1][$2][$3][$4]");
-    const expression = invocation(`call slots,${args}`, syntax);
-    expect(expand(expression, env)).toBe(expected);
-    const part = value(expression).parts[0]!;
-    expect(part.kind).toBe("function-call");
-    if (part.kind !== "function-call") throw new Error("Expected call function");
-    // Check trailing slots in compiled IR too: a missing slot also expands empty.
-    expect(part.function.args.map((arg) => new ValueExpansionEngine(env).expand(arg)))
-      .toEqual(["slots", ...slots]);
-  });
+  ] as const)(
+    "call slots,%s retains parameter indices",
+    (args, expected, slots) => {
+      const env = environment();
+      deferred(env, "slots", "[$1][$2][$3][$4]");
+      const expression = invocation(`call slots,${args}`, syntax);
+      expect(expand(expression, env)).toBe(expected);
+      const part = value(expression).parts[0]!;
+      expect(part.kind).toBe("function-call");
+      if (part.kind !== "function-call")
+        throw new Error("Expected call function");
+      // Check trailing slots in compiled IR too: a missing slot also expands empty.
+      expect(
+        part.function.args.map((arg) =>
+          new ValueExpansionEngine(env).expand(arg),
+        ),
+      ).toEqual(["slots", ...slots]);
+    },
+  );
 
   test("arguments that expand to empty retain their slots", () => {
     const env = environment();
     deferred(env, "slots", "[$1][$2][$3]");
-    expect(expand(invocation("call slots,first,$(MISSING),third", syntax), env))
-      .toBe("[first][][third]");
+    expect(
+      expand(invocation("call slots,first,$(MISSING),third", syntax), env),
+    ).toBe("[first][][third]");
   });
 
   test("a comma-bearing expansion remains a single positional argument", () => {
     const env = environment();
     env.setRawVariable("PAIR", "a,b");
     deferred(env, "slots", "[$1][$2][$3]");
-    expect(expand(invocation("call slots,$(PAIR),,tail", syntax), env))
-      .toBe("[a,b][][tail]");
+    expect(expand(invocation("call slots,$(PAIR),,tail", syntax), env)).toBe(
+      "[a,b][][tail]",
+    );
   });
 });
 
 describe("8. directory-free automatic D/F variables", () => {
   test.each([
-    ["@D", "."], ["@F", "app"],
-    ["<D", "."], ["<F", "foo.o"],
-    ["^D", ". ."], ["^F", "foo.o bar.o"],
-    ["+D", ". . ."], ["+F", "foo.o bar.o foo.o"],
-    ["?D", "."], ["?F", "foo.o"],
-  ])("%s projects directory-free filenames with both syntaxes", (name, expected) => {
-    for (const syntax of syntaxes) {
-      expect(automatic(`echo [${invocation(name, syntax)}]`).run())
-        .toBe(`echo [${expected}]`);
-    }
-  });
+    ["@D", "."],
+    ["@F", "app"],
+    ["<D", "."],
+    ["<F", "foo.o"],
+    ["^D", ". ."],
+    ["^F", "foo.o bar.o"],
+    ["+D", ". . ."],
+    ["+F", "foo.o bar.o foo.o"],
+    ["?D", "."],
+    ["?F", "foo.o"],
+  ])(
+    "%s projects directory-free filenames with both syntaxes",
+    (name, expected) => {
+      for (const syntax of syntaxes) {
+        expect(automatic(`echo [${invocation(name, syntax)}]`).run()).toBe(
+          `echo [${expected}]`,
+        );
+      }
+    },
+  );
 
   test.each([
-    ["<", "foo.o"], ["^", "foo.o bar.o"],
-    ["+", "foo.o bar.o foo.o"], ["?", "foo.o"], ["|", "stamp"],
+    ["<", "foo.o"],
+    ["^", "foo.o bar.o"],
+    ["+", "foo.o bar.o foo.o"],
+    ["?", "foo.o"],
+    ["|", "stamp"],
   ])("$%s agrees with parentheses and braces", (name, expected) => {
-    const references = [`$${name}`, invocation(name, "parentheses"), invocation(name, "braces")];
-    expect(automatic("echo " + references.map((reference) => `[${reference}]`).join("|")).run())
-      .toBe(`echo [${expected}]|[${expected}]|[${expected}]`);
+    const references = [
+      `$${name}`,
+      invocation(name, "parentheses"),
+      invocation(name, "braces"),
+    ];
+    expect(
+      automatic(
+        "echo " + references.map((reference) => `[${reference}]`).join("|"),
+      ).run(),
+    ).toBe(`echo [${expected}]|[${expected}]|[${expected}]`);
   });
 });

@@ -1,6 +1,5 @@
 
-strip = yagiz erdem
-a =  $(strip)
+a =  $(strip a  b)
 
 all :
 	echo $(a)

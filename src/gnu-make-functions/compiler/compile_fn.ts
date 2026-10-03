@@ -45,15 +45,34 @@ export class compile_fn
 
   public compile(ctx: FunctionContext, func: MakeFunction): FunctionIR {
     const fn = new FunctionIR(func.getFnName());
-
     this.checkArity(ctx, func);
 
-    for (const argCtx of ctx.arguments()!.argument()) {
-      fn.args.push(this.visitArgument(argCtx));
+    // comma sensitive argument parsing
+    fn.args.push(new ValueIR());
+    for (const child of ctx.arguments()?.children ?? []) {
+      if (child instanceof ArgumentContext) {
+        fn.args[fn.args.length - 1] = this.visitArgument(child);
+      } else if (child.getText() === ",") {
+        fn.args.push(new ValueIR());
+      }
     }
 
     return fn;
   }
+
+  // public compileCommaSensitive(
+  //   ctx: FunctionContext,
+  //   func: MakeFunction,
+  // ): FunctionIR {
+  //   const ir = new FunctionIR(func.getFnName());
+  //   this.checkArity(ctx, func);
+  //   const children = ctx.arguments()?.children ?? [];
+  //   if (children.length === 0) return ir;
+
+  //   // argument() omits empty slots; direct comma children delimit every slot.
+
+  //   return ir;
+  // }
 
   public visitArgument(ctx: ArgumentContext): ValueIR {
     return this.visitExpressions(ctx.expressions());
@@ -194,16 +213,44 @@ export class compile_fn
     return val;
   }
 
-  public checkArity(ctx: FunctionContext, func: MakeFunction): void {
-    const given =
-      ctx.arguments() == null ? 0 : ctx.arguments()!.argument().length;
-    const expected = func.arity();
+  // public checkArity(ctx: FunctionContext, func: MakeFunction): void {
+  //   const given =
+  //     ctx.arguments() == null ? 0 : ctx.arguments()!.argument().length;
+  //   const expected = func.arity();
 
-    // variadic functions
+  //   // variadic functions
+  //   if (expected === -1) {
+  //     return;
+  //   }
+
+  //   if (given !== expected) {
+  //     throw CbuildException.from({
+  //       errorType: ErrorType.SEMANTIC,
+  //       message: `function '${func.getFnName()}' expects ${expected} argument(s), but got ${given}`,
+  //       row: ctx.start?.line || 0,
+  //       column: (ctx.start?.column || 0) + 1,
+  //       machineCode: MachineCode.FUNCTION_COMPILATION_ERROR,
+  //     });
+  //   }
+  // }
+
+  // count arguments based on commas in the arugmet list $(subst ) -> 1 arg $(subst a,,banana preserves) -> 3 args
+  // comma coutn + 1
+  // edge case comma-coutn(0) + 1 = 1 arg
+  public checkArity(ctx: FunctionContext, func: MakeFunction): void {
+    const expected = func.arity();
     if (expected === -1) {
       return;
     }
-
+    const argumentsCtx = ctx.arguments();
+    let given = 0;
+    if (argumentsCtx != null) {
+      const children = argumentsCtx.children ?? [];
+      const commaCount = children.filter(
+        (child) => child.getText() === ",",
+      ).length;
+      given = commaCount + 1;
+    }
     if (given !== expected) {
       throw CbuildException.from({
         errorType: ErrorType.SEMANTIC,
