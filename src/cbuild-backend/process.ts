@@ -163,34 +163,6 @@ export class ProcessRunner {
     });
   }
 
-  /** Each logical recipe line gets a separate shell; stops at the first failure.
-   * Expansion and continuation joining belong to the caller. This is not a
-   * make parser: '+' / recursive make and .ONESHELL are not implemented.
-   */
-  public async runRecipeAsync(
-    lines: readonly string[],
-    options: RecipeOptions = {},
-  ): Promise<ProcessResult[]> {
-    const results: ProcessResult[] = [];
-    for (const line of lines) {
-      const prefix = /^[\t ]*[@-]*/.exec(line)![0];
-      const command = line.slice(prefix.length);
-      if (!command.trim()) continue;
-      if (!options.silent && !prefix.includes("@")) {
-        (options.echo ?? console.log)(command);
-      }
-      results.push(
-        await this.runAsync(command, {
-          ...options,
-          ignoreErrors:
-            prefix.includes("-") ||
-            (options.ignoreErrors ?? this.defaults.ignoreErrors),
-        }),
-      );
-    }
-    return results;
-  }
-
   public runSync(command: string, options: ProcessOptions = {}): ProcessResult {
     const settings = { ...this.defaults, ...options };
     const shell = settings.shell ?? defaultShell();
@@ -287,34 +259,5 @@ export class ProcessRunner {
     }
 
     return result;
-  }
-
-  public runRecipeSync(
-    lines: readonly string[],
-    options: RecipeOptions = {},
-  ): ProcessResult[] {
-    const results: ProcessResult[] = [];
-
-    for (const line of lines) {
-      const prefix = /^[\t ]*[@-]*/.exec(line)![0];
-      const command = line.slice(prefix.length);
-
-      if (!command.trim()) continue;
-
-      if (!options.silent && !prefix.includes("@")) {
-        (options.echo ?? console.log)(command);
-      }
-
-      results.push(
-        this.runSync(command, {
-          ...options,
-          ignoreErrors:
-            prefix.includes("-") ||
-            (options.ignoreErrors ?? this.defaults.ignoreErrors),
-        }),
-      );
-    }
-
-    return results;
   }
 }
