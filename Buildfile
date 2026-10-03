@@ -1,6 +1,9 @@
+ BASE = old 
+ LIST := initial
+ 
+ LIST += $(BASE)
+ 
+ BASE = new
 
-strip = yagiz erdem
-a =  $(strip)
-
-all :
-	echo $(a)
+ app: 
+	echo $(LIST)

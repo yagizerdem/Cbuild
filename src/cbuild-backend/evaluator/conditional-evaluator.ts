@@ -19,33 +19,9 @@ export default class ConditionalIREvaluator {
     const expandedRightCondition =
       this.ir.condition?.right?.exec<string>(this.valueExpansionEngine) ??
       undefined;
-    // if right condition is undefined it must be ifdef kw
-
-    let leftValue = "";
-    if (this.context.hasVariable(expandedLeftCondition)) {
-      const symbolTableVar = this.context.getVariable(expandedLeftCondition);
-      if (symbolTableVar?.isDeferred() && symbolTableVar.value) {
-        leftValue = this.valueExpansionEngine.exec(symbolTableVar.value);
-      } else {
-        leftValue = this.context.getRawVariable(expandedLeftCondition) ?? "";
-      }
-    }
-
-    let rightValue = "";
-    if (
-      expandedRightCondition &&
-      this.context.hasVariable(expandedRightCondition)
-    ) {
-      const symbolTableVar = this.context.getVariable(expandedRightCondition);
-      if (symbolTableVar?.isDeferred() && symbolTableVar.value) {
-        rightValue = this.valueExpansionEngine.exec(symbolTableVar.value);
-      } else {
-        rightValue = this.context.getRawVariable(expandedRightCondition) ?? "";
-      }
-    }
 
     if (this.ir.kind == "ifeq") {
-      if (leftValue === rightValue) {
+      if (expandedLeftCondition === expandedRightCondition) {
         return this.ir.thenBranch;
       } else {
         return this.ir.elseBranch;
@@ -53,7 +29,7 @@ export default class ConditionalIREvaluator {
     }
 
     if (this.ir.kind == "ifneq") {
-      if (leftValue !== rightValue) {
+      if (expandedLeftCondition !== expandedRightCondition) {
         return this.ir.thenBranch;
       } else {
         return this.ir.elseBranch;
@@ -61,7 +37,7 @@ export default class ConditionalIREvaluator {
     }
 
     if (this.ir.kind == "ifdef") {
-      if (leftValue) {
+      if (this.isDefined(expandedLeftCondition)) {
         return this.ir.thenBranch;
       } else {
         return this.ir.elseBranch;
@@ -69,7 +45,7 @@ export default class ConditionalIREvaluator {
     }
 
     if (this.ir.kind == "ifndef") {
-      if (!leftValue) {
+      if (!this.isDefined(expandedLeftCondition)) {
         return this.ir.thenBranch;
       } else {
         return this.ir.elseBranch;
@@ -77,5 +53,16 @@ export default class ConditionalIREvaluator {
     }
 
     return [];
+  }
+
+  private isDefined(identifier: string): boolean {
+    const symbolTableVar = this.context.getVariableRecursive(identifier);
+    if (!symbolTableVar) {
+      return false;
+    }
+    if (symbolTableVar.isDeferred()) {
+      return (symbolTableVar.value?.parts.length ?? 0) > 0;
+    }
+    return (symbolTableVar.getRawValue() ?? "").length > 0;
   }
 }

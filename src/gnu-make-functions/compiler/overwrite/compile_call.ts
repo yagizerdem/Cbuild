@@ -1,5 +1,5 @@
-import { FunctionIR } from "@compiler/ir.js";
-import { FunctionContext } from "@parser/cbuildParser.js";
+import { FunctionIR, ValueIR } from "@compiler/ir.js";
+import { ArgumentContext, FunctionContext } from "@parser/cbuildParser.js";
 import {
   CbuildException,
   ErrorType,

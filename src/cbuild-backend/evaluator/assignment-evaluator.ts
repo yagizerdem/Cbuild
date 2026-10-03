@@ -2,6 +2,7 @@ import {
   AssignmentIR,
   AssignmentPrefix,
   AssignmentType,
+  textPart,
   ValueIR,
 } from "@src/compiler/ir.js";
 import {
@@ -42,7 +43,7 @@ export default class AssignmentIREvaluator {
       );
       this.setRawVariable(identifier, value, this.shouldExport(prefix));
     } else if (this.assignmentIR.type === AssignmentType.CONDITIONAL) {
-      if (!this.context.hasVariable(identifier)) {
+      if (!this.context.hasVariableRecursive(identifier)) {
         this.setDeferredVariable(
           identifier,
           this.assignmentIR.right ??
@@ -197,7 +198,12 @@ export default class AssignmentIREvaluator {
         this.context
           .getVariable(identifier)!
           .appendValues(new ValueIR([{ kind: "text", lexeme: " " }]));
-        this.context.getVariable(identifier)!.appendValues(right);
+
+        let expandedRvalue = this.valueExpansionEngine.expand(right);
+
+        this.context
+          .getVariable(identifier)!
+          .appendValues(textPart(expandedRvalue));
       }
 
       this.context.setVariableOrigin(

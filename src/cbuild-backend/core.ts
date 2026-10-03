@@ -36,6 +36,7 @@ import {
   registerBuiltInImplicitRules,
   registerBuiltInImplicitVariables,
 } from "@cbuild-backend/built-in.js";
+import { BuildFileMeta } from "@src/type/buildfile-meta.js";
 
 export interface CliVar {
   key: string;

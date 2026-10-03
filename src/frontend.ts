@@ -294,13 +294,17 @@ export function compile(context: CbuildfileContext): IR[] {
   }
 }
 
-export function frontend(buildFile: BuildFileMeta): IR[] {
+export function frontend(buildFileMeta: BuildFileMeta): IR[] {
   try {
-    setBuildFileName(buildFile.name);
-    const pCharBuffer = preprocess(buildFile.rawContent);
+    setBuildFileName(buildFileMeta.name);
+    const pCharBuffer = preprocess(buildFileMeta.rawContent);
     const preprocessedProgram = pCharBufferToString(pCharBuffer);
     const context = parseBuildFile(preprocessedProgram);
-    return compile(context);
+    const irs = compile(context);
+    irs.forEach((ir) => {
+      ir.buildFileMeta = buildFileMeta;
+    });
+    return irs;
   } catch (error: unknown) {
     throw normalizeFrontendError(error, ErrorType.SYNTAX);
   }
