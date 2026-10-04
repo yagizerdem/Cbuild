@@ -34,6 +34,7 @@ import { compile_call } from "@gnu-make-functions/compiler/overwrite/compile_cal
 import { compile_eval } from "@gnu-make-functions/compiler/overwrite/compile_eval.js";
 import { compile_file } from "@gnu-make-functions/compiler/overwrite/compile_file.js";
 import { compile_value } from "@gnu-make-functions/compiler/overwrite/compile_value.js";
+import { compile_notdir } from "@gnu-make-functions/compiler/overwrite/compile_notdir.js";
 import type { FnRunner } from "@gnu-make-functions/runner.js";
 
 export interface MakeFunctionHandler {
@@ -354,6 +355,32 @@ export class lastwordFn implements MakeFunction {
   public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
     return (ir: FunctionIR) => {
       return runner.lastwordFn(ir);
+    };
+  }
+}
+
+export class notDirFn implements MakeFunction {
+  private readonly compiler: compile_notdir;
+
+  public constructor() {
+    this.compiler = new compile_notdir();
+  }
+
+  public getFnName(): string {
+    return "notdir";
+  }
+
+  public arity(): number {
+    return -1; // takes 0 or 1 argument, check at compiler override function
+  }
+
+  public compile(ctx: FunctionContext): FunctionIR {
+    return this.compiler.compile(ctx, this);
+  }
+
+  public resolveRunner(runner: FnRunner): (ir: FunctionIR) => string {
+    return (ir: FunctionIR) => {
+      return runner.notDirFn(ir);
     };
   }
 }
