@@ -73,6 +73,7 @@ All of these variables are registered with the `default` origin and are not expo
 
 ## Variables with special meanings
 
-| Variable | Default value | Description                                       |
-| -------- | ------------- | ------------------------------------------------- |
-| `SHELL`  | undefined     | The command interpreter used by the build system. |
+| Variable      | Default value | Description                                                        |
+| ------------- | ------------- | ------------------------------------------------------------------ |
+| `SHELL`       | undefined     | The command interpreter used by the build system.                  |
+| `.SHELLFLAGS` | undefined     | The flags passed to the command interpreter referenced by `SHELL`. |
