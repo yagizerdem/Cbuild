@@ -93,28 +93,61 @@ export default class ModelResolver implements Executor {
       }
     }
 
-    return targets.map((target) =>
-      stemResolver.hasStem(target)
-        ? new ImplicitPatterRule({
-            targetPattern: target,
-            prerequisites: [...prerequisites],
-            orderOnlyPrerequisites: [...orderOnlyPrerequisites],
-            recipeIRs: [...ir.recipes],
-            evaluatedRecipeIRs: [...recipeIRresolutions],
-            ruleIR: ir,
-            vpathRules: [...this.evaluationState.vpaths],
-          })
-        : new NormalRule({
-            target,
-            prerequisites: [...prerequisites],
-            orderOnlyPrerequisites: [...orderOnlyPrerequisites],
-            ruleIR: ir,
-            recipeIRs: [...ir.recipes],
-            evaluatedRecipeIRs: [...recipeIRresolutions],
-            shellCommands: [], // do not use raw shell commands, expand from recipeIR before execution
-            vpathRules: [...(this.evaluationState.vpaths ?? [])],
-            ruleSeperator: ir.separator,
-          }),
-    );
+    const resolvedModels = [];
+
+    for (const target of targets) {
+      if (this.isSpecialTarget(target)) {
+        this.resolveSpecialTargetDispatcher(target, ir);
+      } else {
+        resolvedModels.push(
+          stemResolver.hasStem(target)
+            ? new ImplicitPatterRule({
+                targetPattern: target,
+                prerequisites: [...prerequisites],
+                orderOnlyPrerequisites: [...orderOnlyPrerequisites],
+                recipeIRs: [...ir.recipes],
+                evaluatedRecipeIRs: [...recipeIRresolutions],
+                ruleIR: ir,
+                vpathRules: [...this.evaluationState.vpaths],
+              })
+            : new NormalRule({
+                target,
+                prerequisites: [...prerequisites],
+                orderOnlyPrerequisites: [...orderOnlyPrerequisites],
+                ruleIR: ir,
+                recipeIRs: [...ir.recipes],
+                evaluatedRecipeIRs: [...recipeIRresolutions],
+                shellCommands: [], // do not use raw shell commands, expand from recipeIR before execution
+                vpathRules: [...(this.evaluationState.vpaths ?? [])],
+                ruleSeperator: ir.separator,
+              }),
+        );
+      }
+    }
+
+    return resolvedModels;
+  }
+
+  private isSpecialTarget(target: string): boolean {
+    return target === ".PHONY";
+  }
+
+  private resolveSpecialTargetDispatcher(target: string, ir: NormalRuleIR) {
+    if (target === ".PHONY") {
+      this.resolvePhonyTarget(ir);
+    }
+  }
+
+  // mutate the env and add phony targets
+  private resolvePhonyTarget(ir: NormalRuleIR) {
+    const expansion = new ValueExpansionEngine(this.context);
+    ir.prerequisites.forEach((preq) => {
+      const resolution = expansion.expand(preq);
+      this.context.phonyTargets.add(resolution);
+    });
+    ir.orderOnlyPrerequisites.forEach((preq) => {
+      const resolution = expansion.expand(preq);
+      this.context.phonyTargets.add(resolution);
+    });
   }
 }

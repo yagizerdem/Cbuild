@@ -1,2 +1,6 @@
-app:
-	echo app
+app.txt:
+	echo app > app.txt
+	echo girdi
+
+
+.PHONY: app.txt

@@ -52,14 +52,21 @@ export class Build {
       this.context,
     );
 
+    // check is target is phony
+    const isPhonyTarget = this.context.phonyTargets.has(rule.target);
+
+    // resolve out of date
     const outOfDateChecker = new OutOfDateChecker(this.context);
     const outOfDateResolution = await outOfDateChecker.resolveOutOfDateAsync(
       targetResolution,
       preqResolutions.first,
     );
 
-    if (!outOfDateResolution.isTargetOutOfDate) {
-      return;
+    // phony targets do not need to be checked for out-of-date status
+    if (!isPhonyTarget) {
+      if (!outOfDateResolution.isTargetOutOfDate) {
+        return;
+      }
     }
 
     if (this.context.cliOptions.touch) {

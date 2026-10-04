@@ -11,7 +11,6 @@ import {
   ErrorType,
   MachineCode,
 } from "@src/cbuild-exception.js";
-import { OutOfDateChecker } from "@src/cbuild-backend/execution/preq-resolution/out-of-date.js";
 import { PreqResolution } from "@src/cbuild-backend/execution/preq-resolution/type.js";
 import { Env } from "@src/cbuild-backend/env.js";
 

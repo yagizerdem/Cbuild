@@ -117,6 +117,7 @@ export class Env {
   public enclosingEnv?: Env;
   public targetEnvs: Record<string, Env> = {};
   public islatePositionalVariables: boolean = false;
+  public phonyTargets: Set<string> = new Set();
 
   public constructor(cliOptions: CBuildOptions) {
     this.cliOptions = cliOptions;

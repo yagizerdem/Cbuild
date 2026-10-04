@@ -48,17 +48,30 @@ async function main() {
 
     const targetArgs = getTargetArgs(args);
 
-    for (const targetArg of targetArgs) {
+    if (targetArgs.length === 0) {
+      // auto detect default target by core module
+
       const envVars = collectEnvVars(options);
       const cliVars = collectCliVars(args);
       context = new Env(options);
-
       const core = new Core(context);
       await core.runAsync(intermediateRepresentation, {
         envVars,
         cliVars,
-        defaultTargetName: targetArg,
       });
+    } else {
+      for (const targetArg of targetArgs) {
+        const envVars = collectEnvVars(options);
+        const cliVars = collectCliVars(args);
+        context = new Env(options);
+
+        const core = new Core(context);
+        await core.runAsync(intermediateRepresentation, {
+          envVars,
+          cliVars,
+          defaultTargetName: targetArg,
+        });
+      }
     }
   } catch (error: unknown) {
     if (error instanceof Error) {
