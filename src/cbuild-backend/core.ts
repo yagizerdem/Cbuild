@@ -52,6 +52,7 @@ export interface RunnerOptions {
   context?: Env;
   cliVars?: CliVar[];
   envVars?: EnvVar[];
+  defaultTargetName?: string;
 }
 
 export class Core {
@@ -114,7 +115,9 @@ export class Core {
       process.exit(0);
     }
 
-    const targetName = findDefaultTargetName(normalizedExplicitRules);
+    const targetName =
+      options?.defaultTargetName ??
+      findDefaultTargetName(normalizedExplicitRules);
     if (!targetName) {
       throw CbuildException.from({
         errorType: ErrorType.SEMANTIC,
