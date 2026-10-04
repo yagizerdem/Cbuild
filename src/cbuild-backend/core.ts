@@ -115,7 +115,6 @@ export class Core {
     }
 
     const targetName = findDefaultTargetName(normalizedExplicitRules);
-    const targetRule = findTargetRule(normalizedExplicitRules, targetName!);
     if (!targetName) {
       throw CbuildException.from({
         errorType: ErrorType.SEMANTIC,
@@ -146,12 +145,12 @@ export class Core {
     }
 
     if (currentContext.cliOptions.sequential) {
-      const schedular = new SequentialSchedular(currentContext, resolution);
+      const schedular = new SequentialSchedular(currentContext, rulesSubGraph);
       await schedular.sequentialScheduleAsync(
-        findTargetRule(resolution, targetName!),
+        findTargetRule(rulesSubGraph, targetName!),
       );
     } else {
-      const schedular = new ParallelSchedular(currentContext, resolution);
+      const schedular = new ParallelSchedular(currentContext, rulesSubGraph);
       await schedular.parallelSchedule();
     }
   }

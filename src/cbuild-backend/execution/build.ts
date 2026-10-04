@@ -251,7 +251,13 @@ export class Build {
         ? command.slice(1).trim()
         : command;
 
-      if (!this.context.cliOptions.dryRun) {
+      if (
+        !(
+          this.context.cliOptions.dryRun ||
+          this.context.cliOptions.justPrint ||
+          this.context.cliOptions.recon
+        )
+      ) {
         const commandRunnerOptions: CommandRunnerOptions = {
           command: normalizeCommand,
           processEnv,
@@ -317,6 +323,7 @@ export class Build {
           cwd: process.cwd(),
           env: options.processEnv,
           output: "capture",
+          ignoreErrors: this.context.cliOptions.ignoreErrors,
         })
       : processRunner.runAsync(options.command, {
           cwd: process.cwd(),
@@ -328,6 +335,7 @@ export class Build {
                 args: options.args ?? [],
               }
             : defaultShell(),
+          ignoreErrors: this.context.cliOptions.ignoreErrors,
         }));
 
     return result;
@@ -346,6 +354,7 @@ export class Build {
             cwd: process.cwd(),
             env: options.processEnv,
             output: "capture",
+            ignoreErrors: this.context.cliOptions.ignoreErrors,
           })
         : processRunner.runSync(options.command, {
             cwd: process.cwd(),
@@ -357,6 +366,7 @@ export class Build {
                   args: options.args ?? [],
                 }
               : defaultShell(),
+            ignoreErrors: this.context.cliOptions.ignoreErrors,
           });
 
     return result;
