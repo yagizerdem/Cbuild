@@ -1,0 +1,31 @@
+CC := gcc
+SRC_DIR := src
+DIST_DIR := ./dist
+TARGET := main
+CFLAGS := -Isrc $(shell pkg-config --cflags sdl2)
+LDLIBS := $(shell pkg-config --libs sdl2)
+ROM ?= programs/pong.ch8
+
+C_SRC := $(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/**/*.c)
+HEADERS := $(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/**/*.h)
+OBJECTS := $(patsubst $(SRC_DIR)/%.c,$(DIST_DIR)/obj/%.o,$(C_SRC))
+
+all: build
+
+build: $(DIST_DIR)/$(TARGET)
+
+run: $(DIST_DIR)/$(TARGET)
+	@$(DIST_DIR)/$(TARGET) $(ROM)
+
+$(DIST_DIR)/$(TARGET): $(OBJECTS)
+	mkdir -p $(DIST_DIR)
+	$(CC) -o "$@" $(OBJECTS) $(LDLIBS)
+
+$(DIST_DIR)/obj/%.o: $(SRC_DIR)/%.c $(HEADERS)
+	mkdir -p "$(@D)"
+	$(CC) $(CFLAGS) -c "$<" -o "$@"
+
+clean:
+	rm -f $(OBJECTS) $(DIST_DIR)/$(TARGET)
+
+.PHONY: all build run clean

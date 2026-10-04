@@ -20,7 +20,7 @@
 #define NUM_KEYS 16
 #define FONT_START_ADDR 0x050
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 typedef struct {
 	uint8_t memory[MEMORY_SIZE]; // 4 kb or memory with word size 16 bits (2 bytes)

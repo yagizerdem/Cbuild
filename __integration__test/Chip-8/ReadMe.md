@@ -23,13 +23,30 @@ A minimal **CHIP-8 Emulator** written for Unix based systems. This project follo
 
 ## Usage
 
-The emulator is executed from the shell and takes **two parameters**:
+The emulator uses the SDL2 development package installed in Linux/WSL.
+`Buildfile` obtains the system SDL2 include and linker flags with `pkg-config`.
 
-```bash
-chip8 <programPath>
+Install the development dependencies in Ubuntu/WSL, then build from this directory:
 
-#Exapmle (adjust program path and call this from your unix shell)
-Chip_8 ./roms/PONG.ch8
+```sh
+sudo apt-get update
+sudo apt-get install build-essential libsdl2-dev pkg-config
+cbuild --sequential -f Buildfile
+# Or use GNU make:
+make -f Buildfile -j4
+```
+
+SDL2 headers and the shared library are supplied by the system package;
+SDL2 sources and binaries are not vendored in this project. A graphical
+Linux/WSLg session is needed to display the emulator window.
+
+The default target builds the program without launching it. Run the emulator
+with a ROM path:
+
+```sh
+./dist/main programs/pong.ch8
+# Or use GNU make's run target:
+make -f Buildfile run ROM=programs/pong.ch8
 ```
 
 ## Author
