@@ -142,7 +142,7 @@ export class ProcessRunner {
                 row: -1,
                 errorType: ErrorType.PROCESS,
                 machineCode: MachineCode.SHELL_COMMAND_FAILED,
-                message: `cbuild: Command failed (${signal ?? exitCode}): ${command}. Stop.`,
+                message: `cbuild: Command failed (${signal ?? exitCode}): ${command}. Stop. \n {stdout: ${Buffer.concat(stdout).toString("utf8")}, stderr: ${Buffer.concat(stderr).toString("utf8")}}`,
               }),
             );
           } else {
@@ -156,7 +156,7 @@ export class ProcessRunner {
             row: -1,
             errorType: ErrorType.PROCESS,
             machineCode: MachineCode.SHELL_COMMAND_FAILED,
-            message: `cbuild: Could not start shell: ${shell.executable}. Stop.`,
+            message: `cbuild: Could not start shell: ${shell.executable}. Stop. \n {stdout: ${Buffer.concat(stdout).toString("utf8")}, stderr: ${Buffer.concat(stderr).toString("utf8")}}`,
           }),
         );
       }
@@ -241,7 +241,7 @@ export class ProcessRunner {
         row: -1,
         errorType: ErrorType.PROCESS,
         machineCode: MachineCode.SHELL_COMMAND_FAILED,
-        message: `cbuild: Command could not complete: ${command}: ${child.error.message}. Stop.`,
+        message: `cbuild: Command could not complete: ${command}: ${child.error.message}. Stop. \n {stdout: ${result.stdout}, stderr: ${result.stderr}}`,
       });
     }
 
@@ -254,7 +254,7 @@ export class ProcessRunner {
         row: -1,
         errorType: ErrorType.PROCESS,
         machineCode: MachineCode.SHELL_COMMAND_FAILED,
-        message: `cbuild: Command failed (${child.signal ?? child.status}): ${command}. Stop.`,
+        message: `cbuild: Command failed (${child.signal ?? child.status}): ${command}. Stop. \n {stdout: ${result.stdout}, stderr: ${result.stderr}}`,
       });
     }
 

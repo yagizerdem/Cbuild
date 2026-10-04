@@ -10,22 +10,19 @@ CFLAGS := -Isrc/include
 C_SRC := $(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/**/*.c)
 OBJECTS := $(patsubst %.c,%.o,$(notdir $(C_SRC)))
 
-all:
-	@echo  $(notdir $(C_SRC))
+all: build run
 
-# all: build run
+build: $(TARGET) clean
 
-# build: $(TARGET) clean
+run:
+	@$(DIST_DIR)/$(TARGET)
 
-# run:
-# 	@$(DIST_DIR)/$(TARGET)
+$(TARGET): $(OBJECTS)
+	mkdir -p $(DIST_DIR)
+	gcc -o $(DIST_DIR)/$@ $^ $(CFLAGS)
 
-# $(TARGET): $(OBJECTS)
-# 	mkdir -p $(DIST_DIR)
-# 	gcc -o $(DIST_DIR)/$@ $^ $(CFLAGS)
+$(OBJECTS): $(C_SRC)
+	gcc -c $^ $(CFLAGS)
 
-# $(OBJECTS): $(C_SRC)
-# 	gcc -c $^ $(CFLAGS)
-
-# clean:
-# 	rm $(OBJECTS)
+clean:
+	rm $(OBJECTS)
