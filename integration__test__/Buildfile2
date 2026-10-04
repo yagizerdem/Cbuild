@@ -1,5 +1,0 @@
-
-include Buildfile
-
-foo:
-	echo foo

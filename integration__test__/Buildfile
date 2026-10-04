@@ -1,6 +1,0 @@
-
-include Buildfile2
-
-app:
-	echo app
-
