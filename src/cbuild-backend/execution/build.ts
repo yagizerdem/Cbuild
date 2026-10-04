@@ -105,9 +105,6 @@ export class Build {
     const valueExpansionEngine = new ValueExpansionEngine(this.context);
 
     for (const recipeIR of rule.evaluatedRecipeIRs) {
-      // expand recipe before executing
-      const command: string = recipeIR.exec(recipeExpansionEngine);
-
       const shellVar = this.context.getVariable("SHELL");
       let shellPath: string | null = null;
       if (shellVar != undefined) {
@@ -126,6 +123,13 @@ export class Build {
       // send variables that marked as exported to child processes
       const processEnv = createProcessEnv(this.context, valueExpansionEngine);
 
+      // expand recipe before executing
+      const command: string = recipeIR.exec(recipeExpansionEngine);
+      const startWithAtSymbol = command.startsWith("@");
+      const normalizeCommand = startWithAtSymbol
+        ? command.slice(1).trim()
+        : command;
+
       if (
         !(
           this.context.cliOptions.dryRun ||
@@ -134,7 +138,7 @@ export class Build {
         )
       ) {
         const commandRunnerOptions: CommandRunnerOptions = {
-          command,
+          command: normalizeCommand,
           processEnv,
           shellPath,
           srcRule: rule,
@@ -145,13 +149,13 @@ export class Build {
         if (
           !(this.context.cliOptions.silent || this.context.cliOptions.quiet)
         ) {
-          console.log(`${command}`);
+          console.log(`${normalizeCommand}`);
         }
 
         this.handleProcessResult(commandRunnerOptions, result);
       } else {
         // just print the command that would be executed in a dry run
-        console.log(`${command}`);
+        console.log(`${normalizeCommand}`);
       }
     }
   }
@@ -242,9 +246,14 @@ export class Build {
       // send variables that marked as exported to child processes
       const processEnv = createProcessEnv(this.context, valueExpansionEngine);
 
+      const startWithAtSymbol = command.startsWith("@");
+      const normalizeCommand = startWithAtSymbol
+        ? command.slice(1).trim()
+        : command;
+
       if (!this.context.cliOptions.dryRun) {
         const commandRunnerOptions: CommandRunnerOptions = {
-          command,
+          command: normalizeCommand,
           processEnv,
           shellPath,
           srcRule: rule,
@@ -253,8 +262,6 @@ export class Build {
         const result: ProcessResult =
           await this.runCommandAsync(commandRunnerOptions);
 
-        const startWithAtSymbol = command.startsWith("@");
-
         if (
           !(
             this.context.cliOptions.silent ||
@@ -262,13 +269,13 @@ export class Build {
             startWithAtSymbol
           )
         ) {
-          console.log(`${command}`);
+          console.log(`${normalizeCommand}`);
         }
 
         this.handleProcessResult(commandRunnerOptions, result);
       } else {
         // just print the command that would be executed in a dry run
-        console.log(`${command}`);
+        console.log(`${normalizeCommand}`);
       }
     }
   }

@@ -9,4 +9,4 @@ SHELL = /bin/bash
  BASE = new
 
  app: 
-	@echo $(LIST)
+	echo $(LIST)
