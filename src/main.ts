@@ -4,13 +4,14 @@ import { frontend } from "@src/frontend.js";
 import { Env } from "@cbuild-backend/env.js";
 import { Core } from "@cbuild-backend/core.js";
 import cli from "@src/cli.js";
+import { getTargetArgs } from "@src/collect-vars.js";
 import ErrorHandler from "@src/error-handler.js";
 import type { CBuildOptions } from "@src/cli.js";
 import {
   handleCliOptions,
   resolveBuildFilePath,
 } from "@src/handle-cli-options.js";
-import { collectEnvVars } from "./collect-vars.js";
+import { collectCliVars, collectEnvVars } from "./collect-vars.js";
 import fs from "fs/promises";
 import { IR } from "@compiler/ir.js";
 import { BuildFileMeta } from "./type/buildfile-meta.js";
@@ -26,6 +27,8 @@ async function main() {
   try {
     cli.parse();
     const options: CBuildOptions = cli.opts<CBuildOptions>();
+    const args = cli.args;
+
     handleCliOptions(options);
     const buildFileAbsolutePaths: string[] = resolveBuildFilePath(options);
     const intermediateRepresentation: IR[] = [];
@@ -43,14 +46,20 @@ async function main() {
       intermediateRepresentation.push(...ir);
     }
 
-    const envVars = collectEnvVars(options);
-    context = new Env(options);
+    const targetArgs = getTargetArgs(args);
 
-    const core = new Core(context);
-    await core.runAsync(intermediateRepresentation, {
-      envVars,
-      cliVars: [],
-    });
+    for (const targetArg of targetArgs) {
+      const envVars = collectEnvVars(options);
+      const cliVars = collectCliVars(args);
+      context = new Env(options);
+
+      const core = new Core(context);
+      await core.runAsync(intermediateRepresentation, {
+        envVars,
+        cliVars,
+        defaultTargetName: targetArg,
+      });
+    }
   } catch (error: unknown) {
     if (error instanceof Error) {
       const errorHandler = new ErrorHandler();

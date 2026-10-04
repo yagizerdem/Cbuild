@@ -1,10 +1,10 @@
-import { OptionValues, program } from "commander";
+import { Command, OptionValues, program } from "commander";
 
 function collect(value: string, previous: string[]) {
   return previous.concat(value);
 }
 
-const cli = program;
+const cli: Command = program.enablePositionalOptions(true);
 
 cli.option("--sequential");
 cli.option("--backend <string>");
@@ -153,6 +153,8 @@ cli.option(
   "--warn-undefined-variables",
   "Warn when an undefined variable is referenced",
 );
+
+cli.argument("[args...]");
 
 export default cli;
 

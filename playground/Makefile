@@ -1,3 +1,6 @@
 
 all:
-	@echo '$(@)'
+	@echo $(A)
+
+bar:
+	@echo  bar
