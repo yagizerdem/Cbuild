@@ -36,19 +36,27 @@ export default class AssignmentIREvaluator {
         this.valueExpansionEngine,
       );
 
-      this.setRawVariable(identifier, value, this.shouldExport(prefix));
+      this.setRawVariable(
+        identifier,
+        value,
+        this.shouldExport(identifier, prefix),
+      );
     } else if (this.assignmentIR.type === AssignmentType.POSIX_SIMPLE) {
       const value = this.assignmentIR.right!.exec<string>(
         this.valueExpansionEngine,
       );
-      this.setRawVariable(identifier, value, this.shouldExport(prefix));
+      this.setRawVariable(
+        identifier,
+        value,
+        this.shouldExport(identifier, prefix),
+      );
     } else if (this.assignmentIR.type === AssignmentType.CONDITIONAL) {
       if (!this.context.hasVariableRecursive(identifier)) {
         this.setDeferredVariable(
           identifier,
           this.assignmentIR.right ??
             new ValueIR([{ kind: "text", lexeme: "" }]),
-          this.shouldExport(prefix),
+          this.shouldExport(identifier, prefix),
         );
       }
     } else if (this.assignmentIR.type === AssignmentType.APPEND) {
@@ -56,7 +64,10 @@ export default class AssignmentIREvaluator {
         this.assignmentIR.right ?? new ValueIR([{ kind: "text", lexeme: "" }]);
       this.appendVariable(identifier, right);
 
-      this.context.setVariableExported(identifier, this.shouldExport(prefix));
+      this.context.setVariableExported(
+        identifier,
+        this.shouldExport(identifier, prefix),
+      );
     } else if (this.assignmentIR.type === AssignmentType.IMMEDIATE_ESCAPED) {
       const value =
         this.assignmentIR.right?.exec<string>(this.valueExpansionEngine) ?? "";
@@ -68,7 +79,7 @@ export default class AssignmentIREvaluator {
             lexeme: value,
           },
         ]),
-        this.shouldExport(prefix),
+        this.shouldExport(identifier, prefix),
       );
     } else if (this.assignmentIR.type === AssignmentType.SHELL) {
       const command =
@@ -92,13 +103,13 @@ export default class AssignmentIREvaluator {
             lexeme: value,
           },
         ]),
-        this.shouldExport(prefix),
+        this.shouldExport(identifier, prefix),
       );
     } else if (this.assignmentIR.type == AssignmentType.RECURSIVE) {
       this.setDeferredVariable(
         identifier,
         this.assignmentIR.right!,
-        this.shouldExport(prefix),
+        this.shouldExport(identifier, prefix),
       );
     }
   }
@@ -183,7 +194,7 @@ export default class AssignmentIREvaluator {
         identifier,
         right,
         this.assignmentPrefixToVariableOrigin(prefix),
-        this.shouldExport(prefix),
+        this.shouldExport(identifier, prefix),
       );
       return;
     }
@@ -235,13 +246,29 @@ export default class AssignmentIREvaluator {
     }
   }
 
-  private shouldExport(prefix: AssignmentPrefix | undefined): boolean {
-    if (prefix === undefined) return false;
+  private shouldExport(
+    identifier: string,
+    prefix: AssignmentPrefix | undefined,
+  ): boolean {
     if (prefix === "unexport") return false;
-    return (
+
+    if (
       prefix === "export override" ||
       prefix === "export" ||
       prefix === "override export"
-    );
+    ) {
+      return true;
+    }
+
+    if (
+      this.context.hasVariable(identifier) &&
+      this.context.getVariable(identifier)!.isExported
+    ) {
+      return true;
+    }
+
+    if (prefix === undefined) return false;
+
+    return false;
   }
 }
