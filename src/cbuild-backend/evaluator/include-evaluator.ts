@@ -73,6 +73,17 @@ export default class IncludeIREvaluator {
         });
       }
 
+      // check circular include
+      if (this.evaluationState.includeGuard.includes(resolvedBuildFilePath)) {
+        throw CbuildException.from({
+          column: this.ir.col,
+          row: this.ir.row,
+          errorType: ErrorType.PROCESS,
+          machineCode: MachineCode.CIRCULAR_INCLUDE,
+          message: `Circular include detected: ${resolvedBuildFilePath}`,
+        });
+      }
+
       const buildFileContent = await fsPromises.readFile(
         resolvedBuildFilePath,
         "utf-8",
@@ -88,15 +99,21 @@ export default class IncludeIREvaluator {
 
       const ir = frontend(buildFile);
 
-      const buildFileEvaluator = new BuildFileEvaluator(
-        this.context,
-        ir,
-        this.evaluationState,
-      );
-
-      const resolvedModels = await buildFileEvaluator.evaluateAsync();
-
-      models.push(...resolvedModels);
+      try {
+        this.evaluationState.includeGuard.push(resolvedBuildFilePath);
+        const buildFileEvaluator = new BuildFileEvaluator(
+          this.context,
+          ir,
+          this.evaluationState,
+        );
+        const resolvedModels = await buildFileEvaluator.evaluateAsync();
+        models.push(...resolvedModels);
+      } finally {
+        this.evaluationState.includeGuard =
+          this.evaluationState.includeGuard.filter(
+            (path) => path !== resolvedBuildFilePath,
+          );
+      }
     }
 
     return models;

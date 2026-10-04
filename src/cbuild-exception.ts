@@ -25,6 +25,7 @@ export enum MachineCode {
   // depq graph
   NO_TARGET_FOUND,
   CIRCULAR_DEPQ,
+  CIRCULAR_INCLUDE,
 
   // command
   SHELL_COMMAND_FAILED,

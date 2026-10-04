@@ -2,7 +2,7 @@ import { EnvVar } from "@cbuild-backend/core.js";
 import { CBuildOptions } from "@src/cli.js";
 
 export function collectEnvVars(options: CBuildOptions) {
-  const avoid = ["SHELL"];
+  const avoid = ["SHELL", ".SHELLFLAGS"];
 
   const envVars: EnvVar[] = [];
 

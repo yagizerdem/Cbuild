@@ -61,7 +61,19 @@ export default class ConditionalIREvaluator {
       return false;
     }
     if (symbolTableVar.isDeferred()) {
-      return (symbolTableVar.value?.parts.length ?? 0) > 0;
+      if (symbolTableVar.value.parts.length == 0) return false;
+      // should be at least one defferd part or non-empty raw value
+      for (const part of symbolTableVar.value.parts) {
+        if (
+          part.kind === "variable-reference" ||
+          part.kind === "function-call" ||
+          (part.kind === "text" && part.lexeme.length > 0)
+        ) {
+          return true;
+        }
+      }
+
+      return false;
     }
     return (symbolTableVar.getRawValue() ?? "").length > 0;
   }

@@ -1,2 +1,5 @@
-app: 
-	echo app
+
+include Buildfile
+
+foo:
+	echo foo

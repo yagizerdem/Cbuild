@@ -7,7 +7,7 @@ import { Env } from "@cbuild-backend/env.js";
 import { resolvePreqs } from "@src/cbuild-backend/execution/preq-resolution/preq-resolver.js";
 import { createProcessEnv } from "@src/cbuild-backend/execution/create-process-env.js";
 import AutomaticVariableEnv from "@src/cbuild-backend/execution/auto-variable.js";
-import { ProcessResult } from "@src/cbuild-backend/process.js";
+import { defaultShell, ProcessResult } from "@src/cbuild-backend/process.js";
 import {
   CbuildException,
   ErrorType,
@@ -28,6 +28,7 @@ interface CommandRunnerOptions {
   command: string;
   processEnv: NodeJS.ProcessEnv;
   srcRule: NormalRule;
+  args: string[] | null;
 }
 
 export class Build {
@@ -104,18 +105,30 @@ export class Build {
     const valueExpansionEngine = new ValueExpansionEngine(this.context);
 
     for (const recipeIR of rule.evaluatedRecipeIRs) {
-      // expand recipe before executing
-      const command: string = recipeIR.exec(recipeExpansionEngine);
-
       const shellVar = this.context.getVariable("SHELL");
       let shellPath: string | null = null;
-
       if (shellVar != undefined) {
         shellPath = valueExpansionEngine.expand(shellVar.value);
       }
 
+      const shellFlagsVar = this.context.getVariable(".SHELLFLAGS");
+      let shellArgs: string[] | null = null;
+      if (shellFlagsVar != undefined) {
+        shellArgs = valueExpansionEngine
+          .expand(shellFlagsVar.value)
+          .split(/\s+/)
+          .filter(Boolean);
+      }
+
       // send variables that marked as exported to child processes
       const processEnv = createProcessEnv(this.context, valueExpansionEngine);
+
+      // expand recipe before executing
+      const command: string = recipeIR.exec(recipeExpansionEngine);
+      const startWithAtSymbol = command.startsWith("@");
+      const normalizeCommand = startWithAtSymbol
+        ? command.slice(1).trim()
+        : command;
 
       if (
         !(
@@ -125,23 +138,24 @@ export class Build {
         )
       ) {
         const commandRunnerOptions: CommandRunnerOptions = {
-          command,
+          command: normalizeCommand,
           processEnv,
           shellPath,
           srcRule: rule,
+          args: shellArgs,
         };
         const result: ProcessResult = this.runCommandSync(commandRunnerOptions);
 
         if (
           !(this.context.cliOptions.silent || this.context.cliOptions.quiet)
         ) {
-          console.log(`${command}`);
+          console.log(`${normalizeCommand}`);
         }
 
         this.handleProcessResult(commandRunnerOptions, result);
       } else {
         // just print the command that would be executed in a dry run
-        console.log(`${command}`);
+        console.log(`${normalizeCommand}`);
       }
     }
   }
@@ -216,25 +230,37 @@ export class Build {
 
       const shellVar = this.context.getVariable("SHELL");
       let shellPath: string | null = null;
-
       if (shellVar != undefined) {
         shellPath = valueExpansionEngine.expand(shellVar.value);
+      }
+
+      const shellFlagsVar = this.context.getVariable(".SHELLFLAGS");
+      let shellArgs: string[] | null = null;
+      if (shellFlagsVar) {
+        shellArgs = valueExpansionEngine
+          .expand(shellFlagsVar.value)
+          .split(/\s+/)
+          .filter(Boolean);
       }
 
       // send variables that marked as exported to child processes
       const processEnv = createProcessEnv(this.context, valueExpansionEngine);
 
+      const startWithAtSymbol = command.startsWith("@");
+      const normalizeCommand = startWithAtSymbol
+        ? command.slice(1).trim()
+        : command;
+
       if (!this.context.cliOptions.dryRun) {
         const commandRunnerOptions: CommandRunnerOptions = {
-          command,
+          command: normalizeCommand,
           processEnv,
           shellPath,
           srcRule: rule,
+          args: shellArgs,
         };
         const result: ProcessResult =
           await this.runCommandAsync(commandRunnerOptions);
-
-        const startWithAtSymbol = command.startsWith("@");
 
         if (
           !(
@@ -243,13 +269,13 @@ export class Build {
             startWithAtSymbol
           )
         ) {
-          console.log(`${command}`);
+          console.log(`${normalizeCommand}`);
         }
 
         this.handleProcessResult(commandRunnerOptions, result);
       } else {
         // just print the command that would be executed in a dry run
-        console.log(`${command}`);
+        console.log(`${normalizeCommand}`);
       }
     }
   }
@@ -286,7 +312,7 @@ export class Build {
       ? processRunner.runAsync(options.command, {
           shell: {
             executable: options.shellPath,
-            args: [],
+            args: options.args ?? [],
           },
           cwd: process.cwd(),
           env: options.processEnv,
@@ -296,6 +322,12 @@ export class Build {
           cwd: process.cwd(),
           env: options.processEnv,
           output: "capture",
+          shell: options.args
+            ? {
+                ...defaultShell(),
+                args: options.args ?? [],
+              }
+            : defaultShell(),
         }));
 
     return result;
@@ -309,7 +341,7 @@ export class Build {
         ? processRunner.runSync(options.command, {
             shell: {
               executable: options.shellPath,
-              args: [],
+              args: options.args ?? [],
             },
             cwd: process.cwd(),
             env: options.processEnv,
@@ -319,6 +351,12 @@ export class Build {
             cwd: process.cwd(),
             env: options.processEnv,
             output: "capture",
+            shell: options.args
+              ? {
+                  ...defaultShell(),
+                  args: options.args ?? [],
+                }
+              : defaultShell(),
           });
 
     return result;

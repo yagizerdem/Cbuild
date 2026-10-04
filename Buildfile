@@ -1,3 +1,6 @@
+SHELL = /bin/bash
+.SHELLFLAGS = -c
+
  BASE = old 
  LIST := initial
  

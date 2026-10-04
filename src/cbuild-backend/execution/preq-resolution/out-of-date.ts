@@ -40,7 +40,7 @@ export class OutOfDateChecker {
     const lastModifiedDateOfTarget: bigint | undefined =
       getModifiedTimeNs(targetAbsolutePath);
 
-    if (!lastModifiedDateOfTarget) return true;
+    if (lastModifiedDateOfTarget === undefined) return true;
 
     const oldFilesFromCli: string[] = [
       ...this.context.cliOptions.oldFile,
@@ -94,7 +94,7 @@ export class OutOfDateChecker {
       const lastModifiedDateOfPreq: bigint | undefined =
         getModifiedTimeNs(preqAbsolutePath);
 
-      if (!lastModifiedDateOfPreq) return true;
+      if (lastModifiedDateOfPreq === undefined) return true;
       if (lastModifiedDateOfPreq > lastModifiedDateOfTarget) return true;
 
       // chedk if file is assumed as new file or not
@@ -127,7 +127,7 @@ export class OutOfDateChecker {
     const lastModifiedDateOfTarget: bigint | undefined =
       await getModifiedTimeNsAsync(targetAbsolutePath);
 
-    if (!lastModifiedDateOfTarget) return true;
+    if (lastModifiedDateOfTarget === undefined) return true;
 
     const oldFilesFromCli: string[] = [
       ...this.context.cliOptions.oldFile,
@@ -182,7 +182,7 @@ export class OutOfDateChecker {
       const lastModifiedDateOfPreq: bigint | undefined =
         await getModifiedTimeNsAsync(preqAbsolutePath);
 
-      if (!lastModifiedDateOfPreq) return true;
+      if (lastModifiedDateOfPreq === undefined) return true;
       if (lastModifiedDateOfPreq > lastModifiedDateOfTarget) return true;
 
       // chedk if file is assumed as new file or not
