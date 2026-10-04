@@ -1,6 +1,7 @@
-app.txt:
+app.txt: bar.txt
 	echo app > app.txt
 	echo girdi
 
 
-.PHONY: app.txt
+bar.txt:
+	echo bar > bar.txt
