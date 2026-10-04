@@ -13,18 +13,6 @@ export default class SequentialSchedular {
   }
   // sequuential build
 
-  public sequentialSchedule(targetRule: NormalRule): void {
-    const build = new Build(this.context, this.explicitRules);
-
-    // should not have circular dependencies to sort
-    const sortedRules = topologicalSort(this.explicitRules, targetRule);
-
-    for (let i = 0; i < sortedRules.length; i++) {
-      const current: NormalRule = sortedRules[i]!;
-      build.buildTargetSync(current);
-    }
-  }
-
   public async sequentialScheduleAsync(targetRule: NormalRule): Promise<void> {
     const build = new Build(this.context, this.explicitRules);
 
