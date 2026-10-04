@@ -1,3 +1,6 @@
+SHELL = /bin/bash
+.SHELLFLAGS = -c
+
  BASE = old 
  LIST := initial
  
@@ -6,4 +9,4 @@
  BASE = new
 
  app: 
-	echo $(LIST)
+	@echo $(LIST)

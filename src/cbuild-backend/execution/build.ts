@@ -7,7 +7,7 @@ import { Env } from "@cbuild-backend/env.js";
 import { resolvePreqs } from "@src/cbuild-backend/execution/preq-resolution/preq-resolver.js";
 import { createProcessEnv } from "@src/cbuild-backend/execution/create-process-env.js";
 import AutomaticVariableEnv from "@src/cbuild-backend/execution/auto-variable.js";
-import { ProcessResult } from "@src/cbuild-backend/process.js";
+import { defaultShell, ProcessResult } from "@src/cbuild-backend/process.js";
 import {
   CbuildException,
   ErrorType,
@@ -28,6 +28,7 @@ interface CommandRunnerOptions {
   command: string;
   processEnv: NodeJS.ProcessEnv;
   srcRule: NormalRule;
+  args: string[] | null;
 }
 
 export class Build {
@@ -109,9 +110,17 @@ export class Build {
 
       const shellVar = this.context.getVariable("SHELL");
       let shellPath: string | null = null;
-
       if (shellVar != undefined) {
         shellPath = valueExpansionEngine.expand(shellVar.value);
+      }
+
+      const shellFlagsVar = this.context.getVariable(".SHELLFLAGS");
+      let shellArgs: string[] | null = null;
+      if (shellFlagsVar != undefined) {
+        shellArgs = valueExpansionEngine
+          .expand(shellFlagsVar.value)
+          .split(/\s+/)
+          .filter(Boolean);
       }
 
       // send variables that marked as exported to child processes
@@ -129,6 +138,7 @@ export class Build {
           processEnv,
           shellPath,
           srcRule: rule,
+          args: shellArgs,
         };
         const result: ProcessResult = this.runCommandSync(commandRunnerOptions);
 
@@ -216,9 +226,17 @@ export class Build {
 
       const shellVar = this.context.getVariable("SHELL");
       let shellPath: string | null = null;
-
       if (shellVar != undefined) {
         shellPath = valueExpansionEngine.expand(shellVar.value);
+      }
+
+      const shellFlagsVar = this.context.getVariable(".SHELLFLAGS");
+      let shellArgs: string[] | null = null;
+      if (shellFlagsVar) {
+        shellArgs = valueExpansionEngine
+          .expand(shellFlagsVar.value)
+          .split(/\s+/)
+          .filter(Boolean);
       }
 
       // send variables that marked as exported to child processes
@@ -230,6 +248,7 @@ export class Build {
           processEnv,
           shellPath,
           srcRule: rule,
+          args: shellArgs,
         };
         const result: ProcessResult =
           await this.runCommandAsync(commandRunnerOptions);
@@ -286,7 +305,7 @@ export class Build {
       ? processRunner.runAsync(options.command, {
           shell: {
             executable: options.shellPath,
-            args: [],
+            args: options.args ?? [],
           },
           cwd: process.cwd(),
           env: options.processEnv,
@@ -296,6 +315,12 @@ export class Build {
           cwd: process.cwd(),
           env: options.processEnv,
           output: "capture",
+          shell: options.args
+            ? {
+                ...defaultShell(),
+                args: options.args ?? [],
+              }
+            : defaultShell(),
         }));
 
     return result;
@@ -309,7 +334,7 @@ export class Build {
         ? processRunner.runSync(options.command, {
             shell: {
               executable: options.shellPath,
-              args: [],
+              args: options.args ?? [],
             },
             cwd: process.cwd(),
             env: options.processEnv,
@@ -319,6 +344,12 @@ export class Build {
             cwd: process.cwd(),
             env: options.processEnv,
             output: "capture",
+            shell: options.args
+              ? {
+                  ...defaultShell(),
+                  args: options.args ?? [],
+                }
+              : defaultShell(),
           });
 
     return result;
