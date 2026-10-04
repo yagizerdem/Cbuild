@@ -39,127 +39,6 @@ export class Build {
     this.explicitRules = explicitRules;
   }
 
-  public buildTargetSync(rule: NormalRule) {
-    const targetResolution: TargetResolution = resolveTarget(
-      this.explicitRules,
-      rule,
-      this.context,
-    );
-
-    const preqResolutions = resolvePreqs(
-      this.explicitRules,
-      rule,
-      this.context,
-    );
-
-    const outOfDateChecker = new OutOfDateChecker(this.context);
-    const outOfDateResolution = outOfDateChecker.resolveOutOfDateSync(
-      targetResolution,
-      preqResolutions.first,
-    );
-
-    if (!outOfDateResolution.isTargetOutOfDate) {
-      return;
-    }
-
-    if (this.context.cliOptions.touch) {
-      if (targetResolution.origin.type === "not-found") {
-        const targetAbsPath = resolveAndGetAbsolutePath(
-          process.cwd(),
-          targetResolution.targetName,
-        );
-
-        touchFileSync(targetAbsPath);
-      } else {
-        touchFileSync(targetResolution.origin.absolutePath);
-      }
-      return;
-    }
-
-    // build required
-    if (this.context.cliOptions.question) {
-      throw CbuildException.from({
-        column: -1,
-        row: -1,
-        errorType: ErrorType.PROCESS,
-        machineCode: MachineCode.REBUILD_REQUIRED,
-        message: `cbuild: Rebuild required for target ${rule.target}`,
-        exitCode: 1,
-      });
-    }
-
-    const automaticVariableEnv = new AutomaticVariableEnv(
-      rule,
-      this.context,
-      targetResolution,
-      preqResolutions.first, // normal preq resolultions
-      preqResolutions.second, // order-only preq resolutions
-      outOfDateResolution,
-      rule.ruleIR.buildFileMeta,
-    );
-    const automaticEnv = automaticVariableEnv.generate(
-      this.context.targetEnvs[rule.target] ?? undefined,
-    );
-
-    const recipeExpansionEngine = new RecipeExpansionEngine(automaticEnv);
-    const valueExpansionEngine = new ValueExpansionEngine(this.context);
-
-    for (const recipeIR of rule.evaluatedRecipeIRs) {
-      const shellVar = this.context.getVariable("SHELL");
-      let shellPath: string | null = null;
-      if (shellVar != undefined) {
-        shellPath = valueExpansionEngine.expand(shellVar.value);
-      }
-
-      const shellFlagsVar = this.context.getVariable(".SHELLFLAGS");
-      let shellArgs: string[] | null = null;
-      if (shellFlagsVar != undefined) {
-        shellArgs = valueExpansionEngine
-          .expand(shellFlagsVar.value)
-          .split(/\s+/)
-          .filter(Boolean);
-      }
-
-      // send variables that marked as exported to child processes
-      const processEnv = createProcessEnv(this.context, valueExpansionEngine);
-
-      // expand recipe before executing
-      const command: string = recipeIR.exec(recipeExpansionEngine);
-      const startWithAtSymbol = command.startsWith("@");
-      const normalizeCommand = startWithAtSymbol
-        ? command.slice(1).trim()
-        : command;
-
-      if (
-        !(
-          this.context.cliOptions.dryRun ||
-          this.context.cliOptions.justPrint ||
-          this.context.cliOptions.recon
-        )
-      ) {
-        const commandRunnerOptions: CommandRunnerOptions = {
-          command: normalizeCommand,
-          processEnv,
-          shellPath,
-          srcRule: rule,
-          args: shellArgs,
-        };
-        const result: ProcessResult = this.runCommandSync(commandRunnerOptions);
-
-        if (
-          !(this.context.cliOptions.silent || this.context.cliOptions.quiet)
-        ) {
-          console.log(`${normalizeCommand}`);
-        }
-
-        this.handleProcessResult(commandRunnerOptions, result);
-      } else {
-        // just print the command that would be executed in a dry run
-        console.log(`${normalizeCommand}`);
-      }
-    }
-  }
-
   public async buildTargetAsync(rule: NormalRule) {
     const targetResolution: TargetResolution = resolveTarget(
       this.explicitRules,
@@ -251,7 +130,13 @@ export class Build {
         ? command.slice(1).trim()
         : command;
 
-      if (!this.context.cliOptions.dryRun) {
+      if (
+        !(
+          this.context.cliOptions.dryRun ||
+          this.context.cliOptions.justPrint ||
+          this.context.cliOptions.recon
+        )
+      ) {
         const commandRunnerOptions: CommandRunnerOptions = {
           command: normalizeCommand,
           processEnv,
@@ -317,6 +202,7 @@ export class Build {
           cwd: process.cwd(),
           env: options.processEnv,
           output: "capture",
+          ignoreErrors: this.context.cliOptions.ignoreErrors,
         })
       : processRunner.runAsync(options.command, {
           cwd: process.cwd(),
@@ -328,36 +214,8 @@ export class Build {
                 args: options.args ?? [],
               }
             : defaultShell(),
+          ignoreErrors: this.context.cliOptions.ignoreErrors,
         }));
-
-    return result;
-  }
-
-  runCommandSync(options: CommandRunnerOptions): ProcessResult {
-    const processRunner = new ProcessRunner();
-
-    const result =
-      options.shellPath != null
-        ? processRunner.runSync(options.command, {
-            shell: {
-              executable: options.shellPath,
-              args: options.args ?? [],
-            },
-            cwd: process.cwd(),
-            env: options.processEnv,
-            output: "capture",
-          })
-        : processRunner.runSync(options.command, {
-            cwd: process.cwd(),
-            env: options.processEnv,
-            output: "capture",
-            shell: options.args
-              ? {
-                  ...defaultShell(),
-                  args: options.args ?? [],
-                }
-              : defaultShell(),
-          });
 
     return result;
   }

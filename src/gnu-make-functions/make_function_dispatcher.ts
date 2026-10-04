@@ -1,8 +1,5 @@
-import { FunctionContext } from "@parser/cbuildParser.js";
-import { FunctionIR } from "@compiler/ir.js";
 import * as type from "@gnu-make-functions/type.js";
-import { FnRunner } from "@gnu-make-functions/runner.js";
-import { MakeFunction, MakeFunctionHandler } from "@gnu-make-functions/type.js";
+import { MakeFunctionHandler } from "@gnu-make-functions/type.js";
 
 export class make_function_dispatcher {
   private static readonly handlers = new Map<string, MakeFunctionHandler>();
@@ -27,6 +24,7 @@ export class make_function_dispatcher {
     make_function_dispatcher.register("wordlist", new type.wordlistFn());
     make_function_dispatcher.register("firstword", new type.firstwordFn());
     make_function_dispatcher.register("lastword", new type.lastwordFn());
+    make_function_dispatcher.register("notdir", new type.notDirFn());
     make_function_dispatcher.register("dir", new type.dirFn());
     make_function_dispatcher.register("suffix", new type.suffixFn());
     make_function_dispatcher.register("basename", new type.basenameFn());
