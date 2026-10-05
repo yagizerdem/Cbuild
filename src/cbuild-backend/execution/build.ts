@@ -19,17 +19,14 @@ import {
   touchFileAsync,
   touchFileSync,
 } from "@src/file-utils.js";
-import { TargetResolution } from "@cbuild-backend/execution/preq-resolution/type.js";
-import { OutOfDateChecker } from "./preq-resolution/out-of-date.js";
-import { resolveTarget } from "./preq-resolution/target-resolver.js";
-
-interface CommandRunnerOptions {
-  shellPath: string | null;
-  command: string;
-  processEnv: NodeJS.ProcessEnv;
-  srcRule: NormalRule;
-  args: string[] | null;
-}
+import {
+  OutOfDateResolution,
+  PreqResolution,
+  TargetResolution,
+} from "@cbuild-backend/execution/preq-resolution/type.js";
+import { OutOfDateChecker } from "@cbuild-backend/execution/preq-resolution/out-of-date.js";
+import { resolveTarget } from "@cbuild-backend/execution/preq-resolution/target-resolver.js";
+import { RecipeIR } from "@src/compiler/ir.js";
 
 export class Build {
   private readonly context: Env;
@@ -40,6 +37,66 @@ export class Build {
   }
 
   public async buildTargetAsync(rule: NormalRule) {
+    // resolution
+    const {
+      targetResolution,
+      preqResolutions,
+      isPhonyTarget,
+      outOfDateResolution,
+    } = await this.resolution(rule);
+
+    // phony targets do not need to be checked for out-of-date status
+    if (!isPhonyTarget) {
+      if (!outOfDateResolution.isTargetOutOfDate) {
+        return;
+      }
+    }
+
+    // if touch cli option is enabled do not need to exexute shell commands.
+    if (this.context.cliOptions.touch) {
+      await this.touch(targetResolution);
+      return;
+    }
+
+    // build required
+    if (this.context.cliOptions.question) {
+      throw CbuildException.from({
+        column: -1,
+        row: -1,
+        errorType: ErrorType.PROCESS,
+        machineCode: MachineCode.REBUILD_REQUIRED,
+        message: `cbuild: Rebuild required for target ${rule.target}`,
+        exitCode: 1,
+      });
+    }
+
+    const executionEnv = await this.prepareExecutionEnv({
+      preqResolutions: preqResolutions.first,
+      orderOnlyPreqResolutions: preqResolutions.second,
+      targetResolution: targetResolution,
+      outOfDateResolution: outOfDateResolution,
+      rule: rule,
+    });
+
+    if (rule.evaluatedRecipeIRs.length > 0) {
+      // execute user defined recipes
+      this.executeRuleRecipesSequentially(
+        rule,
+        rule.evaluatedRecipeIRs,
+        executionEnv,
+      );
+    } else {
+      // execute default recipes if exist
+      this.executeRuleRecipesSequentially(
+        rule,
+        this.context.defaultRecipes,
+        executionEnv,
+      );
+    }
+  }
+
+  // first resolution phase is required
+  private async resolution(rule: NormalRule) {
     const targetResolution: TargetResolution = resolveTarget(
       this.explicitRules,
       rule,
@@ -62,75 +119,38 @@ export class Build {
       preqResolutions.first,
     );
 
-    // phony targets do not need to be checked for out-of-date status
-    if (!isPhonyTarget) {
-      if (!outOfDateResolution.isTargetOutOfDate) {
-        return;
-      }
-    }
-
-    if (this.context.cliOptions.touch) {
-      if (targetResolution.origin.type === "not-found") {
-        const targetAbsPath = resolveAndGetAbsolutePath(
-          process.cwd(),
-          targetResolution.targetName,
-        );
-        await touchFileAsync(targetAbsPath);
-      } else {
-        await touchFileAsync(targetResolution.origin.absolutePath);
-      }
-      return;
-    }
-
-    // build required
-    if (this.context.cliOptions.question) {
-      throw CbuildException.from({
-        column: -1,
-        row: -1,
-        errorType: ErrorType.PROCESS,
-        machineCode: MachineCode.REBUILD_REQUIRED,
-        message: `cbuild: Rebuild required for target ${rule.target}`,
-        exitCode: 1,
-      });
-    }
-
-    const automaticVariableEnv = new AutomaticVariableEnv(
-      rule,
-      this.context,
+    return {
       targetResolution,
-      preqResolutions.first, // normal preq resolutions
-      preqResolutions.second, // order-only preq resolutions
+      preqResolutions,
+      isPhonyTarget,
       outOfDateResolution,
-      rule.ruleIR.buildFileMeta,
-    );
-    const automaticEnv = automaticVariableEnv.generate(
-      this.context.targetEnvs[rule.target] ?? undefined,
-    );
+    };
+  }
 
-    const recipeExpansionEngine = new RecipeExpansionEngine(automaticEnv);
-    const valueExpansionEngine = new ValueExpansionEngine(this.context);
+  private async touch(targetResolution: TargetResolution) {
+    if (targetResolution.origin.type === "not-found") {
+      const targetAbsPath = resolveAndGetAbsolutePath(
+        process.cwd(),
+        targetResolution.targetName,
+      );
+      await touchFileAsync(targetAbsPath);
+    } else {
+      await touchFileAsync(targetResolution.origin.absolutePath);
+    }
+  }
 
-    for (const recipeIR of rule.evaluatedRecipeIRs) {
+  private async executeRuleRecipesSequentially(
+    rule: NormalRule,
+    recipes: RecipeIR[] | string[],
+    executionEnv: Env,
+  ): Promise<void> {
+    const recipeExpansionEngine = new RecipeExpansionEngine(executionEnv);
+    for (const recipe of recipes) {
       // expand recipe before executing
-      const command: string = recipeIR.exec(recipeExpansionEngine);
-
-      const shellVar = this.context.getVariable("SHELL");
-      let shellPath: string | null = null;
-      if (shellVar != undefined) {
-        shellPath = valueExpansionEngine.expand(shellVar.value);
-      }
-
-      const shellFlagsVar = this.context.getVariable(".SHELLFLAGS");
-      let shellArgs: string[] | null = null;
-      if (shellFlagsVar) {
-        shellArgs = valueExpansionEngine
-          .expand(shellFlagsVar.value)
-          .split(/\s+/)
-          .filter(Boolean);
-      }
-
-      // send variables that marked as exported to child processes
-      const processEnv = createProcessEnv(this.context, valueExpansionEngine);
+      const command: string =
+        recipe instanceof RecipeIR
+          ? recipe.exec(recipeExpansionEngine)
+          : recipe;
 
       const startWithAtSymbol = command.startsWith("@");
       const normalizeCommand = startWithAtSymbol
@@ -144,15 +164,8 @@ export class Build {
           this.context.cliOptions.recon
         )
       ) {
-        const commandRunnerOptions: CommandRunnerOptions = {
-          command: normalizeCommand,
-          processEnv,
-          shellPath,
-          srcRule: rule,
-          args: shellArgs,
-        };
         const result: ProcessResult =
-          await this.runCommandAsync(commandRunnerOptions);
+          await this.runCommandAsync(normalizeCommand);
 
         if (
           !(
@@ -164,7 +177,7 @@ export class Build {
           console.log(`${normalizeCommand}`);
         }
 
-        this.handleProcessResult(commandRunnerOptions, result);
+        this.handleProcessResult(rule, result);
       } else {
         // just print the command that would be executed in a dry run
         console.log(`${normalizeCommand}`);
@@ -172,10 +185,38 @@ export class Build {
     }
   }
 
-  private handleProcessResult(
-    options: CommandRunnerOptions,
-    result: ProcessResult,
-  ) {
+  private async prepareExecutionEnv({
+    rule,
+    targetResolution,
+    preqResolutions,
+    orderOnlyPreqResolutions,
+    outOfDateResolution,
+  }: {
+    rule: NormalRule;
+    targetResolution: TargetResolution;
+    preqResolutions: PreqResolution[];
+    orderOnlyPreqResolutions: PreqResolution[];
+    outOfDateResolution: OutOfDateResolution;
+  }): Promise<Env> {
+    const automaticVariableEnv = new AutomaticVariableEnv(
+      rule,
+      this.context,
+      targetResolution,
+      preqResolutions, // normal preq resolutions
+      orderOnlyPreqResolutions, // order-only preq resolutions
+      outOfDateResolution,
+      rule.ruleIR.buildFileMeta,
+    );
+
+    // add target only env to enclosing of automatic vars env creat chain of env
+    const automaticEnv = automaticVariableEnv.generate(
+      this.context.targetEnvs[rule.target] ?? undefined,
+    );
+
+    return automaticEnv;
+  }
+
+  private handleProcessResult(srcRule: NormalRule, result: ProcessResult) {
     if (result.stdout) {
       process.stdout.write(result.stdout);
     }
@@ -191,34 +232,55 @@ export class Build {
           row: -1,
           errorType: ErrorType.PROCESS,
           machineCode: MachineCode.SHELL_COMMAND_FAILED,
-          message: `cbuild: *** [${options.srcRule.target}] Error ${result.exitCode}`,
+          message: `cbuild: *** [${srcRule.target}] Error ${result.exitCode}`,
         });
       }
     }
   }
 
-  async runCommandAsync(options: CommandRunnerOptions): Promise<ProcessResult> {
+  private async runCommandAsync(command: string): Promise<ProcessResult> {
+    const valueExpansionEngine = new ValueExpansionEngine(this.context);
     const processRunner = new ProcessRunner();
 
-    const result = await (options.shellPath != null
-      ? processRunner.runAsync(options.command, {
+    // determine the shell executable and its arguments
+    const shellVar = this.context.getVariable("SHELL");
+    let shellPath: string | null = null;
+    if (shellVar != undefined) {
+      shellPath = valueExpansionEngine.expand(shellVar.value);
+    }
+
+    const shellFlagsVar = this.context.getVariable(".SHELLFLAGS");
+    let shellArgs: string[] | null = null;
+    if (shellFlagsVar) {
+      shellArgs = valueExpansionEngine
+        .expand(shellFlagsVar.value)
+        .split(/\s+/)
+        .filter(Boolean);
+    }
+    //
+
+    // send variables that marked as exported to child processes
+    const processEnv = createProcessEnv(this.context, valueExpansionEngine);
+
+    const result = await (shellPath != null
+      ? processRunner.runAsync(command, {
           shell: {
-            executable: options.shellPath,
-            args: options.args ?? [],
+            executable: shellPath,
+            args: shellArgs ?? [],
           },
           cwd: process.cwd(),
-          env: options.processEnv,
+          env: processEnv,
           output: "capture",
           ignoreErrors: this.context.cliOptions.ignoreErrors,
         })
-      : processRunner.runAsync(options.command, {
+      : processRunner.runAsync(command, {
           cwd: process.cwd(),
-          env: options.processEnv,
+          env: processEnv,
           output: "capture",
-          shell: options.args
+          shell: shellArgs
             ? {
                 ...defaultShell(),
-                args: options.args ?? [],
+                args: shellArgs ?? [],
               }
             : defaultShell(),
           ignoreErrors: this.context.cliOptions.ignoreErrors,

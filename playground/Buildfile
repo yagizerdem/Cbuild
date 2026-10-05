@@ -1,7 +1,1 @@
-app.txt: bar.txt
-	echo app > app.txt
-	echo girdi
-
-
-bar.txt:
-	echo bar > bar.txt
+app:
