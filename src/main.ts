@@ -22,12 +22,22 @@ export async function readBuildFile(buildFilePath: string): Promise<string> {
 }
 
 async function main() {
-  let context: Env | null = null;
+  cli.parse();
+  const options: CBuildOptions = cli.opts<CBuildOptions>();
+  const args = cli.args;
+  await cbuildBackend(options, args);
 
+  if (options.backend === "cbuild") {
+    await cbuildBackend(options, args);
+  }
+  if (options.backend === "tinymake") {
+    await tinyMakeBackend(options, args);
+  }
+}
+
+async function cbuildBackend(options: CBuildOptions, args: string[]) {
   try {
-    cli.parse();
-    const options: CBuildOptions = cli.opts<CBuildOptions>();
-    const args = cli.args;
+    let context: Env | null = null;
 
     handleCliOptions(options);
     const buildFileAbsolutePaths: string[] = resolveBuildFilePath(options);
@@ -83,5 +93,7 @@ async function main() {
     }
   }
 }
+
+async function tinyMakeBackend(options: CBuildOptions, args: string[]) {}
 
 await main();

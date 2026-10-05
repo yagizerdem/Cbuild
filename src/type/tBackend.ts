@@ -1,1 +1,1 @@
-export type Tbackend = "cbuild" | "declarative";
+export type Tbackend = "cbuild" | "tinymake";

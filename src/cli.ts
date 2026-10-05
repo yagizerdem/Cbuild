@@ -1,4 +1,5 @@
 import { Command, OptionValues, program } from "commander";
+import { Tbackend } from "./type/tBackend.js";
 
 function collect(value: string, previous: string[]) {
   return previous.concat(value);
@@ -160,7 +161,7 @@ export default cli;
 
 export interface CBuildOptions extends OptionValues {
   sequential?: boolean;
-  backend?: string;
+  backend?: Tbackend;
   jobs?: number;
 
   directory: string[];
@@ -209,4 +210,14 @@ export interface CBuildOptions extends OptionValues {
   assumeNew: string[];
 
   warnUndefinedVariables?: boolean;
+}
+
+export function normalizeOptions(options: CBuildOptions) {
+  if (!options.sequential && options.jobs == 0) {
+    options.jobs = 1;
+  }
+
+  if (!options.backend) {
+    options.backend = "cbuild" as Tbackend;
+  }
 }
