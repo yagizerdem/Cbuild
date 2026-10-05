@@ -33,7 +33,7 @@ import { BuildFileEvaluationState } from "@cbuild-backend/evaluator/core/type.js
 import { NormalizeModels } from "@cbuild-backend/normalize-models.js";
 import { DatabasePrinter } from "@cbuild-backend/database-printer.js";
 import {
-  registerBuiltInImplicitRules,
+  getBuiltInImplicitRules,
   registerBuiltInImplicitVariables,
 } from "@cbuild-backend/built-in.js";
 import { BuildFileMeta } from "@src/type/buildfile-meta.js";
@@ -86,7 +86,10 @@ export class Core {
       rules,
       evaluationState,
     );
-    const resolvedModels = await evaluator.evaluateAsync();
+    const resolvedModels = [
+      ...(await evaluator.evaluateAsync()),
+      ...getBuiltInImplicitRules(),
+    ];
 
     // contains relation only needed for build
     const explicitRules = this.collectNormalRuleModels(resolvedModels);

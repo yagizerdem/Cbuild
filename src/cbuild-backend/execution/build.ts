@@ -80,14 +80,14 @@ export class Build {
 
     if (rule.evaluatedRecipeIRs.length > 0) {
       // execute user defined recipes
-      this.executeRuleRecipesSequentially(
+      await this.executeRuleRecipesSequentially(
         rule,
         rule.evaluatedRecipeIRs,
         executionEnv,
       );
     } else {
       // execute default recipes if exist
-      this.executeRuleRecipesSequentially(
+      await this.executeRuleRecipesSequentially(
         rule,
         this.context.defaultRecipes,
         executionEnv,

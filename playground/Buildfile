@@ -1,6 +1,6 @@
-.DEFAULT:
-	echo app
-	echo bar
 
-app:
-	echo kill
+app.o:  app.k
+	echo $@
+
+app.k:
+	echo test
