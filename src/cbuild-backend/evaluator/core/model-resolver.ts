@@ -155,6 +155,6 @@ export default class ModelResolver implements Executor {
 
   // mutate the env and add default targets
   private resolveDefaultTarget(ir: NormalRuleIR) {
-    this.context.defaultRecipes.push(...ir.recipes);
+    this.context.defaultRecipes = ir.recipes;
   }
 }
