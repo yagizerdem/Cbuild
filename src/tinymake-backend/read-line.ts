@@ -50,6 +50,7 @@ export type ClassifiedLine = {
         >;
         left: Pchar[];
         right: Pchar[];
+        assignmentOp: string;
       }
     | {
         type: Extract<LineType, "target-preq">;
@@ -269,8 +270,7 @@ export class LineReader {
       recursiveAssignmentIndex,
     );
 
-    // target-preq
-    if (simpleAssignmentIndex == -1 && recursiveAssignmentIndex == -1) {
+    const createTargetPreqLine = (): ClassifiedLine => {
       return {
         ...srcLine,
         processed,
@@ -281,10 +281,9 @@ export class LineReader {
           preqs: processed.slice(columnIndex + 1, processed.length),
         },
       };
-    }
+    };
 
-    // assignment
-    if (columnIndex == -1) {
+    const createAssignmentLine = (): ClassifiedLine => {
       return {
         ...srcLine,
         processed,
@@ -307,63 +306,33 @@ export class LineReader {
               (recursiveAssignmentIndex != -1 ? 1 : 2),
             processed.length,
           ),
+          assignmentOp: recursiveAssignmentIndex != -1 ? "=" : ":=",
         },
       };
+    };
+
+    // target-preq
+    if (simpleAssignmentIndex == -1 && recursiveAssignmentIndex == -1) {
+      return createTargetPreqLine();
+    }
+
+    // assignment
+    if (columnIndex == -1) {
+      return createAssignmentLine();
     }
 
     // assignment
     if (assignmentIndex < columnIndex) {
-      return {
-        ...srcLine,
-        processed,
-        processedRaw: pCharToRaw(processed),
-        parsed: {
-          type:
-            recursiveAssignmentIndex != -1
-              ? "recursive-assignment"
-              : "immediate-assignment",
-          left: processed.slice(
-            0,
-            recursiveAssignmentIndex != -1
-              ? recursiveAssignmentIndex
-              : simpleAssignmentIndex,
-          ),
-          right: processed.slice(
-            (recursiveAssignmentIndex != -1
-              ? recursiveAssignmentIndex
-              : simpleAssignmentIndex) +
-              +(recursiveAssignmentIndex != -1 ? 1 : 2),
-            processed.length,
-          ),
-        },
-      };
+      return createAssignmentLine();
     }
 
     // := and : has same starting idnex so := has more piority bcs it is longest common substring
     if (simpleAssignmentIndex <= columnIndex) {
-      return {
-        ...srcLine,
-        processed,
-        processedRaw: pCharToRaw(processed),
-        parsed: {
-          type: "immediate-assignment",
-          left: processed.slice(0, simpleAssignmentIndex),
-          right: processed.slice(simpleAssignmentIndex + 2, processed.length),
-        },
-      };
+      return createAssignmentLine();
     }
 
     // target preq
-    return {
-      ...srcLine,
-      processed,
-      processedRaw: pCharToRaw(processed),
-      parsed: {
-        type: "target-preq",
-        targets: processed.slice(0, columnIndex),
-        preqs: processed.slice(columnIndex + 1, processed.length),
-      },
-    };
+    return createTargetPreqLine();
   }
 }
 
@@ -508,9 +477,10 @@ export class LineParser {
       line.parsed.targets,
       { current: 0 },
       0,
+      0,
     );
 
-    const preqValue = this.valueParser(line.parsed.preqs, { current: 0 }, 0);
+    const preqValue = this.valueParser(line.parsed.preqs, { current: 0 }, 0, 0);
 
     return {
       first: targetValue,
@@ -522,35 +492,54 @@ export class LineParser {
     processed: Pchar[],
     cursor: { current: number },
     depth: number,
+    valueParserInvokationCount: number,
   ): ValueNode {
+    const isVarRefPart = () => {
+      const pch = peekPchar(processed, cursor);
+      const nextPch = nextPchar(processed, cursor);
+      if (pch.char == "$" && !pch.escaped) return true;
+
+      if (
+        pch.escaped &&
+        !(nextPch.char === "$" || nextPch.char === "{" || nextPch.char === "(")
+      ) {
+        return true;
+      }
+
+      return false;
+    };
+
     const parts: (VarRefPart | TextPart)[] = [];
 
     while (!end(processed, cursor)) {
-      const pch: Pchar = peekPchar(processed, cursor);
-
       // dispatch parse method
-      if (pch.char == "$" && !pch.escaped) {
-        const nextPch = nextPchar(processed, cursor);
-        if (!nextPch.escaped) {
-          depth++;
-          parts.push(this.varRefParser(processed, cursor, depth));
-        } else {
-          if (
-            nextPch.char === "$" ||
-            nextPch.char === "{" ||
-            nextPch.char === "("
-          ) {
-            parts.push(this.textPartParser(processed, cursor, depth));
-          } else {
-            depth++;
-            parts.push(this.varRefParser(processed, cursor, depth));
-          }
-        }
+      if (isVarRefPart()) {
+        parts.push(
+          this.varRefParser(
+            processed,
+            cursor,
+            depth,
+            valueParserInvokationCount,
+          ),
+        );
       } else {
         parts.push(this.textPartParser(processed, cursor, depth));
       }
 
-      if (depth > 0) break;
+      if (
+        (peekPchar(processed, cursor).char === ")" ||
+          peekPchar(processed, cursor).char === "}") &&
+        !peekPchar(processed, cursor).escaped
+      ) {
+        depth--;
+      }
+
+      if (
+        depth == 0 &&
+        !(valueParserInvokationCount == 0 && !end(processed, cursor))
+      ) {
+        break;
+      }
     }
 
     return {
@@ -562,9 +551,29 @@ export class LineParser {
     processed: Pchar[],
     cursor: { current: number },
     depth: number,
+    valueParserInvokationCount: number,
   ): VarRefPart {
     advance(processed, cursor); // consume $
     const pch = peekPchar(processed, cursor);
+
+    const closeVarRef = () => {
+      const pch = peekPchar(processed, cursor);
+
+      const closingParen = peekPchar(processed, cursor);
+      if (closingParen.char != "}" && closingParen.char != ")" && depth == 0) {
+        throw new Error("shoudl close with paren");
+      }
+
+      if (pch.char == "(" && closingParen.char != ")" && depth == 0) {
+        throw new Error("shoudl close with )");
+      }
+
+      if (pch.char == "{" && closingParen.char != "}" && depth == 0) {
+        throw new Error("shoudl close with }");
+      }
+
+      advance(processed, cursor); // consume Rparen ) }
+    };
 
     // single char variable
     if (pch.char !== "{" && pch.char !== "(") {
@@ -575,23 +584,16 @@ export class LineParser {
       return valueWithTextPart;
     }
 
+    // multi char var-ref
     advance(processed, cursor); // consume Lparen ( {}
-    const value: ValueNode = this.valueParser(processed, cursor, depth);
+    const value: ValueNode = this.valueParser(
+      processed,
+      cursor,
+      depth + 1,
+      valueParserInvokationCount + 1,
+    );
 
-    const closingParen = peekPchar(processed, cursor);
-    if (closingParen.char != "}" && closingParen.char != ")") {
-      throw new Error("shoudl close with paren");
-    }
-
-    if (pch.char == "(" && closingParen.char != ")") {
-      throw new Error("shoudl close with )");
-    }
-
-    if (pch.char == "{" && closingParen.char != "}") {
-      throw new Error("shoudl close with }");
-    }
-
-    advance(processed, cursor); // consume Rparen ) }
+    closeVarRef();
 
     return createVarRefPart(value);
   }
@@ -609,8 +611,13 @@ export class LineParser {
         advance(process, cursor);
       } else if (pch.char === "$") {
         break;
-      } else if (pch.char === ")" || (pch.char == "}" && depth > 0)) {
-        break;
+      } else if (pch.char === ")" || pch.char == "}") {
+        if (depth > 0) {
+          break;
+        } else {
+          text += pch.char;
+          advance(process, cursor);
+        }
       } else {
         text += pch.char;
         advance(process, cursor);

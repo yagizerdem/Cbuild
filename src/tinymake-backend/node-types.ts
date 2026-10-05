@@ -12,7 +12,12 @@ export interface ValueNode {
   parts: (VarRefPart | TextPart)[];
 }
 
-export interface BaseNode {}
+export type TNode = "rule" | "assignment";
+export type AssignmentFlavour = "simple" | "deffered";
+
+export interface BaseNode {
+  type: TNode;
+}
 
 export interface RuleNode extends BaseNode {
   targets: ValueNode;
@@ -23,6 +28,7 @@ export interface RuleNode extends BaseNode {
 export interface AssignmentNode extends BaseNode {
   identifier: ValueNode;
   value: ValueNode;
+  flavour: AssignmentFlavour;
 }
 
 export function createVarRefPart(value: ValueNode): VarRefPart {
@@ -56,15 +62,19 @@ export function createRuleNode(
     targets,
     prerequisites,
     recipes,
+    type: "rule",
   };
 }
 
 export function createAssignmentNode(
   identifier: ValueNode,
   value: ValueNode,
+  flavour: AssignmentFlavour,
 ): AssignmentNode {
   return {
     identifier,
     value,
+    type: "assignment",
+    flavour,
   };
 }
