@@ -1,3 +1,5 @@
+import { BaseNode } from "@tinymake-backend/node-types.js";
+
 export type Pchar = {
   char: string;
   escaped: boolean;
@@ -19,11 +21,11 @@ export type LineType =
 export type ClassifiedLine =
   | {
       processed: Pchar[];
+      processedLine: string; // raw version after escape handling
 
       parsed:
         | {
             type: Extract<LineType, "recipe">;
-            raw: Pchar[];
           }
         | {
             type: Extract<
@@ -181,7 +183,11 @@ export class LineReader {
   }
 
   private classifyLines(srcLine: Line): ClassifiedLine {
-    const processed = this.processLine(srcLine);
+    const processed = this.processLine(srcLine); // handle escapes
+
+    const pCharToRaw = (pChar: Pchar[]) => {
+      return pChar.map((p) => p.char).join("");
+    };
 
     if (processed.length == 0) {
       throw Error("cannot classify empyt line");
@@ -194,7 +200,6 @@ export class LineReader {
         processed,
         parsed: {
           type: "recipe",
-          raw: processed,
         },
       };
     }
@@ -221,6 +226,7 @@ export class LineReader {
       return {
         ...srcLine,
         processed,
+        processedLine: pCharToRaw(processed),
         parsed: {
           type: "target-preq",
           targets: processed.slice(0, columnIndex),
@@ -234,6 +240,7 @@ export class LineReader {
       return {
         ...srcLine,
         processed,
+        processedLine: pCharToRaw(processed),
         parsed: {
           type:
             recursiveAssignmentIndex != -1
@@ -261,6 +268,7 @@ export class LineReader {
       return {
         ...srcLine,
         processed,
+        processedLine: pCharToRaw(processed),
         parsed: {
           type:
             recursiveAssignmentIndex != -1
@@ -288,6 +296,7 @@ export class LineReader {
       return {
         ...srcLine,
         processed,
+        processedLine: pCharToRaw(processed),
         parsed: {
           type: "immediate-assignment",
           left: processed.slice(0, simpleAssignmentIndex),
@@ -300,6 +309,7 @@ export class LineReader {
     return {
       ...srcLine,
       processed,
+      processedLine: pCharToRaw(processed),
       parsed: {
         type: "target-preq",
         targets: processed.slice(0, columnIndex),
@@ -307,4 +317,21 @@ export class LineReader {
       },
     };
   }
+}
+
+type Cursor = { current: number };
+
+export class LineParser {
+  private readonly classifiedLines: ClassifiedLine[] = [];
+  public constructor(classifiedLines: ClassifiedLine[]) {
+    this.classifiedLines = classifiedLines;
+  }
+
+  public parse(): BaseNode[] {
+    const models: BaseNode[] = [];
+
+    return models;
+  }
+
+  private valueParser() {}
 }
