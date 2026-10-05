@@ -11,10 +11,10 @@ import {
   handleCliOptions,
   resolveBuildFilePath,
 } from "@src/handle-cli-options.js";
-import { collectCliVars, collectEnvVars } from "./collect-vars.js";
+import { collectCliVars, collectEnvVars } from "@src/collect-vars.js";
 import fs from "fs/promises";
 import { IR } from "@compiler/ir.js";
-import { BuildFileMeta } from "./type/buildfile-meta.js";
+import { BuildFileMeta } from "@src/type/buildfile-meta.js";
 import path from "path";
 
 export async function readBuildFile(buildFilePath: string): Promise<string> {

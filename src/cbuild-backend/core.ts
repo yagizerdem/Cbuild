@@ -71,7 +71,9 @@ export class Core {
 
     isCompatible(rules);
 
-    registerBuiltInImplicitVariables(this.context);
+    if (this.context.cliOptions.builtinVariables) {
+      registerBuiltInImplicitVariables(this.context);
+    }
 
     this.mergeEnvVars(options?.envVars ?? []);
     this.mergeCliVars(options?.cliVars ?? []);
@@ -86,10 +88,14 @@ export class Core {
       rules,
       evaluationState,
     );
-    const resolvedModels = [
-      ...(await evaluator.evaluateAsync()),
-      ...getBuiltInImplicitRules(),
-    ];
+    const resolvedModels = await evaluator.evaluateAsync();
+
+    if (
+      this.context.cliOptions.builtinRules &&
+      this.context.cliOptions.builtinVariables
+    ) {
+      resolvedModels.push(...getBuiltInImplicitRules());
+    }
 
     // contains relation only needed for build
     const explicitRules = this.collectNormalRuleModels(resolvedModels);

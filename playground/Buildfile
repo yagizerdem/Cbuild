@@ -1,6 +1,6 @@
 
-app.o:  app.k
-	echo $@
+app.o:  app.c
 
-app.k:
-	echo test
+
+app.c:
+	echo hit app.c recipe
