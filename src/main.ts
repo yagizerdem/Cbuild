@@ -9,6 +9,7 @@ import ErrorHandler from "@src/error-handler.js";
 import type { CBuildOptions } from "@src/cli.js";
 import {
   handleCliOptions,
+  normalizeOptions,
   resolveBuildFilePath,
 } from "@src/handle-cli-options.js";
 import { collectCliVars, collectEnvVars } from "@src/collect-vars.js";
@@ -16,6 +17,7 @@ import fs from "fs/promises";
 import { IR } from "@compiler/ir.js";
 import { BuildFileMeta } from "@src/type/buildfile-meta.js";
 import path from "path";
+import { TinyMake } from "@tinymake-backend/tiny-make.js";
 
 export async function readBuildFile(buildFilePath: string): Promise<string> {
   return await fs.readFile(buildFilePath, "utf-8");
@@ -25,14 +27,19 @@ async function main() {
   cli.parse();
   const options: CBuildOptions = cli.opts<CBuildOptions>();
   const args = cli.args;
-  await cbuildBackend(options, args);
 
-  if (options.backend === "cbuild") {
-    await cbuildBackend(options, args);
-  }
-  if (options.backend === "tinymake") {
-    await tinyMakeBackend(options, args);
-  }
+  await tinyMakeBackend(options, args);
+
+  // normalize and mutate original object
+
+  // normalizeOptions(options);
+
+  // if (options.backend === "cbuild") {
+  //   await cbuildBackend(options, args);
+  // }
+  // if (options.backend === "tinymake") {
+  //   await tinyMakeBackend(options, args);
+  // }
 }
 
 async function cbuildBackend(options: CBuildOptions, args: string[]) {
@@ -94,6 +101,18 @@ async function cbuildBackend(options: CBuildOptions, args: string[]) {
   }
 }
 
-async function tinyMakeBackend(options: CBuildOptions, args: string[]) {}
+async function tinyMakeBackend(options: CBuildOptions, args: string[]) {
+  const raw = `
+app:
+\t echo app
+
+a := bar
+b = test
+c : := preq
+`;
+
+  const tinyMake = new TinyMake(raw);
+  tinyMake.run();
+}
 
 await main();

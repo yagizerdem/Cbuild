@@ -22,6 +22,7 @@
       "@compiler/*": ["./src/compiler/*"],
       "@gnu-make-functions/*": ["./src/gnu-make-functions/*"],
       "@cbuild-backend/*": ["./src/cbuild-backend/*"],
+      "@tinymake-backend/*": ["./src/tinymake-backend/*"],
       "@tests/*": ["./__tests__/*"]
     }
   },

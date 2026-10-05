@@ -211,13 +211,3 @@ export interface CBuildOptions extends OptionValues {
 
   warnUndefinedVariables?: boolean;
 }
-
-export function normalizeOptions(options: CBuildOptions) {
-  if (!options.sequential && options.jobs == 0) {
-    options.jobs = 1;
-  }
-
-  if (!options.backend) {
-    options.backend = "cbuild" as Tbackend;
-  }
-}

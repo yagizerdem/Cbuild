@@ -9,6 +9,7 @@ import {
   ErrorType,
   MachineCode,
 } from "@src/cbuild-exception.js";
+import { Tbackend } from "@src/type/tBackend.js";
 
 export function handleCliOptions(options: CBuildOptions) {
   handleVersionCliOption(options);
@@ -84,4 +85,14 @@ export function resolveBuildFilePath(options: CBuildOptions): string[] {
   }
 
   return resolvedBuildFilePaths;
+}
+
+export function normalizeOptions(options: CBuildOptions) {
+  if (!options.sequential && options.jobs == 0) {
+    options.jobs = 1;
+  }
+
+  if (!options.backend) {
+    options.backend = "cbuild" as Tbackend;
+  }
 }
