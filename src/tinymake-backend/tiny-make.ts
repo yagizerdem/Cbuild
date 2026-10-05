@@ -1,4 +1,4 @@
-import { LineReader } from "@tinymake-backend/read-line.js";
+import { LineParser, LineReader } from "@tinymake-backend/read-line.js";
 
 export class TinyMake {
   private rawBuildFile: string;
@@ -9,6 +9,8 @@ export class TinyMake {
   async run() {
     const lineReader = new LineReader(this.rawBuildFile);
     const classifiedLines = lineReader.read();
-    console.log(classifiedLines);
+
+    const lineParser = new LineParser(classifiedLines);
+    lineParser.parse();
   }
 }

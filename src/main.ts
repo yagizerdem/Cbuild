@@ -103,12 +103,8 @@ async function cbuildBackend(options: CBuildOptions, args: string[]) {
 
 async function tinyMakeBackend(options: CBuildOptions, args: string[]) {
   const raw = `
-app:
-\t echo app
+($app):  
 
-a $= : bar
-b = test
-c : := preq
 `;
 
   const tinyMake = new TinyMake(raw);

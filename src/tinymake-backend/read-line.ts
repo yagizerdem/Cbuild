@@ -1,4 +1,19 @@
-import { BaseNode } from "@tinymake-backend/node-types.js";
+import {
+  BaseNode,
+  TextPart,
+  ValueNode,
+  VarRefPart,
+  RuleNode,
+  createRuleNode,
+  createValueNode,
+  createTextPart,
+  createVarRefPart,
+} from "@tinymake-backend/node-types.js";
+
+export type Pair<A, T> = {
+  first: A;
+  second: T;
+};
 
 export type Pchar = {
   char: string;
@@ -18,30 +33,30 @@ export type LineType =
   | "immediate-assignment"
   | "recursive-assignment";
 
-export type ClassifiedLine =
-  | {
-      processed: Pchar[];
-      processedLine: string; // raw version after escape handling
+export type ClassifiedLine = {
+  line: string;
+  row: number;
+  processed: Pchar[];
+  processedRaw: string;
 
-      parsed:
-        | {
-            type: Extract<LineType, "recipe">;
-          }
-        | {
-            type: Extract<
-              LineType,
-              "immediate-assignment" | "recursive-assignment"
-            >;
-            left: Pchar[];
-            right: Pchar[];
-          }
-        | {
-            type: Extract<LineType, "target-preq">;
-            targets: Pchar[];
-            preqs: Pchar[];
-          };
-    }
-  | Line;
+  parsed:
+    | {
+        type: Extract<LineType, "recipe">;
+      }
+    | {
+        type: Extract<
+          LineType,
+          "immediate-assignment" | "recursive-assignment"
+        >;
+        left: Pchar[];
+        right: Pchar[];
+      }
+    | {
+        type: Extract<LineType, "target-preq">;
+        targets: Pchar[];
+        preqs: Pchar[];
+      };
+};
 
 function isSpace(str: string): boolean {
   return /^\s+$/.test(str);
@@ -104,20 +119,51 @@ export class LineReader {
   private processLine(line: Line): Pchar[] {
     const processed: Pchar[] = [];
     let escaped = false;
-    for (let i = 0; i < line.line.length; i++) {
-      if (line.line[i] == "$") {
+
+    const cursor: Cursor = { current: 0 };
+    while (!end(line.line, cursor)) {
+      const ch = peek(line.line, cursor);
+      const nextCh = next(line.line, cursor);
+
+      if (ch == "$" && (nextCh == "(" || nextCh == "{") && !escaped) {
+        processed.push({
+          char: "$",
+          col: cursor.current,
+          escaped: false,
+          row: line.row,
+        });
+        processed.push({
+          char: nextCh,
+          col: cursor.current,
+          escaped: false,
+          row: line.row,
+        });
+        // consume $( or ${
+        advance(line.line, cursor);
+        advance(line.line, cursor);
+        continue;
+      }
+
+      if (ch == "$" && !escaped) {
+        processed.push({
+          char: ch,
+          col: cursor.current,
+          escaped,
+          row: line.row,
+        });
         escaped = true;
+        advance(line.line, cursor);
         continue;
       }
 
       processed.push({
-        char: line.line[i],
-        col: i,
+        char: ch,
+        col: cursor.current,
         escaped,
         row: line.row,
       });
-
       escaped = false;
+      advance(line.line, cursor);
     }
 
     return processed;
@@ -196,8 +242,10 @@ export class LineReader {
     // recipe
     if (processed[0].char == "\t" && !processed[0].escaped) {
       return {
-        ...srcLine,
+        line: srcLine.line,
+        row: srcLine.row,
         processed,
+        processedRaw: processed.map((p) => p.char).join(""),
         parsed: {
           type: "recipe",
         },
@@ -226,7 +274,7 @@ export class LineReader {
       return {
         ...srcLine,
         processed,
-        processedLine: pCharToRaw(processed),
+        processedRaw: pCharToRaw(processed),
         parsed: {
           type: "target-preq",
           targets: processed.slice(0, columnIndex),
@@ -240,7 +288,7 @@ export class LineReader {
       return {
         ...srcLine,
         processed,
-        processedLine: pCharToRaw(processed),
+        processedRaw: pCharToRaw(processed),
         parsed: {
           type:
             recursiveAssignmentIndex != -1
@@ -268,7 +316,7 @@ export class LineReader {
       return {
         ...srcLine,
         processed,
-        processedLine: pCharToRaw(processed),
+        processedRaw: pCharToRaw(processed),
         parsed: {
           type:
             recursiveAssignmentIndex != -1
@@ -296,7 +344,7 @@ export class LineReader {
       return {
         ...srcLine,
         processed,
-        processedLine: pCharToRaw(processed),
+        processedRaw: pCharToRaw(processed),
         parsed: {
           type: "immediate-assignment",
           left: processed.slice(0, simpleAssignmentIndex),
@@ -309,7 +357,7 @@ export class LineReader {
     return {
       ...srcLine,
       processed,
-      processedLine: pCharToRaw(processed),
+      processedRaw: pCharToRaw(processed),
       parsed: {
         type: "target-preq",
         targets: processed.slice(0, columnIndex),
@@ -321,6 +369,86 @@ export class LineReader {
 
 type Cursor = { current: number };
 
+const EOF = "\0";
+
+function toRawString(data: string | Pchar[]): string {
+  if (Array.isArray(data) && data.length > 0 && typeof data == "object") {
+    return data.map((pc) => pc.char).join("");
+  } else {
+    return data as string;
+  }
+}
+
+function peek(data: string | Pchar[], cursor: Cursor): string {
+  const raw = toRawString(data);
+
+  if (cursor.current >= raw.length) {
+    return EOF;
+  }
+
+  const ch = raw[cursor.current];
+  return ch;
+}
+
+function next(data: string | Pchar[], cursor: Cursor): string {
+  const raw = toRawString(data);
+
+  if (cursor.current + 1 >= raw.length) {
+    return EOF;
+  }
+
+  const ch = raw[cursor.current + 1];
+  return ch;
+}
+
+function advance(data: string | Pchar[], cursor: Cursor): string {
+  cursor.current = cursor.current + 1;
+  return peek(data, cursor);
+}
+
+function end(data: string | Pchar[], cursor: Cursor): boolean {
+  if (typeof data == "object") {
+    return peekPchar(data, cursor).char === EOF;
+  } else {
+    return peek(data, cursor) === EOF;
+  }
+}
+
+function peekPchar(data: Pchar[], cursor: Cursor): Pchar {
+  if (cursor.current >= data.length) {
+    return {
+      char: EOF,
+      col: -1,
+      escaped: false,
+      row: -1,
+    };
+  }
+
+  const ch = data[cursor.current];
+  return ch;
+}
+
+function nextPchar(data: Pchar[], cursor: Cursor): Pchar {
+  if (cursor.current + 1 >= data.length) {
+    return {
+      char: EOF,
+      col: -1,
+      escaped: false,
+      row: -1,
+    };
+  }
+
+  const ch = data[cursor.current + 1];
+  return ch;
+}
+
+function advancePchar(data: Pchar[], cursor: Cursor): Pchar {
+  cursor.current = cursor.current + 1;
+  return peekPchar(data, cursor);
+}
+
+type ParseContext = "rule" | "normal";
+
 export class LineParser {
   private readonly classifiedLines: ClassifiedLine[] = [];
   public constructor(classifiedLines: ClassifiedLine[]) {
@@ -329,9 +457,166 @@ export class LineParser {
 
   public parse(): BaseNode[] {
     const models: BaseNode[] = [];
+    let context: ParseContext = "normal";
+    let recentRuleHeader: Pair<ValueNode, ValueNode> | undefined;
+    let recipesUnderRule: ValueNode[] = [];
+
+    for (const line of this.classifiedLines) {
+      if (line.parsed.type === "target-preq") {
+        if (context === "normal") {
+          recentRuleHeader = this.parseRuleHeader(line);
+          context = "rule";
+        } else {
+          if (recentRuleHeader) {
+            models.push(
+              createRuleNode(
+                recentRuleHeader.first,
+                recentRuleHeader.second,
+                recipesUnderRule,
+              ),
+            );
+          }
+          recentRuleHeader = undefined;
+          recipesUnderRule = [];
+          recentRuleHeader = this.parseRuleHeader(line);
+          context = "rule";
+        }
+      }
+    }
+
+    if (context === "rule" && recentRuleHeader) {
+      models.push(
+        createRuleNode(
+          recentRuleHeader.first,
+          recentRuleHeader.second,
+          recipesUnderRule,
+        ),
+      );
+    }
 
     return models;
   }
 
-  private valueParser() {}
+  private parseRuleHeader(line: ClassifiedLine): Pair<ValueNode, ValueNode> {
+    if (line.parsed.type !== "target-preq") {
+      throw Error(
+        "parseRuleHeader fucntion only parse lines classified as rule-header type",
+      );
+    }
+
+    const targetValue = this.valueParser(
+      line.parsed.targets,
+      { current: 0 },
+      0,
+    );
+
+    const preqValue = this.valueParser(line.parsed.preqs, { current: 0 }, 0);
+
+    return {
+      first: targetValue,
+      second: preqValue,
+    };
+  }
+
+  private valueParser(
+    processed: Pchar[],
+    cursor: { current: number },
+    depth: number,
+  ): ValueNode {
+    const parts: (VarRefPart | TextPart)[] = [];
+
+    while (!end(processed, cursor)) {
+      const pch: Pchar = peekPchar(processed, cursor);
+
+      // dispatch parse method
+      if (pch.char == "$" && !pch.escaped) {
+        const nextPch = nextPchar(processed, cursor);
+        if (!nextPch.escaped) {
+          depth++;
+          parts.push(this.varRefParser(processed, cursor, depth));
+        } else {
+          if (
+            nextPch.char === "$" ||
+            nextPch.char === "{" ||
+            nextPch.char === "("
+          ) {
+            parts.push(this.textPartParser(processed, cursor, depth));
+          } else {
+            depth++;
+            parts.push(this.varRefParser(processed, cursor, depth));
+          }
+        }
+      } else {
+        parts.push(this.textPartParser(processed, cursor, depth));
+      }
+
+      if (depth > 0) break;
+    }
+
+    return {
+      parts,
+    };
+  }
+
+  private varRefParser(
+    processed: Pchar[],
+    cursor: { current: number },
+    depth: number,
+  ): VarRefPart {
+    advance(processed, cursor); // consume $
+    const pch = peekPchar(processed, cursor);
+
+    // single char variable
+    if (pch.char !== "{" && pch.char !== "(") {
+      const valueWithTextPart = createVarRefPart(
+        createValueNode([createTextPart(pch.char)]),
+      );
+      advance(processed, cursor); // consume char
+      return valueWithTextPart;
+    }
+
+    advance(processed, cursor); // consume Lparen ( {}
+    const value: ValueNode = this.valueParser(processed, cursor, depth);
+
+    const closingParen = peekPchar(processed, cursor);
+    if (closingParen.char != "}" && closingParen.char != ")") {
+      throw new Error("shoudl close with paren");
+    }
+
+    if (pch.char == "(" && closingParen.char != ")") {
+      throw new Error("shoudl close with )");
+    }
+
+    if (pch.char == "{" && closingParen.char != "}") {
+      throw new Error("shoudl close with }");
+    }
+
+    advance(processed, cursor); // consume Rparen ) }
+
+    return createVarRefPart(value);
+  }
+
+  private textPartParser(
+    process: Pchar[],
+    cursor: Cursor,
+    depth: number,
+  ): TextPart {
+    let text = "";
+    while (!end(process, cursor)) {
+      const pch = peekPchar(process, cursor);
+      if (pch.escaped) {
+        text += pch.char;
+        advance(process, cursor);
+      } else if (pch.char === "$") {
+        break;
+      } else if (pch.char === ")" || (pch.char == "}" && depth > 0)) {
+        break;
+      } else {
+        text += pch.char;
+        advance(process, cursor);
+      }
+    }
+
+    return createTextPart(text);
+  }
 }
