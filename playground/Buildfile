@@ -1,1 +1,6 @@
+.DEFAULT:
+	echo app
+	echo bar
+
 app:
+	echo kill

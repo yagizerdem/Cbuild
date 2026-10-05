@@ -1,4 +1,4 @@
-import { ValueIR, ValuePart } from "@compiler/ir.js";
+import { RecipeIR, ValueIR, ValuePart } from "@compiler/ir.js";
 import { CBuildOptions } from "@src/cli.js";
 
 export type VariableFlavor = "raw" | "recursive";
@@ -118,7 +118,7 @@ export class Env {
   public targetEnvs: Record<string, Env> = {};
   public islatePositionalVariables: boolean = false;
   public phonyTargets: Set<string> = new Set();
-  public defaultRecipes: string[] = [];
+  public defaultRecipes: RecipeIR[] = [];
 
   public constructor(cliOptions: CBuildOptions) {
     this.cliOptions = cliOptions;
