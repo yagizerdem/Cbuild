@@ -20,11 +20,21 @@ export class TinyMake {
     const models = lineParser.parse();
 
     const ruleNodes: RuleNode[] = this.collectRulesNodes(models);
+    const assignmentNodes: AssignmentNode[] =
+      this.collectAssignmentNodes(models);
 
     for (const n of ruleNodes) {
       debugPrintValue(n.targets);
       console.log("\n");
       debugPrintValue(n.prerequisites);
+      console.log("\n");
+      n.recipes.forEach((r) => debugPrintValue(r));
+    }
+
+    for (const a of assignmentNodes) {
+      debugPrintValue(a.identifier);
+      debugPrintValue(a.value);
+      console.log(a.flavour);
     }
   }
 

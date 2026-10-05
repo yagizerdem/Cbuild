@@ -103,6 +103,8 @@ async function cbuildBackend(options: CBuildOptions, args: string[]) {
 
 async function tinyMakeBackend(options: CBuildOptions, args: string[]) {
   const raw = `
+A = 10
+B = $(A)
 app : $(foo$(bar$(baz)))
 
 `;

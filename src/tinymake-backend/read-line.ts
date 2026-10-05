@@ -8,6 +8,8 @@ import {
   createValueNode,
   createTextPart,
   createVarRefPart,
+  AssignmentNode,
+  createAssignmentNode,
 } from "@tinymake-backend/node-types.js";
 
 export type Pair<A, T> = {
@@ -450,6 +452,28 @@ export class LineParser {
           recentRuleHeader = this.parseRuleHeader(line);
           context = "rule";
         }
+      } else if (
+        line.parsed.type === "immediate-assignment" ||
+        line.parsed.type === "recursive-assignment"
+      ) {
+        context = "normal";
+        // collect recent rule header
+        if (recentRuleHeader) {
+          models.push(
+            createRuleNode(
+              recentRuleHeader.first,
+              recentRuleHeader.second,
+              recipesUnderRule,
+            ),
+          );
+        }
+        recentRuleHeader = undefined;
+        recipesUnderRule = [];
+        // collect assginment
+        models.push(this.parseAssignment(line));
+      } else {
+        // collect recipe
+        recipesUnderRule.push(this.parseRecipe(line));
       }
     }
 
@@ -464,6 +488,38 @@ export class LineParser {
     }
 
     return models;
+  }
+
+  private parseRecipe(line: ClassifiedLine): ValueNode {
+    if (line.parsed.type !== "recipe") {
+      throw Error(
+        "parseRecipe fucntion only parse lines classified as recipe type",
+      );
+    }
+
+    const recipeNode = this.valueParser(line.processed, { current: 0 }, 0, 0);
+
+    return recipeNode;
+  }
+
+  private parseAssignment(line: ClassifiedLine): AssignmentNode {
+    if (
+      line.parsed.type !== "recursive-assignment" &&
+      line.parsed.type !== "immediate-assignment"
+    ) {
+      throw Error(
+        "parseReparseAssignmentcipe fucntion only parse lines classified as (recursive-assignment | immediate-assignment) type",
+      );
+    }
+
+    const identifier = this.valueParser(line.parsed.left, { current: 0 }, 0, 0);
+    const value = this.valueParser(line.parsed.right, { current: 0 }, 0, 0);
+
+    return createAssignmentNode(
+      identifier,
+      value,
+      line.parsed.assignmentOp == "=" ? "deffered" : "simple",
+    );
   }
 
   private parseRuleHeader(line: ClassifiedLine): Pair<ValueNode, ValueNode> {
