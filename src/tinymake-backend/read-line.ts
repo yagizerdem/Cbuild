@@ -1,4 +1,4 @@
-type Pchar = {
+export type Pchar = {
   char: string;
   escaped: boolean;
   row: number;
@@ -23,20 +23,20 @@ export type ClassifiedLine =
       parsed:
         | {
             type: Extract<LineType, "recipe">;
-            raw: string;
+            raw: Pchar[];
           }
         | {
             type: Extract<
               LineType,
               "immediate-assignment" | "recursive-assignment"
             >;
-            leftRaw: string;
-            rightRaw: string;
+            left: Pchar[];
+            right: Pchar[];
           }
         | {
             type: Extract<LineType, "target-preq">;
-            targetsRaw: string;
-            preqsRaw: string;
+            targets: Pchar[];
+            preqs: Pchar[];
           };
     }
   | Line;
@@ -181,13 +181,6 @@ export class LineReader {
   }
 
   private classifyLines(srcLine: Line): ClassifiedLine {
-    const toRaw = (processed: Pchar[]): string => {
-      return processed
-        .filter((p) => !p.escaped)
-        .map((p) => p.char)
-        .join("") as string;
-    };
-
     const processed = this.processLine(srcLine);
 
     if (processed.length == 0) {
@@ -201,7 +194,7 @@ export class LineReader {
         processed,
         parsed: {
           type: "recipe",
-          raw: toRaw(processed),
+          raw: processed,
         },
       };
     }
@@ -230,8 +223,8 @@ export class LineReader {
         processed,
         parsed: {
           type: "target-preq",
-          targetsRaw: toRaw(processed.slice(0, columnIndex)),
-          preqsRaw: toRaw(processed.slice(columnIndex + 1, processed.length)),
+          targets: processed.slice(0, columnIndex),
+          preqs: processed.slice(columnIndex + 1, processed.length),
         },
       };
     }
@@ -246,22 +239,18 @@ export class LineReader {
             recursiveAssignmentIndex != -1
               ? "recursive-assignment"
               : "immediate-assignment",
-          leftRaw: toRaw(
-            processed.slice(
-              0,
-              recursiveAssignmentIndex != -1
-                ? recursiveAssignmentIndex
-                : simpleAssignmentIndex,
-            ),
+          left: processed.slice(
+            0,
+            recursiveAssignmentIndex != -1
+              ? recursiveAssignmentIndex
+              : simpleAssignmentIndex,
           ),
-          rightRaw: toRaw(
-            processed.slice(
-              (recursiveAssignmentIndex != -1
-                ? recursiveAssignmentIndex
-                : simpleAssignmentIndex) +
-                (recursiveAssignmentIndex != -1 ? 1 : 2),
-              processed.length,
-            ),
+          right: processed.slice(
+            (recursiveAssignmentIndex != -1
+              ? recursiveAssignmentIndex
+              : simpleAssignmentIndex) +
+              (recursiveAssignmentIndex != -1 ? 1 : 2),
+            processed.length,
           ),
         },
       };
@@ -277,22 +266,18 @@ export class LineReader {
             recursiveAssignmentIndex != -1
               ? "recursive-assignment"
               : "immediate-assignment",
-          leftRaw: toRaw(
-            processed.slice(
-              0,
-              recursiveAssignmentIndex != -1
-                ? recursiveAssignmentIndex
-                : simpleAssignmentIndex,
-            ),
+          left: processed.slice(
+            0,
+            recursiveAssignmentIndex != -1
+              ? recursiveAssignmentIndex
+              : simpleAssignmentIndex,
           ),
-          rightRaw: toRaw(
-            processed.slice(
-              (recursiveAssignmentIndex != -1
-                ? recursiveAssignmentIndex
-                : simpleAssignmentIndex) +
-                +(recursiveAssignmentIndex != -1 ? 1 : 2),
-              processed.length,
-            ),
+          right: processed.slice(
+            (recursiveAssignmentIndex != -1
+              ? recursiveAssignmentIndex
+              : simpleAssignmentIndex) +
+              +(recursiveAssignmentIndex != -1 ? 1 : 2),
+            processed.length,
           ),
         },
       };
@@ -305,10 +290,8 @@ export class LineReader {
         processed,
         parsed: {
           type: "immediate-assignment",
-          leftRaw: toRaw(processed.slice(0, simpleAssignmentIndex)),
-          rightRaw: toRaw(
-            processed.slice(simpleAssignmentIndex + 2, processed.length),
-          ),
+          left: processed.slice(0, simpleAssignmentIndex),
+          right: processed.slice(simpleAssignmentIndex + 2, processed.length),
         },
       };
     }
@@ -319,8 +302,8 @@ export class LineReader {
       processed,
       parsed: {
         type: "target-preq",
-        targetsRaw: toRaw(processed.slice(0, columnIndex)),
-        preqsRaw: toRaw(processed.slice(columnIndex + 1, processed.length)),
+        targets: processed.slice(0, columnIndex),
+        preqs: processed.slice(columnIndex + 1, processed.length),
       },
     };
   }

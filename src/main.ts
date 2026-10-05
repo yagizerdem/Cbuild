@@ -28,11 +28,11 @@ async function main() {
   const options: CBuildOptions = cli.opts<CBuildOptions>();
   const args = cli.args;
 
+  normalizeOptions(options);
+
   await tinyMakeBackend(options, args);
 
   // normalize and mutate original object
-
-  // normalizeOptions(options);
 
   // if (options.backend === "cbuild") {
   //   await cbuildBackend(options, args);
@@ -106,7 +106,7 @@ async function tinyMakeBackend(options: CBuildOptions, args: string[]) {
 app:
 \t echo app
 
-a := bar
+a $= : bar
 b = test
 c : := preq
 `;
