@@ -8,13 +8,13 @@ A = 10
 B = $(A)
 EMPTY=
 BR= $(EMPTY) $(EMPTY) 
-app : yagiz erdem
+app: yagiz
 \t echo hello world
 
-yagiz:
+yagiz: erdem
 \t echo yagiz
 
-erdem: app 
+erdem: 
 \t echo erdem
 
 

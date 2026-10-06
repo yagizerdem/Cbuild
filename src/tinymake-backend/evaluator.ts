@@ -7,7 +7,7 @@ import {
 import { TinyMakeExpansionEngine } from "@tinymake-backend/expansion.js";
 import { TinyMakeEnv } from "@tinymake-backend/env.js";
 
-export type EvaluatedRules = {
+export type EvaluatedRule = {
   target: string;
   preqs: string[];
   recipes: ValueNode[];
@@ -22,8 +22,8 @@ export class TinyMakeEvaluator {
     this.context = context;
   }
 
-  public evaluate(): EvaluatedRules[] {
-    const evaluationResult: EvaluatedRules[] = [];
+  public evaluate(): EvaluatedRule[] {
+    const evaluationResult: EvaluatedRule[] = [];
     for (const node of this.nodes) {
       if (node.type === "assignment") {
         this.evaluateAssignmentNode(node as AssignmentNode);
@@ -59,8 +59,8 @@ export class TinyMakeEvaluator {
     }
   }
 
-  private evaluatRule(rule: RuleNode): EvaluatedRules[] {
-    const evaluationResult: EvaluatedRules[] = [];
+  private evaluatRule(rule: RuleNode): EvaluatedRule[] {
+    const evaluationResult: EvaluatedRule[] = [];
     const expansion = new TinyMakeExpansionEngine(this.context);
     const expandedTarget = expansion
       .expand(rule.targets)

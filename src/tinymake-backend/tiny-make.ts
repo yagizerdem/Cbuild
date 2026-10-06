@@ -6,12 +6,13 @@ import {
 import { LineParser, LineReader } from "@tinymake-backend/read-line.js";
 import {
   TinyMakeEvaluator,
-  EvaluatedRules,
+  EvaluatedRule,
 } from "@tinymake-backend/evaluator.js";
 import { TinyMakeEnv } from "@tinymake-backend/env.js";
 import { debugPrintValue } from "@tinymake-backend/debug-util.js";
 import {
   createDepqGraph,
+  deadRuleElemination,
   DeqpGraph,
   hasCycle,
 } from "@tinymake-backend/graph.js";
@@ -38,7 +39,7 @@ export class TinyMake {
     // }
 
     const evaluation = new TinyMakeEvaluator(AST, this.context);
-    const evaluatedRules: EvaluatedRules[] = evaluation.evaluate();
+    const evaluatedRules: EvaluatedRule[] = evaluation.evaluate();
     console.log(evaluatedRules);
 
     const graph: DeqpGraph = createDepqGraph(evaluatedRules);
@@ -48,8 +49,16 @@ export class TinyMake {
       return;
     }
 
+    // there should not be cycle
     const cycle = hasCycle(graph, defaultGoal.target);
     console.log(cycle);
+
+    // eleminate unused rules
+    const resolved: DeqpGraph = createDepqGraph(
+      deadRuleElemination(graph, defaultGoal.target),
+    );
+
+    console.log(resolved.rules);
   }
 
   collectRulesNodes(models: BaseNode[]): RuleNode[] {
