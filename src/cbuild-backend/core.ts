@@ -33,7 +33,7 @@ import { BuildFileEvaluationState } from "@cbuild-backend/evaluator/core/type.js
 import { NormalizeModels } from "@cbuild-backend/normalize-models.js";
 import { DatabasePrinter } from "@cbuild-backend/database-printer.js";
 import {
-  registerBuiltInImplicitRules,
+  getBuiltInImplicitRules,
   registerBuiltInImplicitVariables,
 } from "@cbuild-backend/built-in.js";
 import { BuildFileMeta } from "@src/type/buildfile-meta.js";
@@ -71,7 +71,9 @@ export class Core {
 
     isCompatible(rules);
 
-    registerBuiltInImplicitVariables(this.context);
+    if (this.context.cliOptions.builtinVariables) {
+      registerBuiltInImplicitVariables(this.context);
+    }
 
     this.mergeEnvVars(options?.envVars ?? []);
     this.mergeCliVars(options?.cliVars ?? []);
@@ -87,6 +89,13 @@ export class Core {
       evaluationState,
     );
     const resolvedModels = await evaluator.evaluateAsync();
+
+    if (
+      this.context.cliOptions.builtinRules &&
+      this.context.cliOptions.builtinVariables
+    ) {
+      resolvedModels.push(...getBuiltInImplicitRules());
+    }
 
     // contains relation only needed for build
     const explicitRules = this.collectNormalRuleModels(resolvedModels);

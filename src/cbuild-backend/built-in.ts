@@ -64,7 +64,7 @@ export function registerBuiltInImplicitVariables(context: Env) {
   context.setRawVariable("LINTFLAGS", "", "default", false);
 }
 
-export function registerBuiltInImplicitRules() {
+export function getBuiltInImplicitRules(): ImplicitPatterRule[] {
   // GNU Make 10.2 - Catalogue of Built-In Rules
   // https://www.gnu.org/software/make/manual/html_node/Catalogue-of-Rules.html
   // Exact recipes: https://github.com/mirror/make/blob/master/src/default.c

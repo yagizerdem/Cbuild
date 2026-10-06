@@ -234,7 +234,7 @@ targets
     ;
 
 recipes
-    : recipe+
+    : (recipe | empty_recipe_line)+
     ;
 
 recipes_opt
@@ -247,6 +247,10 @@ recipe
     | ws? COMMENT NL
     | conditional_in_recipe
     | NL
+    ;
+
+empty_recipe_line
+    : LEADING_TAB ws? NL
     ;
 
 undefine

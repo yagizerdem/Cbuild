@@ -1,7 +1,7 @@
-app.txt: bar.txt
-	echo app > app.txt
-	echo girdi
+
+app.o:  app.c
 
 
-bar.txt:
-	echo bar > bar.txt
+
+app.c:
+	echo hit app.c recipe

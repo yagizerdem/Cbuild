@@ -77,3 +77,9 @@ All of these variables are registered with the `default` origin and are not expo
 | ------------- | ------------- | ------------------------------------------------------------------ |
 | `SHELL`       | undefined     | The command interpreter used by the build system.                  |
 | `.SHELLFLAGS` | undefined     | The flags passed to the command interpreter referenced by `SHELL`. |
+
+## Special Targets
+
+| Target   | Description                                       |
+| -------- | ------------------------------------------------- |
+| `.PHONY` | Declares phony targets that are not actual files. |

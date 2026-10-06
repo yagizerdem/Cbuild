@@ -9,25 +9,42 @@ import ErrorHandler from "@src/error-handler.js";
 import type { CBuildOptions } from "@src/cli.js";
 import {
   handleCliOptions,
+  normalizeOptions,
   resolveBuildFilePath,
 } from "@src/handle-cli-options.js";
-import { collectCliVars, collectEnvVars } from "./collect-vars.js";
+import { collectCliVars, collectEnvVars } from "@src/collect-vars.js";
 import fs from "fs/promises";
 import { IR } from "@compiler/ir.js";
-import { BuildFileMeta } from "./type/buildfile-meta.js";
+import { BuildFileMeta } from "@src/type/buildfile-meta.js";
 import path from "path";
+import { tinyMakeBackend } from "@tinymake-backend/core.js";
 
 export async function readBuildFile(buildFilePath: string): Promise<string> {
   return await fs.readFile(buildFilePath, "utf-8");
 }
 
 async function main() {
-  let context: Env | null = null;
+  cli.parse();
+  const options: CBuildOptions = cli.opts<CBuildOptions>();
+  const args = cli.args;
 
+  normalizeOptions(options);
+
+  await tinyMakeBackend(options, args);
+
+  // normalize and mutate original object
+
+  // if (options.backend === "cbuild") {
+  //   await cbuildBackend(options, args);
+  // }
+  // if (options.backend === "tinymake") {
+  //   await tinyMakeBackend(options, args);
+  // }
+}
+
+async function cbuildBackend(options: CBuildOptions, args: string[]) {
   try {
-    cli.parse();
-    const options: CBuildOptions = cli.opts<CBuildOptions>();
-    const args = cli.args;
+    let context: Env | null = null;
 
     handleCliOptions(options);
     const buildFileAbsolutePaths: string[] = resolveBuildFilePath(options);

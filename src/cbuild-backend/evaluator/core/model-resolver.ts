@@ -129,12 +129,14 @@ export default class ModelResolver implements Executor {
   }
 
   private isSpecialTarget(target: string): boolean {
-    return target === ".PHONY";
+    return target === ".PHONY" || target == ".DEFAULT";
   }
 
   private resolveSpecialTargetDispatcher(target: string, ir: NormalRuleIR) {
     if (target === ".PHONY") {
       this.resolvePhonyTarget(ir);
+    } else if (target === ".DEFAULT") {
+      this.resolveDefaultTarget(ir);
     }
   }
 
@@ -149,5 +151,10 @@ export default class ModelResolver implements Executor {
       const resolution = expansion.expand(preq);
       this.context.phonyTargets.add(resolution);
     });
+  }
+
+  // mutate the env and add default targets
+  private resolveDefaultTarget(ir: NormalRuleIR) {
+    this.context.defaultRecipes = ir.recipes;
   }
 }

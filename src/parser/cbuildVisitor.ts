@@ -51,6 +51,7 @@ import { TargetsContext } from "./cbuildParser.js";
 import { RecipesContext } from "./cbuildParser.js";
 import { Recipes_optContext } from "./cbuildParser.js";
 import { RecipeContext } from "./cbuildParser.js";
+import { Empty_recipe_lineContext } from "./cbuildParser.js";
 import { UndefineContext } from "./cbuildParser.js";
 import { SpecifiersContext } from "./cbuildParser.js";
 import { IdentifierContext } from "./cbuildParser.js";
@@ -375,6 +376,12 @@ export class cbuildVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitRecipe?: (ctx: RecipeContext) => Result;
+    /**
+     * Visit a parse tree produced by `cbuildParser.empty_recipe_line`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitEmpty_recipe_line?: (ctx: Empty_recipe_lineContext) => Result;
     /**
      * Visit a parse tree produced by `cbuildParser.undefine`.
      * @param ctx the parse tree
