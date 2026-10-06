@@ -13,7 +13,7 @@ export type EvaluatedRules = {
   recipes: ValueNode[];
 };
 
-class TinyMakeEvaluator {
+export class TinyMakeEvaluator {
   private readonly nodes: BaseNode[] = [];
   private readonly context: TinyMakeEnv;
 
@@ -28,14 +28,15 @@ class TinyMakeEvaluator {
       if (node.type === "assignment") {
         this.evaluateAssignmentNode(node as AssignmentNode);
       } else if (node.type === "rule") {
+        evaluationResult.push(...this.evaluatRule(node as RuleNode));
       }
     }
     return evaluationResult;
   }
 
-  public evaluateAssignmentNode(assignment: AssignmentNode) {
+  private evaluateAssignmentNode(assignment: AssignmentNode) {
     const expansion = new TinyMakeExpansionEngine(this.context);
-    const lValue: string = expansion.expand(assignment.identifier);
+    const lValue: string = expansion.expand(assignment.identifier).trim();
     if (assignment.flavour === "deffered") {
       const rValue = assignment.value; // do not expand immediately
       this.context.setVariable({
@@ -47,7 +48,7 @@ class TinyMakeEvaluator {
       });
     } else {
       // simple
-      const rValue: string = expansion.expand(assignment.value);
+      const rValue: string = expansion.expand(assignment.value).trim();
       this.context.setVariable({
         identifier: lValue,
         value: {
@@ -58,17 +59,21 @@ class TinyMakeEvaluator {
     }
   }
 
-  public evaluatRule(rule: RuleNode): EvaluatedRules[] {
+  private evaluatRule(rule: RuleNode): EvaluatedRules[] {
     const evaluationResult: EvaluatedRules[] = [];
     const expansion = new TinyMakeExpansionEngine(this.context);
     const expandedTarget = expansion
       .expand(rule.targets)
-      .split(/s+/)
+      .split(/\s+/)
+      .map((t) => t.trim())
       .filter(Boolean);
+
+    const d = expansion.expand(rule.prerequisites);
 
     const expandedPreq = expansion
       .expand(rule.prerequisites)
-      .split(/s+/)
+      .split(/\s+/)
+      .map((t) => t.trim())
       .filter(Boolean);
 
     for (const target of expandedTarget) {

@@ -1,11 +1,13 @@
+export type TPart = "varref-part" | "text-part";
+
 export interface VarRefPart {
   value: ValueNode;
-  name: string;
+  name: Extract<TPart, "varref-part">;
 }
 
 export interface TextPart {
   lexeme: string;
-  name: string;
+  name: Extract<TPart, "text-part">;
 }
 
 export interface ValueNode {

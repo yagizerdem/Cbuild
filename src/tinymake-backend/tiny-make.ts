@@ -4,12 +4,19 @@ import {
   RuleNode,
 } from "@tinymake-backend/node-types.js";
 import { LineParser, LineReader } from "@tinymake-backend/read-line.js";
+import {
+  TinyMakeEvaluator,
+  EvaluatedRules,
+} from "@tinymake-backend/evaluator.js";
+import { TinyMakeEnv } from "@tinymake-backend/env.js";
 import { debugPrintValue } from "./debug-util.js";
 
 export class TinyMake {
-  private rawBuildFile: string;
-  constructor(rawBuildFile: string) {
+  private readonly rawBuildFile: string;
+  private readonly context: TinyMakeEnv;
+  constructor(rawBuildFile: string, context: TinyMakeEnv) {
     this.rawBuildFile = rawBuildFile;
+    this.context = context;
   }
 
   async run() {
@@ -17,25 +24,18 @@ export class TinyMake {
     const classifiedLines = lineReader.read();
 
     const lineParser = new LineParser(classifiedLines);
-    const models = lineParser.parse();
+    const AST = lineParser.parse();
 
-    const ruleNodes: RuleNode[] = this.collectRulesNodes(models);
-    const assignmentNodes: AssignmentNode[] =
-      this.collectAssignmentNodes(models);
-
-    for (const n of ruleNodes) {
-      debugPrintValue(n.targets);
-      console.log("\n");
-      debugPrintValue(n.prerequisites);
-      console.log("\n");
-      n.recipes.forEach((r) => debugPrintValue(r));
+    const rules = this.collectRulesNodes(AST);
+    for (const rule of rules) {
+      debugPrintValue(rule.targets);
+      debugPrintValue(rule.prerequisites);
     }
 
-    for (const a of assignmentNodes) {
-      debugPrintValue(a.identifier);
-      debugPrintValue(a.value);
-      console.log(a.flavour);
-    }
+    const evaluation = new TinyMakeEvaluator(AST, this.context);
+    const evaluatedRules: EvaluatedRules[] = evaluation.evaluate();
+
+    console.log(evaluatedRules);
   }
 
   collectRulesNodes(models: BaseNode[]): RuleNode[] {

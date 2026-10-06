@@ -3,7 +3,6 @@ import {
   TextPart,
   ValueNode,
   VarRefPart,
-  RuleNode,
   createRuleNode,
   createValueNode,
   createTextPart,
@@ -487,7 +486,69 @@ export class LineParser {
       );
     }
 
-    return models;
+    // normalize assignment nodes, clear first and last WS
+    const normalizedModels: BaseNode[] = [];
+    models.forEach((m) => {
+      if (m.type === "assignment") {
+        const m_ = m as AssignmentNode;
+
+        // lvalue
+        if (m_.identifier.parts.length > 0) {
+          // remove first blank from identifier
+          const firstPart: VarRefPart | TextPart | undefined =
+            m_.identifier.parts.at(0);
+          if (
+            firstPart &&
+            firstPart.name === "text-part" &&
+            firstPart.lexeme.trim().length === 0
+          ) {
+            m_.identifier.parts = m_.identifier.parts.slice(1);
+          }
+
+          // remove last blank from identifier
+          const lastPart: VarRefPart | TextPart | undefined =
+            m_.identifier.parts.at(-1);
+          if (
+            lastPart &&
+            lastPart.name === "text-part" &&
+            lastPart.lexeme.trim().length === 0
+          ) {
+            m_.identifier.parts.pop();
+          }
+        }
+
+        // rvalue
+        if (m_.value.parts.length > 0) {
+          // remove first blank from identifier
+          const firstPart: VarRefPart | TextPart | undefined =
+            m_.value.parts.at(0);
+          if (
+            firstPart &&
+            firstPart.name === "text-part" &&
+            firstPart.lexeme.trim().length === 0
+          ) {
+            m_.value.parts = m_.value.parts.slice(1);
+          }
+
+          // remove last blank from identifier
+          const lastPart: VarRefPart | TextPart | undefined =
+            m_.value.parts.at(-1);
+          if (
+            lastPart &&
+            lastPart.name === "text-part" &&
+            lastPart.lexeme.trim().length === 0
+          ) {
+            m_.value.parts.pop();
+          }
+        }
+
+        normalizedModels.push(m);
+      } else if (m.type === "rule") {
+        normalizedModels.push(m);
+      }
+    });
+
+    return normalizedModels;
   }
 
   private parseRecipe(line: ClassifiedLine): ValueNode {
@@ -579,7 +640,11 @@ export class LineParser {
           ),
         );
       } else {
-        parts.push(this.textPartParser(processed, cursor, depth));
+        if (/\s+/.test(peek(processed, cursor))) {
+          parts.push(this.collectWs(processed, cursor));
+        } else {
+          parts.push(this.textPartParser(processed, cursor, depth));
+        }
       }
 
       if (
@@ -654,6 +719,16 @@ export class LineParser {
     return createVarRefPart(value);
   }
 
+  private collectWs(process: Pchar[], cursor: Cursor) {
+    let text = "";
+    // collect WS as seperate text part
+    while (!end(process, cursor) && /\s+/.test(peek(process, cursor))) {
+      text += peek(process, cursor);
+      advance(process, cursor);
+    }
+    return createTextPart(text);
+  }
+
   private textPartParser(
     process: Pchar[],
     cursor: Cursor,
@@ -662,6 +737,11 @@ export class LineParser {
     let text = "";
     while (!end(process, cursor)) {
       const pch = peekPchar(process, cursor);
+
+      if (/\s+/.test(pch.char)) {
+        break;
+      }
+
       if (pch.escaped) {
         text += pch.char;
         advance(process, cursor);
