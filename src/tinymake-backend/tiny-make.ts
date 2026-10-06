@@ -16,6 +16,7 @@ import {
   DeqpGraph,
   hasCycle,
 } from "@tinymake-backend/graph.js";
+import { TinyMakeSchedular } from "@tinymake-backend/schedular.js";
 
 export class TinyMake {
   private readonly rawBuildFile: string;
@@ -59,6 +60,12 @@ export class TinyMake {
     );
 
     console.log(resolved.rules);
+
+    const schedular = new TinyMakeSchedular({
+      depqGraph: resolved,
+      context: this.context,
+    });
+    await schedular.schedule();
   }
 
   collectRulesNodes(models: BaseNode[]): RuleNode[] {

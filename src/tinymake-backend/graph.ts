@@ -2,8 +2,9 @@ import { EvaluatedRule } from "@tinymake-backend/evaluator.js";
 
 export interface DeqpGraph {
   rules: EvaluatedRule[];
-  targetRuleMap: Record<string, EvaluatedRule>;
+  targetRuleMap: Record<string, EvaluatedRule>; // stores target and corresponding target evaluated rule
   reverseTargetRuleMap: Record<string, EvaluatedRule[]>; // stors target list that depends on target key
+  targetDepqMap: Record<string, EvaluatedRule[]>; // stores target and corresponding preqs as evaluated rule
 }
 
 export function createDepqGraph(rules: EvaluatedRule[]): DeqpGraph {
@@ -20,10 +21,19 @@ export function createDepqGraph(rules: EvaluatedRule[]): DeqpGraph {
     });
   }
 
+  const targetDepqMap: Record<string, EvaluatedRule[]> = {};
+  for (const rule of rules) {
+    targetDepqMap[rule.target] = [];
+    for (const preq of rule.preqs) {
+      targetDepqMap[rule.target].push(targetRuleMap[preq]);
+    }
+  }
+
   return {
     reverseTargetRuleMap,
     targetRuleMap,
     rules,
+    targetDepqMap,
   };
 }
 

@@ -1,3 +1,4 @@
+import { CBuildOptions } from "@src/cli.js";
 import { ValueNode } from "@tinymake-backend/node-types.js";
 
 type TinyMakeSymboltableVar = {
@@ -15,8 +16,10 @@ type TinyMakeSymboltableVar = {
 
 export class TinyMakeEnv {
   private readonly symbolTable: Record<string, TinyMakeSymboltableVar> = {};
-  constructor() {
+  public readonly cliOptions: CBuildOptions;
+  constructor(cliOptions: CBuildOptions) {
     this.symbolTable = {};
+    this.cliOptions = cliOptions;
   }
   public enclosing: TinyMakeEnv | undefined;
 
