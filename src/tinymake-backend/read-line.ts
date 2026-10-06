@@ -110,6 +110,13 @@ export class LineReader {
       }
     }
 
+    if (cursor < this.program.length) {
+      lines.push({
+        line: this.program.slice(cursor, this.program.length),
+        row,
+      });
+    }
+
     // normalize lines
     const normalized = lines.filter(
       (line) => !isBlank(line.line) && !isEmpty(line.line),

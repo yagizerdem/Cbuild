@@ -109,9 +109,7 @@ B = $(A)
 EMPTY=
 BR= $(EMPTY) $(EMPTY) 
 app : $Asudenaz$(BR)yetkin$K
-\t echo hello world
-
-`;
+\t echo hello world`;
 
   const context: TinyMakeEnv = new TinyMakeEnv();
 

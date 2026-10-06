@@ -26,11 +26,11 @@ export class TinyMake {
     const lineParser = new LineParser(classifiedLines);
     const AST = lineParser.parse();
 
-    const rules = this.collectRulesNodes(AST);
-    for (const rule of rules) {
-      debugPrintValue(rule.targets);
-      debugPrintValue(rule.prerequisites);
-    }
+    // const rules = this.collectRulesNodes(AST);
+    // for (const rule of rules) {
+    //   debugPrintValue(rule.targets);
+    //   debugPrintValue(rule.prerequisites);
+    // }
 
     const evaluation = new TinyMakeEvaluator(AST, this.context);
     const evaluatedRules: EvaluatedRules[] = evaluation.evaluate();
