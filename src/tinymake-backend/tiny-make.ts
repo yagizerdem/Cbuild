@@ -9,7 +9,12 @@ import {
   EvaluatedRules,
 } from "@tinymake-backend/evaluator.js";
 import { TinyMakeEnv } from "@tinymake-backend/env.js";
-import { debugPrintValue } from "./debug-util.js";
+import { debugPrintValue } from "@tinymake-backend/debug-util.js";
+import {
+  createDepqGraph,
+  DeqpGraph,
+  hasCycle,
+} from "@tinymake-backend/graph.js";
 
 export class TinyMake {
   private readonly rawBuildFile: string;
@@ -34,8 +39,17 @@ export class TinyMake {
 
     const evaluation = new TinyMakeEvaluator(AST, this.context);
     const evaluatedRules: EvaluatedRules[] = evaluation.evaluate();
-
     console.log(evaluatedRules);
+
+    const graph: DeqpGraph = createDepqGraph(evaluatedRules);
+    const defaultGoal = graph.rules.at(0);
+    if (!defaultGoal) {
+      console.log("not targets found");
+      return;
+    }
+
+    const cycle = hasCycle(graph, defaultGoal.target);
+    console.log(cycle);
   }
 
   collectRulesNodes(models: BaseNode[]): RuleNode[] {

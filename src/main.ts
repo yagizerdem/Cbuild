@@ -17,8 +17,7 @@ import fs from "fs/promises";
 import { IR } from "@compiler/ir.js";
 import { BuildFileMeta } from "@src/type/buildfile-meta.js";
 import path from "path";
-import { TinyMake } from "@tinymake-backend/tiny-make.js";
-import { TinyMakeEnv } from "@tinymake-backend/env.js";
+import { tinyMakeBackend } from "@tinymake-backend/core.js";
 
 export async function readBuildFile(buildFilePath: string): Promise<string> {
   return await fs.readFile(buildFilePath, "utf-8");
@@ -100,21 +99,6 @@ async function cbuildBackend(options: CBuildOptions, args: string[]) {
       process.exit(1);
     }
   }
-}
-
-async function tinyMakeBackend(options: CBuildOptions, args: string[]) {
-  const raw = `
-A = 10
-B = $(A)
-EMPTY=
-BR= $(EMPTY) $(EMPTY) 
-app : $Asudenaz$(BR)yetkin$K
-\t echo hello world`;
-
-  const context: TinyMakeEnv = new TinyMakeEnv();
-
-  const tinyMake = new TinyMake(raw, context);
-  tinyMake.run();
 }
 
 await main();
