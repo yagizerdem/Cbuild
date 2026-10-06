@@ -17,7 +17,7 @@ app: yagiz
 yagiz: erdem
 \t echo yagiz
 
-erdem: 
+erdem: test
 \t echo erdem
 
 

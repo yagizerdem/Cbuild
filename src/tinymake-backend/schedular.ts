@@ -2,7 +2,9 @@ import { EvaluatedRule } from "@tinymake-backend/evaluator.js";
 import { DeqpGraph } from "@tinymake-backend/graph.js";
 import { TinyMakeExpansionEngine } from "@tinymake-backend/expansion.js";
 import { TinyMakeEnv } from "@tinymake-backend/env.js";
-import { ExecResult, TinyMakeShell } from "./shell.js";
+import { ExecResult, TinyMakeShell } from "@tinymake-backend/shell.js";
+import path from "node:path";
+import fs from "fs";
 
 interface TinyMakeSchedularSchedularOptions {
   depqGraph: DeqpGraph;
@@ -29,6 +31,41 @@ export class TinyMakeSchedular {
     }
   }
 
+  private shouldRebuild(target: string) {
+    const rule = this.depqGrpah.targetRuleMap[target];
+
+    const targetAbsPath = path.resolve(process.cwd(), rule.target);
+    if (!fs.existsSync(targetAbsPath)) return true;
+    const targetLastModifiedDate: number = fs.statSync(targetAbsPath).mtimeMs;
+
+    for (const preq of rule.preqs) {
+      const preqAbsPath = path.resolve(process.cwd(), preq);
+      const preqFileExist = fs.existsSync(preqAbsPath);
+
+      if (
+        !preqFileExist &&
+        !Object.keys(this.depqGrpah.targetRuleMap).includes(preq)
+      ) {
+        throw new Error(
+          "tinymake: No rule to make targert needed by . Stop...",
+        );
+      }
+
+      // rule should be rebuilded
+      if (!preqFileExist) {
+        continue;
+      }
+
+      const preqLastModifiedDate: number = fs.statSync(preqAbsPath).mtimeMs;
+
+      if (preqLastModifiedDate >= targetLastModifiedDate) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   private collectNextRules(): string[] {
     return Object.keys(this.depqCounter).filter((key) => {
       if (
@@ -44,6 +81,9 @@ export class TinyMakeSchedular {
 
   private async buildTarget(target: string) {
     const rule = this.depqGrpah.targetRuleMap[target];
+
+    if (!this.shouldRebuild(rule.target)) return;
+
     for (const recipe of rule.recipes) {
       const expansion = new TinyMakeExpansionEngine(this.context);
       const command = expansion.expand(recipe).trim();
@@ -67,7 +107,7 @@ export class TinyMakeSchedular {
     }
   }
 
-  sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  private sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
   public async schedule() {
     const maxSlotsSize = this.context.cliOptions.jobs ?? 1;

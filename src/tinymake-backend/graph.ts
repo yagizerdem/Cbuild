@@ -79,10 +79,12 @@ export function deadRuleElemination(graph: DeqpGraph, goal: string) {
 
   const deadCdoeEleminationRecursive = (currentGoal: string) => {
     const goalRule = graph.targetRuleMap[currentGoal];
-    addResolution(goalRule);
-    goalRule.preqs.forEach((preq) => {
-      deadCdoeEleminationRecursive(preq);
-    });
+    if (goalRule) {
+      addResolution(goalRule);
+      goalRule.preqs.forEach((preq) => {
+        deadCdoeEleminationRecursive(preq);
+      });
+    }
   };
 
   const defaultGoal = graph.targetRuleMap[goal];
