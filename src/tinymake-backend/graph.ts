@@ -15,10 +15,11 @@ export function createDepqGraph(rules: EvaluatedRule[]): DeqpGraph {
 
   const reverseTargetRuleMap: Record<string, EvaluatedRule[]> = {};
   for (const rule of rules) {
-    reverseTargetRuleMap[rule.target] = [];
-    rule.preqs.forEach((preq) => {
-      reverseTargetRuleMap[rule.target].push(targetRuleMap[preq]);
-    });
+    reverseTargetRuleMap[rule.target] = reverseTargetRuleMap[rule.target] ?? [];
+    for (const preq of rule.preqs) {
+      reverseTargetRuleMap[preq] = reverseTargetRuleMap[preq] ?? [];
+      reverseTargetRuleMap[preq].push(rule);
+    }
   }
 
   const targetDepqMap: Record<string, EvaluatedRule[]> = {};
