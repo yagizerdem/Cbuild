@@ -27,81 +27,82 @@ import {
   ArgumentsContext,
 } from "@ysharp/parser/ysharpParser.js";
 import { yEnv } from "@ysharp/evaluator/yEnv.js";
+import { yValue } from "@ysharp/evaluator/yValue.js";
 
-class yExprEvaluator extends ysharpVisitor<number> {
+class yExprEvaluator extends ysharpVisitor<yValue> {
   private readonly env: yEnv;
   public constructor(env: yEnv) {
     super();
     this.env = env;
   }
 
-  visitExpression = (ctx: ExpressionContext): number => {
-    return ctx.accept(this) as number;
+  visitExpression = (ctx: ExpressionContext): yValue => {
+    return ctx.accept(this) as yValue;
   };
 
-  visitAssignment = (ctx: AssignmentContext): number => {
+  visitAssignment = (ctx: AssignmentContext): yValue => {
     if (ctx.lvalue() != null) {
-      const lvalue: number = this.visit(ctx.lvalue()!) as number;
+      const lvalue: number = this.visit(ctx.lvalue()!) as yValue;
     }
   };
 
-  visitTernaryConditional = (ctx: TernaryConditionalContext): number => {
+  visitTernaryConditional = (ctx: TernaryConditionalContext): yValue => {
     throw new Error("Not implemented");
   };
 
-  visitEquality = (ctx: EqualityContext): number => {
+  visitEquality = (ctx: EqualityContext): yValue => {
     throw new Error("Not implemented");
   };
 
-  visitComparison = (ctx: ComparisonContext): number => {
+  visitComparison = (ctx: ComparisonContext): yValue => {
     throw new Error("Not implemented");
   };
 
-  visitTerm = (ctx: TermContext): number => {
+  visitTerm = (ctx: TermContext): yValue => {
     throw new Error("Not implemented");
   };
 
-  visitFactor = (ctx: FactorContext): number => {
+  visitFactor = (ctx: FactorContext): yValue => {
     throw new Error("Not implemented");
   };
 
-  visitUnary = (ctx: UnaryContext): number => {
+  visitUnary = (ctx: UnaryContext): yValue => {
     throw new Error("Not implemented");
   };
 
-  visitPostfix = (ctx: PostfixContext): number => {
+  visitPostfix = (ctx: PostfixContext): yValue => {
+    const calle = ctx.call().accept(this) as 
+  };
+
+  visitCall = (ctx: CallContext): yValue => {
     throw new Error("Not implemented");
   };
 
-  visitCall = (ctx: CallContext): number => {
+  visitPrimary = (ctx: PrimaryContext): yValue => {
     throw new Error("Not implemented");
   };
 
-  visitPrimary = (ctx: PrimaryContext): number => {
+  visitAtom = (ctx: AtomContext): yValue => {
     throw new Error("Not implemented");
   };
 
-  visitAtom = (ctx: AtomContext): number => {
+  visitArray = (ctx: ArrayContext): yValue => {
     throw new Error("Not implemented");
   };
 
-  visitArray = (ctx: ArrayContext): number => {
+  visitMap = (ctx: MapContext): yValue => {
     throw new Error("Not implemented");
   };
 
-  visitMap = (ctx: MapContext): number => {
+  visitAssignmentOp = (ctx: AssignmentOpContext): yValue => {
     throw new Error("Not implemented");
   };
 
-  visitAssignmentOp = (ctx: AssignmentOpContext): number => {
-    throw new Error("Not implemented");
+  visitLvalue = (ctx: LvalueContext): yValue => {
+    return ctx.postfix().accept(this) as yValue;
   };
 
-  visitLvalue = (ctx: LvalueContext): number => {
-    return ctx.postfix().accept(this) as number;
-  };
-
-  visitArguments = (ctx: ArgumentsContext): number => {
+  visitArguments = (ctx: ArgumentsContext): yValue => {
     throw new Error("Not implemented");
   };
 }
