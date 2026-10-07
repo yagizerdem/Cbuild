@@ -25,9 +25,11 @@ export function createDepqGraph(rules: ResolvedRule[]): DeqpGraph {
 
   const targetDepqMap: Record<string, ResolvedRule[]> = {};
   for (const rule of rules) {
-    targetDepqMap[rule.target.name] = [];
+    targetDepqMap[rule.target.name] = targetDepqMap[rule.target.name] ?? [];
     for (const preq of rule.preqs) {
-      targetDepqMap[rule.target.name].push(targetRuleMap[preq.name]);
+      if (!targetDepqMap[rule.target.name].includes(targetRuleMap[preq.name])) {
+        targetDepqMap[rule.target.name].push(targetRuleMap[preq.name]);
+      }
     }
   }
 
