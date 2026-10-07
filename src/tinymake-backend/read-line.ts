@@ -94,7 +94,10 @@ export class LineReader {
     const lines = this.splitLines();
 
     for (const line of lines) {
-      classifiedLines.push(this.classifyLines(line));
+      const classified = this.classifyLines(line);
+      if (classified !== null) {
+        classifiedLines.push(classified);
+      }
     }
 
     return classifiedLines;
@@ -257,15 +260,23 @@ export class LineReader {
     return -1;
   }
 
-  private classifyLines(srcLine: Line): ClassifiedLine {
-    const processed = this.processLine(srcLine); // handle escapes
+  private removeComment(line: Pchar[]) {
+    const firstNonEscapedHashIndex = this.findPattern(line, "#", false);
+    if (firstNonEscapedHashIndex != -1) {
+      return line.slice(0, firstNonEscapedHashIndex);
+    }
+    return line;
+  }
+
+  private classifyLines(srcLine: Line): ClassifiedLine | null {
+    const processed = this.removeComment(this.processLine(srcLine)); // handle escapes
 
     const pCharToRaw = (pChar: Pchar[]) => {
       return pChar.map((p) => p.char).join("");
     };
 
     if (processed.length == 0) {
-      throw Error("cannot classify empyt line");
+      return null;
     }
 
     // recipe
