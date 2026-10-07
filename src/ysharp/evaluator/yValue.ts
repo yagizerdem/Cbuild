@@ -1,6 +1,6 @@
 export type TValue = "int" | "double" | "boolean" | "object" | "null";
 
-class yValue {
+export class yValue {
   public valType: TValue;
   public data: any;
 
