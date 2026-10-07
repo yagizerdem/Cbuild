@@ -18,21 +18,42 @@ import {
 } from "@tinymake-backend/graph.js";
 import { TinyMakeSchedular } from "@tinymake-backend/schedular.js";
 import { TinyMakeResolver } from "./resolution.js";
+import { resolveBuildFilePath } from "@src/handle-cli-options.js";
+import { readBuildFile } from "@src/readBuildFile.js";
+import { BuildFileMeta } from "@src/type/buildfile-meta.js";
+import fs from "fs/promises";
+import path from "path";
 
 export class TinyMake {
-  private readonly rawBuildFile: string;
   private readonly context: TinyMakeEnv;
-  constructor(rawBuildFile: string, context: TinyMakeEnv) {
-    this.rawBuildFile = rawBuildFile;
+  private readonly defaultTarget: string | undefined;
+
+  constructor(context: TinyMakeEnv, defaultTarget: string | undefined) {
     this.context = context;
+    this.defaultTarget = defaultTarget;
   }
 
   async run() {
-    const lineReader = new LineReader(this.rawBuildFile);
-    const classifiedLines = lineReader.read();
+    const buildFileAbsolutePaths: string[] = resolveBuildFilePath(
+      this.context.cliOptions,
+    );
+    const parsedNodes: BaseNode[] = [];
+    for (const buildFilePath of buildFileAbsolutePaths) {
+      const buildFileContent = await readBuildFile(buildFilePath);
+      const buildFileMeta: BuildFileMeta = {
+        absolutePath: buildFilePath,
+        rawContent: buildFileContent,
+        size: (await fs.stat(buildFilePath)).size,
+        relativePath: path.relative(process.cwd(), buildFilePath),
+        name: path.basename(buildFilePath),
+      };
 
-    const lineParser = new LineParser(classifiedLines);
-    const AST = lineParser.parse();
+      const lineReader = new LineReader(buildFileMeta.rawContent);
+      const classifiedLines = lineReader.read();
+      const lineParser = new LineParser(classifiedLines);
+      const AST = lineParser.parse();
+      parsedNodes.push(...AST);
+    }
 
     // const rules = this.collectRulesNodes(AST);
     // for (const rule of rules) {
@@ -41,29 +62,30 @@ export class TinyMake {
     // }
 
     // evaluation
-    const evaluation = new TinyMakeEvaluator(AST, this.context);
+    const evaluation = new TinyMakeEvaluator(parsedNodes, this.context);
     const evaluatedRules: EvaluatedRule[] = evaluation.evaluate();
     // resolution
     const resolver = new TinyMakeResolver(evaluatedRules);
     const resolution = resolver.resole();
     // normalize
     const normalzied = resolver.normalize(resolution);
-    console.log(normalzied);
 
     // DEFAULT_GOAL
-    const defaultGoal = normalzied.at(0);
+    const defaultGoal: string | undefined =
+      this.defaultTarget ?? normalzied.at(0)?.target.name;
     if (!defaultGoal) {
       console.log("not targets found");
       return;
     }
 
     const graph: DeqpGraph = createDepqGraph(
-      deadRuleElemination(createDepqGraph(normalzied), defaultGoal.target.name),
+      deadRuleElemination(createDepqGraph(normalzied), defaultGoal),
     );
 
     // there should not be cycle
-    const cycle = hasCycle(graph, defaultGoal.target.name);
-    console.log(cycle);
+    if (hasCycle(graph, defaultGoal)) {
+      throw new Error("ciruclar dependecy !!!");
+    }
 
     const schedular = new TinyMakeSchedular({
       depqGraph: graph,

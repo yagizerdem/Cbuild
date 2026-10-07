@@ -46,8 +46,8 @@ export class TinyMakeResolver {
     const resolution: ResolvedRule[] = [];
     for (let i = 0; i < this.evaluatedRules.length; i++) {
       const evaluation = this.evaluatedRules[i];
-      const targetAbsPath = path.resolve(process.cwd(), evaluation.target);
-      const fileExist = !fs.existsSync(targetAbsPath);
+      const targetAbsPath = path.join(process.cwd(), evaluation.target);
+      const fileExist = fs.existsSync(targetAbsPath);
 
       let targetResolution: TargetResolution;
 
@@ -66,8 +66,8 @@ export class TinyMakeResolver {
 
       const preqResolutions: PreqResolution[] = [];
       for (const preq of evaluation.preqs) {
-        const preqAbsPath = path.resolve(process.cwd(), evaluation.target);
-        const fileExist = !fs.existsSync(preqAbsPath);
+        const preqAbsPath = path.join(process.cwd(), evaluation.target);
+        const fileExist = fs.existsSync(preqAbsPath);
         const targetExist = this.evaluatedRules.some(
           (rule) => rule.target == preq,
         );

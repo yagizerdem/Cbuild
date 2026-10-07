@@ -1,7 +1,11 @@
 
 app.o:  app.c
-
+	echo $@
 
 
 app.c:
 	echo hit app.c recipe
+
+
+bar:
+	echo fucker

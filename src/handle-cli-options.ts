@@ -72,7 +72,7 @@ export function resolveBuildFilePath(options: CBuildOptions): string[] {
 
       if (!fileExistbyAbsolutePath(resolvedBuildFilePath)) {
         throw CbuildException.from({
-          message: `cbuild: ${buildFile}: No such file or directory`,
+          message: `${options.backend === "tinymake" ? "tinymake" : "cbuild"}: ${buildFile}: No such file or directory`,
           column: -1,
           row: -1,
           errorType: ErrorType.PROCESS,

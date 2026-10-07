@@ -27,8 +27,11 @@ export class TinyMakeSchedular {
     this.context = options.context;
 
     for (const rule of options.depqGraph.rules) {
-      this.depqCounter[rule.target.name] =
-        options.depqGraph.targetDepqMap[rule.target.name].length;
+      let depqTargetCount = 0;
+      for (const preqResolution of rule.preqs) {
+        depqTargetCount += preqResolution.origin === "target" ? 1 : 0;
+      }
+      this.depqCounter[rule.target.name] = depqTargetCount;
     }
   }
 
@@ -40,27 +43,15 @@ export class TinyMakeSchedular {
     const targetLastModifiedDate: number = fs.statSync(targetAbsPath).mtimeMs;
 
     for (const preq of rule.preqs) {
-      const preqAbsPath = path.resolve(process.cwd(), preq.name);
-      const preqFileExist = fs.existsSync(preqAbsPath);
-
-      if (
-        !preqFileExist &&
-        !Object.keys(this.depqGrpah.targetRuleMap).includes(preq.name)
-      ) {
-        throw new Error(
-          "tinymake: No rule to make targert needed by . Stop...",
-        );
-      }
-
-      // rule should be rebuilded
-      if (!preqFileExist) {
-        continue;
-      }
-
-      const preqLastModifiedDate: number = fs.statSync(preqAbsPath).mtimeMs;
-
-      if (preqLastModifiedDate >= targetLastModifiedDate) {
-        return true;
+      if (preq.origin === "not-found") {
+        throw new Error("preq not found" + preq.name);
+      } else if (preq.origin === "cwd") {
+        const preqLastModifiedDate: number = fs.statSync(
+          preq.absolutePath,
+        ).mtimeMs;
+        if (preqLastModifiedDate >= targetLastModifiedDate) {
+          return true;
+        }
       }
     }
 
