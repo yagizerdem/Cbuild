@@ -1,3 +1,4 @@
+import { BuildFileMeta } from "@src/type/buildfile-meta.js";
 import {
   BaseNode,
   TextPart,
@@ -82,8 +83,10 @@ function isAlphanumeric(ch: string): boolean {
 
 export class LineReader {
   private readonly program: string;
-  constructor(program: string) {
+  private readonly fileMetaData: BuildFileMeta;
+  constructor(program: string, fileMetaData: BuildFileMeta) {
     this.program = program;
+    this.fileMetaData = fileMetaData;
   }
 
   public read(): ClassifiedLine[] {
@@ -104,7 +107,10 @@ export class LineReader {
     for (let i = 0; i < this.program.length; i++) {
       const char = this.program[i];
       if (char === "\n") {
-        lines.push({ line: this.program.slice(cursor, i), row });
+        lines.push({
+          line: this.program.slice(cursor, i).replace(/\r$/, ""),
+          row,
+        });
         row++;
         cursor = i + 1;
       }
@@ -112,7 +118,9 @@ export class LineReader {
 
     if (cursor < this.program.length) {
       lines.push({
-        line: this.program.slice(cursor, this.program.length),
+        line: this.program
+          .slice(cursor, this.program.length)
+          .replace(/\r$/, ""),
         row,
       });
     }
@@ -133,6 +141,18 @@ export class LineReader {
     while (!end(line.line, cursor)) {
       const ch = peek(line.line, cursor);
       const nextCh = next(line.line, cursor);
+
+      if (ch == "$" && nextCh == "$" && !escaped) {
+        processed.push({
+          char: "$",
+          col: cursor.current,
+          escaped: true,
+          row: line.row,
+        });
+        advance(line.line, cursor);
+        advance(line.line, cursor);
+        continue;
+      }
 
       if (ch == "$" && (nextCh == "(" || nextCh == "{") && !escaped) {
         processed.push({
@@ -270,12 +290,14 @@ export class LineReader {
       simpleAssignmentIndex == -1 &&
       recursiveAssignmentIndex == -1
     ) {
-      throw Error("invalid rule");
+      throw Error(
+        `${this.fileMetaData.name}:${srcLine.row}: *** missing separator.  Stop.`,
+      );
     }
 
     const assignmentIndex = Math.min(
-      simpleAssignmentIndex,
-      recursiveAssignmentIndex,
+      simpleAssignmentIndex == -1 ? Infinity : simpleAssignmentIndex,
+      recursiveAssignmentIndex == -1 ? Infinity : recursiveAssignmentIndex,
     );
 
     const createTargetPreqLine = (): ClassifiedLine => {
@@ -292,29 +314,22 @@ export class LineReader {
     };
 
     const createAssignmentLine = (): ClassifiedLine => {
+      const isSimpleAssignment = simpleAssignmentIndex == assignmentIndex;
+      const assignmentOp = isSimpleAssignment ? ":=" : "=";
       return {
         ...srcLine,
         processed,
         processedRaw: pCharToRaw(processed),
         parsed: {
-          type:
-            recursiveAssignmentIndex != -1
-              ? "recursive-assignment"
-              : "immediate-assignment",
-          left: processed.slice(
-            0,
-            recursiveAssignmentIndex != -1
-              ? recursiveAssignmentIndex
-              : simpleAssignmentIndex,
-          ),
+          type: isSimpleAssignment
+            ? "immediate-assignment"
+            : "recursive-assignment",
+          left: processed.slice(0, assignmentIndex),
           right: processed.slice(
-            (recursiveAssignmentIndex != -1
-              ? recursiveAssignmentIndex
-              : simpleAssignmentIndex) +
-              (recursiveAssignmentIndex != -1 ? 1 : 2),
+            assignmentIndex + assignmentOp.length,
             processed.length,
           ),
-          assignmentOp: recursiveAssignmentIndex != -1 ? "=" : ":=",
+          assignmentOp,
         },
       };
     };
@@ -335,7 +350,7 @@ export class LineReader {
     }
 
     // := and : has same starting idnex so := has more piority bcs it is longest common substring
-    if (simpleAssignmentIndex <= columnIndex) {
+    if (simpleAssignmentIndex != -1 && simpleAssignmentIndex == columnIndex) {
       return createAssignmentLine();
     }
 
@@ -428,8 +443,13 @@ type ParseContext = "rule" | "normal";
 
 export class LineParser {
   private readonly classifiedLines: ClassifiedLine[] = [];
-  public constructor(classifiedLines: ClassifiedLine[]) {
+  private readonly fileMetaData: BuildFileMeta;
+  public constructor(
+    classifiedLines: ClassifiedLine[],
+    fileMetaData: BuildFileMeta,
+  ) {
     this.classifiedLines = classifiedLines;
+    this.fileMetaData = fileMetaData;
   }
 
   public parse(): BaseNode[] {
@@ -479,6 +499,11 @@ export class LineParser {
         models.push(this.parseAssignment(line));
       } else {
         // collect recipe
+        if (context !== "rule" || !recentRuleHeader) {
+          throw Error(
+            `${this.fileMetaData.name}:${line.row}: *** recipe commences before first target.  Stop.`,
+          );
+        }
         recipesUnderRule.push(this.parseRecipe(line));
       }
     }
@@ -493,7 +518,7 @@ export class LineParser {
       );
     }
 
-    // normalize assignment nodes, clear first and last WS
+    // normalize assignment names and leading value WS
     const normalizedModels: BaseNode[] = [];
     models.forEach((m) => {
       if (m.type === "assignment") {
@@ -536,17 +561,6 @@ export class LineParser {
           ) {
             m_.value.parts = m_.value.parts.slice(1);
           }
-
-          // remove last blank from identifier
-          const lastPart: VarRefPart | TextPart | undefined =
-            m_.value.parts.at(-1);
-          if (
-            lastPart &&
-            lastPart.name === "text-part" &&
-            lastPart.lexeme.trim().length === 0
-          ) {
-            m_.value.parts.pop();
-          }
         }
 
         normalizedModels.push(m);
@@ -581,6 +595,15 @@ export class LineParser {
     }
 
     const identifier = this.valueParser(line.parsed.left, { current: 0 }, 0, 0);
+    const variableName = identifier.parts
+      .map((part) => (part.name === "text-part" ? part.lexeme : "$(variable)"))
+      .join("")
+      .trim();
+    if (!variableName || /\s/.test(variableName)) {
+      throw Error(
+        `${this.fileMetaData.name}:${line.row}: *** invalid variable name.  Stop.`,
+      );
+    }
     const value = this.valueParser(line.parsed.right, { current: 0 }, 0, 0);
 
     return createAssignmentNode(
@@ -606,6 +629,16 @@ export class LineParser {
 
     const preqValue = this.valueParser(line.parsed.preqs, { current: 0 }, 0, 0);
 
+    if (
+      targetValue.parts.every(
+        (part) => part.name === "text-part" && part.lexeme.trim().length === 0,
+      )
+    ) {
+      throw Error(
+        `${this.fileMetaData.name}:${line.row}: *** missing target.  Stop.`,
+      );
+    }
+
     return {
       first: targetValue,
       second: preqValue,
@@ -620,17 +653,7 @@ export class LineParser {
   ): ValueNode {
     const isVarRefPart = () => {
       const pch = peekPchar(processed, cursor);
-      const nextPch = nextPchar(processed, cursor);
-      if (pch.char == "$" && !pch.escaped) return true;
-
-      if (
-        pch.escaped &&
-        !(nextPch.char === "$" || nextPch.char === "{" || nextPch.char === "(")
-      ) {
-        return true;
-      }
-
-      return false;
+      return pch.char == "$" && !pch.escaped;
     };
 
     const parts: (VarRefPart | TextPart)[] = [];
@@ -685,19 +708,12 @@ export class LineParser {
     const pch = peekPchar(processed, cursor);
 
     const closeVarRef = () => {
-      const pch = peekPchar(processed, cursor);
-
       const closingParen = peekPchar(processed, cursor);
-      if (closingParen.char != "}" && closingParen.char != ")" && depth == 0) {
-        throw new Error("shoudl close with paren");
-      }
-
-      if (pch.char == "(" && closingParen.char != ")" && depth == 0) {
-        throw new Error("shoudl close with )");
-      }
-
-      if (pch.char == "{" && closingParen.char != "}" && depth == 0) {
-        throw new Error("shoudl close with }");
+      const expectedParen = pch.char === "(" ? ")" : "}";
+      if (closingParen.char !== expectedParen || closingParen.escaped) {
+        throw Error(
+          `${this.fileMetaData.name}:${pch.row}: *** expected '${expectedParen}' to close variable reference.  Stop.`,
+        );
       }
 
       advance(processed, cursor); // consume Rparen ) }
