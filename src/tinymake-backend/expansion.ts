@@ -4,6 +4,7 @@ import { VarRefPart } from "@tinymake-backend/node-types.js";
 
 export class TinyMakeExpansionEngine {
   private readonly env: TinyMakeEnv;
+  private readonly activeVariables = new Set<string>();
   constructor(env: TinyMakeEnv) {
     this.env = env;
   }
@@ -21,7 +22,15 @@ export class TinyMakeExpansionEngine {
 
         if (symbolTableEntry) {
           if (symbolTableEntry.value.kind === "deffered") {
-            builder += this.expand(symbolTableEntry.value.value);
+            if (this.activeVariables.has(ref)) {
+              throw new Error(`Recursive variable reference: ${ref}`);
+            }
+            this.activeVariables.add(ref);
+            try {
+              builder += this.expand(symbolTableEntry.value.value);
+            } finally {
+              this.activeVariables.delete(ref);
+            }
           } else {
             builder += symbolTableEntry.value.value;
           }

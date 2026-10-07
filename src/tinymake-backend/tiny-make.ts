@@ -48,14 +48,17 @@ export class TinyMake {
         name: path.basename(buildFilePath),
       };
 
-      const lineReader = new LineReader(buildFileMeta.rawContent);
+      const lineReader = new LineReader(
+        buildFileMeta.rawContent,
+        buildFileMeta,
+      );
       const classifiedLines = lineReader.read();
-      const lineParser = new LineParser(classifiedLines);
+      const lineParser = new LineParser(classifiedLines, buildFileMeta);
       const AST = lineParser.parse();
       parsedNodes.push(...AST);
     }
 
-    // const rules = this.collectRulesNodes(AST);
+    // const  = this.collectRulesNodes(AST);
     // for (const rule of rules) {
     //   debugPrintValue(rule.targets);
     //   debugPrintValue(rule.prerequisites);

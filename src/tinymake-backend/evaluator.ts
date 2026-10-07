@@ -68,6 +68,10 @@ export class TinyMakeEvaluator {
       .map((t) => t.trim())
       .filter(Boolean);
 
+    if (expandedTarget.length === 0) {
+      throw new Error("Rule has no target after variable expansion");
+    }
+
     const d = expansion.expand(rule.prerequisites);
 
     const expandedPreq = expansion
