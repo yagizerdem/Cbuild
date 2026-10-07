@@ -17,11 +17,10 @@ import fs from "fs/promises";
 import { IR } from "@compiler/ir.js";
 import { BuildFileMeta } from "@src/type/buildfile-meta.js";
 import path from "path";
-import { tinyMakeBackend } from "@tinymake-backend/core.js";
-
-export async function readBuildFile(buildFilePath: string): Promise<string> {
-  return await fs.readFile(buildFilePath, "utf-8");
-}
+import { yInterpreter } from "./ysharp/evaluator/yInterpreter.js";
+import { TinyMakeEnv } from "@tinymake-backend/env.js";
+import { TinyMake } from "@tinymake-backend/tiny-make.js";
+import { readBuildFile } from "@src/readBuildFile.js";
 
 async function main() {
   cli.parse();
@@ -98,6 +97,21 @@ async function cbuildBackend(options: CBuildOptions, args: string[]) {
       console.error("cbuild: *** Unknown error.");
       process.exit(1);
     }
+  }
+}
+
+async function tinyMakeBackend(options: CBuildOptions, targets: string[]) {
+  if (targets.length > 0) {
+    for (const target of targets) {
+      const context: TinyMakeEnv = new TinyMakeEnv(options);
+      const tinyMake = new TinyMake(context, target);
+      tinyMake.run();
+    }
+  } else {
+    // run default target
+    const context: TinyMakeEnv = new TinyMakeEnv(options);
+    const tinyMake = new TinyMake(context, undefined); // undefined interpreted as deafult target
+    tinyMake.run();
   }
 }
 

@@ -5,6 +5,7 @@ import { TinyMakeEnv } from "@tinymake-backend/env.js";
 import { ExecResult, TinyMakeShell } from "@tinymake-backend/shell.js";
 import path from "node:path";
 import fs from "fs";
+import { ResolvedRule } from "./resolution.js";
 
 interface TinyMakeSchedularSchedularOptions {
   depqGraph: DeqpGraph;
@@ -26,40 +27,31 @@ export class TinyMakeSchedular {
     this.context = options.context;
 
     for (const rule of options.depqGraph.rules) {
-      this.depqCounter[rule.target] =
-        options.depqGraph.targetDepqMap[rule.target].length;
+      let depqTargetCount = 0;
+      for (const preqResolution of rule.preqs) {
+        depqTargetCount += preqResolution.origin === "target" ? 1 : 0;
+      }
+      this.depqCounter[rule.target.name] = depqTargetCount;
     }
   }
 
   private shouldRebuild(target: string) {
     const rule = this.depqGrpah.targetRuleMap[target];
 
-    const targetAbsPath = path.resolve(process.cwd(), rule.target);
+    const targetAbsPath = path.resolve(process.cwd(), rule.target.name);
     if (!fs.existsSync(targetAbsPath)) return true;
     const targetLastModifiedDate: number = fs.statSync(targetAbsPath).mtimeMs;
 
     for (const preq of rule.preqs) {
-      const preqAbsPath = path.resolve(process.cwd(), preq);
-      const preqFileExist = fs.existsSync(preqAbsPath);
-
-      if (
-        !preqFileExist &&
-        !Object.keys(this.depqGrpah.targetRuleMap).includes(preq)
-      ) {
-        throw new Error(
-          "tinymake: No rule to make targert needed by . Stop...",
-        );
-      }
-
-      // rule should be rebuilded
-      if (!preqFileExist) {
-        continue;
-      }
-
-      const preqLastModifiedDate: number = fs.statSync(preqAbsPath).mtimeMs;
-
-      if (preqLastModifiedDate >= targetLastModifiedDate) {
-        return true;
+      if (preq.origin === "not-found") {
+        throw new Error("preq not found" + preq.name);
+      } else if (preq.origin === "cwd") {
+        const preqLastModifiedDate: number = fs.statSync(
+          preq.absolutePath,
+        ).mtimeMs;
+        if (preqLastModifiedDate >= targetLastModifiedDate) {
+          return true;
+        }
       }
     }
 
@@ -82,7 +74,7 @@ export class TinyMakeSchedular {
   private async buildTarget(target: string) {
     const rule = this.depqGrpah.targetRuleMap[target];
 
-    if (!this.shouldRebuild(rule.target)) return;
+    if (!this.shouldRebuild(rule.target.name)) return;
 
     for (const recipe of rule.recipes) {
       const expansion = new TinyMakeExpansionEngine(this.context);
@@ -122,7 +114,7 @@ export class TinyMakeSchedular {
         await this.sleep(100);
       }
 
-      const rules: EvaluatedRule[] = this.collectNextRules().map(
+      const rules: ResolvedRule[] = this.collectNextRules().map(
         (t) => this.depqGrpah.targetRuleMap[t],
       );
 
@@ -131,9 +123,9 @@ export class TinyMakeSchedular {
       const processes = chunk.map((rule) => {
         const process = new Promise<void>(async (resolve, reject) => {
           try {
-            await this.buildTarget(rule.target);
+            await this.buildTarget(rule.target.name);
             // build successfully
-            this.compleatedTargets.add(rule.target);
+            this.compleatedTargets.add(rule.target.name);
             resolve();
           } catch (error) {
             reject(error);
@@ -142,20 +134,21 @@ export class TinyMakeSchedular {
         });
 
         process.finally(() => {
-          this.activeTargets.delete(rule.target);
+          this.activeTargets.delete(rule.target.name);
           this.activeBuildProcesses.delete(process);
 
           // the targets that affected by this build
-          const dependents = this.depqGrpah.reverseTargetRuleMap[rule.target];
+          const dependents =
+            this.depqGrpah.reverseTargetRuleMap[rule.target.name];
 
           // reduce their depq counter -1
           dependents.forEach((rule) => {
-            this.depqCounter[rule.target]--;
+            this.depqCounter[rule.target.name]--;
           });
         });
 
         process.catch(() => {
-          this.failedTargets.add(rule.target);
+          this.failedTargets.add(rule.target.name);
         });
 
         return process;
@@ -166,7 +159,7 @@ export class TinyMakeSchedular {
       });
 
       chunk.forEach((rule) => {
-        this.activeTargets.add(rule.target);
+        this.activeTargets.add(rule.target.name);
       });
 
       await Promise.race(this.activeBuildProcesses);
