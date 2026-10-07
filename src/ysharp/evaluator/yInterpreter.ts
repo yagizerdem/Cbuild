@@ -42,16 +42,41 @@ class yExprEvaluator extends ysharpVisitor<yValue> {
 
   visitAssignment = (ctx: AssignmentContext): yValue => {
     if (ctx.lvalue() != null) {
-      const lvalue: number = this.visit(ctx.lvalue()!) as yValue;
+      const yValue: yValue = this.visit(ctx.lvalue()!) as yValue;
+      const op = ctx.assignmentOp()?.getText();
     }
+    return this.visit(ctx.ternaryConditional()!) as yValue;
   };
 
   visitTernaryConditional = (ctx: TernaryConditionalContext): yValue => {
-    throw new Error("Not implemented");
+    const equality: yValue = this.visit(ctx.equality()!) as yValue;
+    if (ctx.QUESTION()) {
+      const expr: yValue = this.visit(ctx.expression()!) as yValue;
+      const option: yValue = this.visit(ctx.ternaryConditional()!) as yValue;
+
+      if (equality.isTruthy()) return expr;
+      return option;
+    } else {
+      return equality;
+    }
   };
 
   visitEquality = (ctx: EqualityContext): yValue => {
-    throw new Error("Not implemented");
+    let left: yValue = this.visit(ctx.children.at(0)!) as yValue;
+    if (ctx.children.length == 0) return left;
+
+    let flag = true;
+    for (let i = 1; i < ctx.children.length; i++) {
+      const right: yValue = this.visit(ctx.children.at(i)!) as yValue;
+      if (!left.equals(right)) {
+        flag = false;
+        break;
+      }
+
+      left = right;
+    }
+
+    return new yValue("boolean", flag);
   };
 
   visitComparison = (ctx: ComparisonContext): yValue => {
@@ -71,7 +96,7 @@ class yExprEvaluator extends ysharpVisitor<yValue> {
   };
 
   visitPostfix = (ctx: PostfixContext): yValue => {
-    const calle = ctx.call().accept(this) as 
+    throw new Error("Not implemented");
   };
 
   visitCall = (ctx: CallContext): yValue => {
@@ -106,6 +131,7 @@ class yExprEvaluator extends ysharpVisitor<yValue> {
     throw new Error("Not implemented");
   };
 }
+
 export class yInterpreter extends ysharpVisitor<void> {
   private readonly program: string;
   private readonly env: yEnv;
@@ -132,7 +158,8 @@ export class yInterpreter extends ysharpVisitor<void> {
   }
 
   visitExprStmt: (ctx: ExprStmtContext) => void = (ctx: ExprStmtContext) => {
-    const evaluator = new yExprEvaluator(this.env);
-    const evaluation: number | null = ctx.accept(evaluator);
+    // const evaluator = new yExprEvaluator(this.env);
+    // const evaluation: number | null = ctx.accept(evaluator);
+    throw new Error("Not implemented");
   };
 }

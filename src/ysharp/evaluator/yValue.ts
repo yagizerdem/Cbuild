@@ -28,4 +28,40 @@ export class yValue {
   static null(): yValue {
     return new yValue("null", null);
   }
+
+  public isTruthy(): boolean {
+    switch (this.valType) {
+      case "boolean":
+        return this.data;
+
+      case "int":
+      case "double":
+        return this.data !== 0;
+
+      case "null":
+        return false;
+
+      case "object":
+        return true;
+    }
+  }
+
+  public equals(other: yValue): boolean {
+    if (this.valType !== other.valType) {
+      return false;
+    }
+
+    switch (this.valType) {
+      case "int":
+      case "double":
+      case "boolean":
+        return this.data === other.data;
+
+      case "null":
+        return true;
+
+      case "object":
+        return this.data === other.data;
+    }
+  }
 }
