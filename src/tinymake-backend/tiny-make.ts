@@ -55,7 +55,7 @@ export class TinyMake {
       parsedNodes.push(...AST);
     }
 
-    // const rules = this.collectRulesNodes(AST);
+    // const  = this.collectRulesNodes(AST);
     // for (const rule of rules) {
     //   debugPrintValue(rule.targets);
     //   debugPrintValue(rule.prerequisites);
