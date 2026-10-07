@@ -15,10 +15,10 @@ type TinyMakeSymboltableVar = {
 };
 
 export class TinyMakeEnv {
-  private readonly symbolTable: Record<string, TinyMakeSymboltableVar> = {};
+  private readonly symbolTable: Record<string, TinyMakeSymboltableVar> = Object.create(null);
   public readonly cliOptions: CBuildOptions;
   constructor(cliOptions: CBuildOptions) {
-    this.symbolTable = {};
+    this.symbolTable = Object.create(null);
     this.cliOptions = cliOptions;
   }
   public enclosing: TinyMakeEnv | undefined;
@@ -29,13 +29,12 @@ export class TinyMakeEnv {
     }
   }
 
-  public hasVariableRecursive(identifier: string) {
+  public hasVariableRecursive(identifier: string): boolean {
     if (this.hasVariable(identifier)) {
       return true;
     } else {
-      this.enclosing?.hasVariableRecursive(identifier);
+      return this.enclosing?.hasVariableRecursive(identifier) ?? false;
     }
-    return false;
   }
 
   public defineVariable(identifier: string, overwrite = false) {

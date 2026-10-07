@@ -8,12 +8,13 @@ export interface DeqpGraph {
 }
 
 export function createDepqGraph(rules: ResolvedRule[]): DeqpGraph {
-  const targetRuleMap: Record<string, ResolvedRule> = {};
+  const targetRuleMap: Record<string, ResolvedRule> = Object.create(null);
   for (const rule of rules) {
     targetRuleMap[rule.target.name] = rule;
   }
 
-  const reverseTargetRuleMap: Record<string, ResolvedRule[]> = {};
+  const reverseTargetRuleMap: Record<string, ResolvedRule[]> =
+    Object.create(null);
   for (const rule of rules) {
     reverseTargetRuleMap[rule.target.name] =
       reverseTargetRuleMap[rule.target.name] ?? [];
@@ -23,12 +24,13 @@ export function createDepqGraph(rules: ResolvedRule[]): DeqpGraph {
     }
   }
 
-  const targetDepqMap: Record<string, ResolvedRule[]> = {};
+  const targetDepqMap: Record<string, ResolvedRule[]> = Object.create(null);
   for (const rule of rules) {
     targetDepqMap[rule.target.name] = targetDepqMap[rule.target.name] ?? [];
     for (const preq of rule.preqs) {
-      if (!targetDepqMap[rule.target.name].includes(targetRuleMap[preq.name])) {
-        targetDepqMap[rule.target.name].push(targetRuleMap[preq.name]);
+      const dependency = targetRuleMap[preq.name];
+      if (dependency && !targetDepqMap[rule.target.name].includes(dependency)) {
+        targetDepqMap[rule.target.name].push(dependency);
       }
     }
   }
@@ -47,15 +49,14 @@ export function hasCycle(
   occured = new Set<string>(),
   activePath = new Set<string>(),
 ) {
+  if (activePath.has(goal)) return true;
+  if (occured.has(goal)) return false;
   const defaultRule = graph.targetRuleMap[goal];
+  if (!defaultRule) return false;
   const preqs: ResolvedRule[] = defaultRule.preqs
     .map((p) => graph.targetRuleMap[p.name])
     .filter((p) => p !== undefined)
     .flat(1);
-
-  if (occured.has(goal) && activePath.has(goal)) {
-    return true;
-  }
 
   occured.add(goal);
   activePath.add(goal);
@@ -82,7 +83,8 @@ export function deadRuleElemination(graph: DeqpGraph, goal: string) {
 
   const deadCdoeEleminationRecursive = (currentGoal: string) => {
     const goalRule = graph.targetRuleMap[currentGoal];
-    if (goalRule) {
+
+    if (goalRule && !resolvedTargets.has(currentGoal)) {
       addResolution(goalRule);
       goalRule.preqs.forEach((preq) => {
         deadCdoeEleminationRecursive(preq.name);
@@ -91,6 +93,9 @@ export function deadRuleElemination(graph: DeqpGraph, goal: string) {
   };
 
   const defaultGoal = graph.targetRuleMap[goal];
+  if (!defaultGoal) {
+    throw new Error(`No rule to make target '${goal}'`);
+  }
   addResolution(defaultGoal);
 
   defaultGoal.preqs.forEach((preq) => {

@@ -46,7 +46,7 @@ export class TinyMakeResolver {
     const resolution: ResolvedRule[] = [];
     for (let i = 0; i < this.evaluatedRules.length; i++) {
       const evaluation = this.evaluatedRules[i];
-      const targetAbsPath = path.join(process.cwd(), evaluation.target);
+      const targetAbsPath = path.resolve(process.cwd(), evaluation.target);
       const fileExist = fs.existsSync(targetAbsPath);
 
       let targetResolution: TargetResolution;
@@ -66,7 +66,7 @@ export class TinyMakeResolver {
 
       const preqResolutions: PreqResolution[] = [];
       for (const preq of evaluation.preqs) {
-        const preqAbsPath = path.join(process.cwd(), evaluation.target);
+        const preqAbsPath = path.resolve(process.cwd(), preq);
         const fileExist = fs.existsSync(preqAbsPath);
         const targetExist = this.evaluatedRules.some(
           (rule) => rule.target == preq,
@@ -113,6 +113,10 @@ export class TinyMakeResolver {
           recipes: [...rule.recipes],
         });
         continue;
+      }
+
+      if (existing.recipes.length > 0 && rule.recipes.length > 0) {
+        throw new Error(`Multiple recipe definitions for target: ${key}`);
       }
 
       existing.preqs.push(...rule.preqs);
