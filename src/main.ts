@@ -18,6 +18,7 @@ import { IR } from "@compiler/ir.js";
 import { BuildFileMeta } from "@src/type/buildfile-meta.js";
 import path from "path";
 import { tinyMakeBackend } from "@tinymake-backend/core.js";
+import { yInterpreter } from "./ysharp/evaluator/yInterpreter.js";
 
 export async function readBuildFile(buildFilePath: string): Promise<string> {
   return await fs.readFile(buildFilePath, "utf-8");
@@ -30,7 +31,9 @@ async function main() {
 
   normalizeOptions(options);
 
-  await tinyMakeBackend(options, args);
+  const interpreter = new yInterpreter("var a = 10;");
+
+  // await tinyMakeBackend(options, args);
 
   // normalize and mutate original object
 

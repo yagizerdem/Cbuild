@@ -593,7 +593,7 @@ export class ysharpParser extends antlr.Parser {
                 case ysharpParser.IDENTIFIER:
                     {
                     this.state = 130;
-                    this.exprStmt();
+                    this.expression();
                     }
                     break;
                 case ysharpParser.SEMI:
@@ -1922,7 +1922,7 @@ export class ysharpParser extends antlr.Parser {
         0,117,119,3,2,1,0,118,117,1,0,0,0,119,122,1,0,0,0,120,118,1,0,0,
         0,120,121,1,0,0,0,121,123,1,0,0,0,122,120,1,0,0,0,123,124,5,5,0,
         0,124,13,1,0,0,0,125,126,3,34,17,0,126,127,5,55,0,0,127,15,1,0,0,
-        0,128,132,5,6,0,0,129,133,3,6,3,0,130,133,3,14,7,0,131,133,5,55,
+        0,128,132,5,6,0,0,129,133,3,6,3,0,130,133,3,34,17,0,131,133,5,55,
         0,0,132,129,1,0,0,0,132,130,1,0,0,0,132,131,1,0,0,0,133,135,1,0,
         0,0,134,136,3,34,17,0,135,134,1,0,0,0,135,136,1,0,0,0,136,137,1,
         0,0,0,137,139,5,55,0,0,138,140,3,34,17,0,139,138,1,0,0,0,139,140,
@@ -2365,9 +2365,6 @@ export class ForStmtContext extends antlr.ParserRuleContext {
     }
     public varDecl(): VarDeclContext | null {
         return this.getRuleContext(0, VarDeclContext);
-    }
-    public exprStmt(): ExprStmtContext | null {
-        return this.getRuleContext(0, ExprStmtContext);
     }
     public expression(): ExpressionContext[];
     public expression(i: number): ExpressionContext | null;

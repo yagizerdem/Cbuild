@@ -50,7 +50,7 @@ exprStmt
     ;
 
 forStmt
-    : FOR (varDecl | exprStmt | SEMI)
+    : FOR (varDecl | expression | SEMI)
       expression?
       SEMI
       expression?
