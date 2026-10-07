@@ -35,7 +35,7 @@ export type ResolvedRule = {
 type TargetResolution = ResolvedRule["target"];
 type PreqResolution = ResolvedRule["preqs"][0];
 
-export class Resolution {
+export class TinyMakeResolver {
   private readonly evaluatedRules: EvaluatedRule[] = [];
 
   constructor(evaluatedRules: EvaluatedRule[]) {

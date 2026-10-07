@@ -17,6 +17,7 @@ import {
   hasCycle,
 } from "@tinymake-backend/graph.js";
 import { TinyMakeSchedular } from "@tinymake-backend/schedular.js";
+import { TinyMakeResolver } from "./resolution.js";
 
 export class TinyMake {
   private readonly rawBuildFile: string;
@@ -39,11 +40,15 @@ export class TinyMake {
     //   debugPrintValue(rule.prerequisites);
     // }
 
+    // evaluation
     const evaluation = new TinyMakeEvaluator(AST, this.context);
     const evaluatedRules: EvaluatedRule[] = evaluation.evaluate();
     console.log(evaluatedRules);
+    // resolution
+    const resolver = new TinyMakeResolver(evaluatedRules);
+    const resolution = resolver.resole();
 
-    const graph: DeqpGraph = createDepqGraph(evaluatedRules);
+    const graph: DeqpGraph = createDepqGraph(resolution);
     const defaultGoal = graph.rules.at(0);
     if (!defaultGoal) {
       console.log("not targets found");
@@ -51,12 +56,12 @@ export class TinyMake {
     }
 
     // there should not be cycle
-    const cycle = hasCycle(graph, defaultGoal.target);
+    const cycle = hasCycle(graph, defaultGoal.target.name);
     console.log(cycle);
 
     // eleminate unused rules
     const resolved: DeqpGraph = createDepqGraph(
-      deadRuleElemination(graph, defaultGoal.target),
+      deadRuleElemination(graph, defaultGoal.target.name),
     );
 
     console.log(resolved.rules);
