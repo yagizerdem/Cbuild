@@ -99,4 +99,32 @@ export class TinyMakeResolver {
 
     return resolution;
   }
+
+  normalize(resolution: ResolvedRule[]): ResolvedRule[] {
+    const normalized = new Map<string, ResolvedRule>();
+    for (const rule of resolution) {
+      const key = rule.target.name;
+      const existing = normalized.get(key);
+
+      if (!existing) {
+        normalized.set(key, {
+          target: rule.target,
+          preqs: [...rule.preqs],
+          recipes: [...rule.recipes],
+        });
+        continue;
+      }
+
+      existing.preqs.push(...rule.preqs);
+      existing.recipes.push(...rule.recipes);
+
+      if (
+        existing.target.origin === "not-found" &&
+        rule.target.origin === "cwd"
+      ) {
+        existing.target = rule.target;
+      }
+    }
+    return [...normalized.values()];
+  }
 }

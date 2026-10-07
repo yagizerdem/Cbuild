@@ -31,9 +31,7 @@ async function main() {
 
   normalizeOptions(options);
 
-  const interpreter = new yInterpreter("var a = 10;");
-
-  // await tinyMakeBackend(options, args);
+  await tinyMakeBackend(options, args);
 
   // normalize and mutate original object
 

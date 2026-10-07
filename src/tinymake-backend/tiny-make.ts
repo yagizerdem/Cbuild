@@ -43,31 +43,30 @@ export class TinyMake {
     // evaluation
     const evaluation = new TinyMakeEvaluator(AST, this.context);
     const evaluatedRules: EvaluatedRule[] = evaluation.evaluate();
-    console.log(evaluatedRules);
     // resolution
     const resolver = new TinyMakeResolver(evaluatedRules);
     const resolution = resolver.resole();
+    // normalize
+    const normalzied = resolver.normalize(resolution);
+    console.log(normalzied);
 
-    const graph: DeqpGraph = createDepqGraph(resolution);
-    const defaultGoal = graph.rules.at(0);
+    // DEFAULT_GOAL
+    const defaultGoal = normalzied.at(0);
     if (!defaultGoal) {
       console.log("not targets found");
       return;
     }
 
+    const graph: DeqpGraph = createDepqGraph(
+      deadRuleElemination(createDepqGraph(normalzied), defaultGoal.target.name),
+    );
+
     // there should not be cycle
     const cycle = hasCycle(graph, defaultGoal.target.name);
     console.log(cycle);
 
-    // eleminate unused rules
-    const resolved: DeqpGraph = createDepqGraph(
-      deadRuleElemination(graph, defaultGoal.target.name),
-    );
-
-    console.log(resolved.rules);
-
     const schedular = new TinyMakeSchedular({
-      depqGraph: resolved,
+      depqGraph: graph,
       context: this.context,
     });
     await schedular.schedule();
