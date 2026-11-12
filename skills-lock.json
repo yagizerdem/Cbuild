@@ -1,17 +1,173 @@
 {
   "version": 2,
   "skills": {
+    "async-python-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/python-development/skills/async-python-patterns/SKILL.md",
+      "computedHash": "5ed4e3ea95b394323088b0754668d72d8d0f70905826be41bf3b440f71fa9f07"
+    },
+    "build-acceleration": {
+      "source": "mohitmishra786/low-level-dev-skills",
+      "sourceType": "github",
+      "skillPath": "skills/build-systems/build-acceleration/SKILL.md",
+      "computedHash": "9b8bf6b64c1cc285abfb1da94ffd9d616a613eda401e86e102bf587f74b42115"
+    },
+    "clang": {
+      "source": "mohitmishra786/low-level-dev-skills",
+      "sourceType": "github",
+      "skillPath": "skills/compilers/clang/SKILL.md",
+      "computedHash": "ce8646f185a03b05b6349903a24de7e9d4ca40db8d4c481b76b94c238d24f845"
+    },
+    "cmake": {
+      "source": "mohitmishra786/low-level-dev-skills",
+      "sourceType": "github",
+      "skillPath": "skills/build-systems/cmake/SKILL.md",
+      "computedHash": "73b0f1e334e5e5d5cb50460fa71e35e6029fab5f56a4a91b83a5d0af597d7a52"
+    },
+    "compiler-frontend": {
+      "source": "mohitmishra786/low-level-dev-skills",
+      "sourceType": "github",
+      "skillPath": "skills/compiler-internals/compiler-frontend/SKILL.md",
+      "computedHash": "e51f54772e4df83980c87653c50789a787f2707d5a4db36db00c1433bc3b3b52"
+    },
+    "conan-vcpkg": {
+      "source": "mohitmishra786/low-level-dev-skills",
+      "sourceType": "github",
+      "skillPath": "skills/build-systems/conan-vcpkg/SKILL.md",
+      "computedHash": "6ac2ef9ed98ee671049ee5838a2bc89cabbe148ff049fdbba3ec80fedbcba81f"
+    },
+    "cpp-pro": {
+      "source": "Jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/cpp-pro/SKILL.md",
+      "computedHash": "8faa7333cfab2a9e43a7f04745c865d180f64a6ec121236b0794a0e315c239cc"
+    },
+    "cpp-testing": {
+      "source": "affaan-m/ECC",
+      "sourceType": "github",
+      "skillPath": "skills/cpp-testing/SKILL.md",
+      "computedHash": "09d2c32374ed6bdabede7a48b389ef8fc3f9e0b0dc2fa87deacd449fd9b7edf1"
+    },
+    "cross-gcc": {
+      "source": "mohitmishra786/low-level-dev-skills",
+      "sourceType": "github",
+      "skillPath": "skills/compilers/cross-gcc/SKILL.md",
+      "computedHash": "a0c767b6551a6b3243d804c952d16377f9b94cb6d5c396435963051321f709b1"
+    },
+    "debugging-strategies": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/developer-essentials/skills/debugging-strategies/SKILL.md",
+      "computedHash": "dde59f5960827ee0ce971e1b8c264247b8ac663ccf4406dc8c6a322a8a51d100"
+    },
     "find-skills": {
       "source": "vercel-labs/skills",
       "sourceType": "github",
       "skillPath": "skills/find-skills/SKILL.md",
       "computedHash": "7bc223e2aafbdbf6e50ea243ba6ef67fe432bb069ab439fea0390795dac0bf7f"
     },
+    "gcc": {
+      "source": "mohitmishra786/low-level-dev-skills",
+      "sourceType": "github",
+      "skillPath": "skills/compilers/gcc/SKILL.md",
+      "computedHash": "711e3a561cdde5220f075b2d314a466c8c5386a323a16717a63ed1228647261a"
+    },
     "git-commit": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
       "skillPath": "skills/git-commit/SKILL.md",
       "computedHash": "90716f49501831c6c0679509b295495021eae83923d6a39035ce7c2d9cd2e8f2"
+    },
+    "linkers-lto": {
+      "source": "mohitmishra786/low-level-dev-skills",
+      "sourceType": "github",
+      "skillPath": "skills/binaries/linkers-lto/SKILL.md",
+      "computedHash": "c73e8343088edcceb4d4d504ad7a2b79c7cbbf61cf195b01c1990862a7b46c3a"
+    },
+    "make": {
+      "source": "mohitmishra786/low-level-dev-skills",
+      "sourceType": "github",
+      "skillPath": "skills/build-systems/make/SKILL.md",
+      "computedHash": "4fa13fa1f5f3e5dcb1e865398f12d2d6854ca16c0c7c63c4fa54bc9b7ea0711e"
+    },
+    "mermaid-diagrams": {
+      "source": "softaworks/agent-toolkit",
+      "sourceType": "github",
+      "skillPath": "skills/mermaid-diagrams/SKILL.md",
+      "computedHash": "c425d7bc17756e5c0538e57286a008b18a45d0967401695c003692badf0cb37a"
+    },
+    "modern-python": {
+      "source": "trailofbits/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/modern-python/skills/modern-python/SKILL.md",
+      "computedHash": "6f78e1948cc291dfc71672a87f83a02de3cec01545ed289312ce432d129ec00b"
+    },
+    "msvc-cl": {
+      "source": "mohitmishra786/low-level-dev-skills",
+      "sourceType": "github",
+      "skillPath": "skills/compilers/msvc-cl/SKILL.md",
+      "computedHash": "6ab6d59ccf320ace708f15592b5fdfa361dc389900cd11ce0a2efd9d181e6cdc"
+    },
+    "ninja": {
+      "source": "mohitmishra786/low-level-dev-skills",
+      "sourceType": "github",
+      "skillPath": "skills/build-systems/ninja/SKILL.md",
+      "computedHash": "1b4f9a9f5f00352c24309038bc67a1ce9b61aead86e0eeb39af180c7cf605a62"
+    },
+    "python-anti-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/python-development/skills/python-anti-patterns/SKILL.md",
+      "computedHash": "9a98a1ddf7517582a43d9d27e3c84c3e3763791bb1f38926f1fe9bf49ad8e33a"
+    },
+    "python-design-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/python-development/skills/python-design-patterns/SKILL.md",
+      "computedHash": "bb31c26764cb2bf8f19955e1610e8102509cb1569e1575a413ffb3ada23a3c16"
+    },
+    "python-packaging": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/python-development/skills/python-packaging/SKILL.md",
+      "computedHash": "4e9803c12a046de6aebda1ce337779affb69fb9cc9233fee8c944c3659ae2b0a"
+    },
+    "python-performance-optimization": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/python-development/skills/python-performance-optimization/SKILL.md",
+      "computedHash": "81a1369058d4089e208104bbfc384cd73eb6b62d654bda87cf33cb97ea296ccd"
+    },
+    "python-testing-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/python-development/skills/python-testing-patterns/SKILL.md",
+      "computedHash": "8113c05a831d4872c9294b0df26a335c09af423ee2e23d8b9b6817b300d96796"
+    },
+    "sanitizers": {
+      "source": "mohitmishra786/low-level-dev-skills",
+      "sourceType": "github",
+      "skillPath": "skills/runtimes/sanitizers/SKILL.md",
+      "computedHash": "1c8149bc40f9966e90534dff9622965d72901ccfe22a10a4cb3d8504f2234a7b"
+    },
+    "static-analysis": {
+      "source": "mohitmishra786/low-level-dev-skills",
+      "sourceType": "github",
+      "skillPath": "skills/build-systems/static-analysis/SKILL.md",
+      "computedHash": "86d076ce39dbf5e06914c1ecd7ff4ed671178e82bdef9e55aeeee29941d33baa"
+    },
+    "systematic-debugging": {
+      "source": "obra/superpowers",
+      "sourceType": "github",
+      "skillPath": "skills/systematic-debugging/SKILL.md",
+      "computedHash": "79ff0583175346e39431b0dc713b223edd1bd7a7ea2b6c8b78b2fb9a3fed6782"
+    },
+    "tdd": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/tdd/SKILL.md",
+      "computedHash": "e3e0f78ff1c2d52ffefa0378baa1e80e129d359288cf9a56f4e59afcd2aac86c"
     }
   }
 }
