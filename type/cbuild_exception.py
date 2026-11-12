@@ -1,7 +1,5 @@
-from __future__ import annotations
-
 from enum import IntEnum
-from typing import Final, NotRequired, TypedDict
+from typing import Final
 
 
 class ErrorType(IntEnum):
@@ -46,15 +44,6 @@ class MachineCode(IntEnum):
     UNSUPPORTED = 19
 
 
-class CbuildExceptionOptions(TypedDict):
-    message: str
-    error_type: ErrorType
-    machine_code: MachineCode
-    row: int
-    column: int
-    exit_code: NotRequired[int | None]
-
-
 class CbuildException(Exception):
     def __init__(
         self,
@@ -72,14 +61,3 @@ class CbuildException(Exception):
         self.row: Final = row
         self.column: Final = column
         self.exit_code = exit_code
-
-    @staticmethod
-    def from_(options: CbuildExceptionOptions) -> CbuildException:
-        return CbuildException(
-            options["message"],
-            options["error_type"],
-            options["machine_code"],
-            options["row"],
-            options["column"],
-            options.get("exit_code"),
-        )
