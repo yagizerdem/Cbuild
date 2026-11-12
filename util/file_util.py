@@ -1,3 +1,7 @@
+"""Utility functions for file operations.
+Some functions may not currently be used by the application.
+"""
+
 import asyncio
 import errno
 import os
