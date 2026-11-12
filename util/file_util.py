@@ -1,13 +1,9 @@
-from __future__ import annotations
-
 import asyncio
 import errno
 import os
 import stat
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Literal, NotRequired, TypedDict
-
 
 def resolve_and_get_absolute_path(
     base_dir: str,
@@ -84,68 +80,6 @@ async def is_file_async(file_path: str) -> bool:
 async def is_directory_async(file_path: str) -> bool:
     stats = await get_file_stats_async(file_path)
     return stat.S_ISDIR(stats.st_mode) if stats is not None else False
-
-
-class RebuildOptions(TypedDict):
-    base_dir: NotRequired[str]
-    phony: NotRequired[bool]
-    prerequisites: Sequence[str]
-    """Pass only normal prerequisites; order-only prerequisites do not affect age."""
-    phony_prerequisites: NotRequired[Sequence[str]]
-
-
-class RebuildStatus(TypedDict):
-    needs_rebuild: bool
-    reason: Literal[
-        "phony-target",
-        "missing-target",
-        "phony-prerequisite",
-        "missing-prerequisite",
-        "newer-prerequisite",
-        "up-to-date",
-    ]
-    prerequisite: NotRequired[str]
-
-
-async def get_rebuild_status_async(
-    target: str,
-    options: RebuildOptions,
-) -> RebuildStatus:
-    """Check after prerequisite builds complete. A missing prerequisite still needs
-    rule resolution by the build scheduler; this helper cannot decide buildability.
-    """
-    if options.get("phony"):
-        return {"needs_rebuild": True, "reason": "phony-target"}
-    base_dir = options.get("base_dir", os.getcwd())
-    target_time = await get_modified_time_ns_async(
-        os.path.abspath(os.path.join(base_dir, target)),
-    )
-    if target_time is None:
-        return {"needs_rebuild": True, "reason": "missing-target"}
-    phony = set(options.get("phony_prerequisites", ()))
-    for prerequisite in options["prerequisites"]:
-        if prerequisite in phony:
-            return {
-                "needs_rebuild": True,
-                "reason": "phony-prerequisite",
-                "prerequisite": prerequisite,
-            }
-        time = await get_modified_time_ns_async(
-            os.path.abspath(os.path.join(base_dir, prerequisite)),
-        )
-        if time is None:
-            return {
-                "needs_rebuild": True,
-                "reason": "missing-prerequisite",
-                "prerequisite": prerequisite,
-            }
-        if time > target_time:
-            return {
-                "needs_rebuild": True,
-                "reason": "newer-prerequisite",
-                "prerequisite": prerequisite,
-            }
-    return {"needs_rebuild": False, "reason": "up-to-date"}
 
 
 async def ensure_directory_async(directory: str) -> None:
