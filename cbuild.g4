@@ -443,7 +443,7 @@ CHARS
 NL : '\r'? '\n' ;
 
 LEADING_TAB
-    : {this.column == 0}? '\t'
+    : {self.column == 0}? '\t'
     ;
 
 WS

@@ -220,7 +220,7 @@ class cbuildLexer(Lexer):
 
     def LEADING_TAB_sempred(self, localctx:RuleContext, predIndex:int):
             if predIndex == 0:
-                return this.column == 0
+                return self.column == 0
          
 
 
