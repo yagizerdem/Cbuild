@@ -4,11 +4,8 @@ import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import TYPE_CHECKING, Literal, NotRequired, Protocol, TypedDict
-
-if TYPE_CHECKING:
-    # TODO: module does not exist yet
-    from cbuild_compiler.type.buildfile_meta import BuildFileMeta
+from typing import Literal, NotRequired, Protocol, TypedDict
+from ..type.buildfile_meta import BuildFileMeta
 
 
 class Executor(Protocol):
