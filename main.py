@@ -15,6 +15,7 @@ from util.handle_cli_options import (
     normalize_options,
     resolve_build_file_path,
 )
+from cbuild_backend import globber
 
 
 def read_build_file(build_file_path: str) -> str:
