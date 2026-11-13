@@ -2,7 +2,6 @@ import re
 
 from antlr4 import CommonTokenStream, InputStream, Parser, Token
 from antlr4.atn.ATNConfigSet import ATNConfigSet
-from antlr4.atn.ATNSimulator import ATNSimulator
 from antlr4.dfa.DFA import DFA
 from antlr4.error.ErrorListener import ErrorListener
 from antlr4.error.Errors import RecognitionException

@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Final, override
 from cbuild_compiler.ir import (
     FunctionIR,
     ValueIR,
-    function_call_part,
     text_part,
     var_ref_part,
 )

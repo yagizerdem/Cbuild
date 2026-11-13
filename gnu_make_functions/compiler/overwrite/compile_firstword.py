@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, override
 from cbuild_compiler.ir import FunctionIR
 from cbuild_parser.cbuildParser import cbuildParser
 from gnu_make_functions.compiler.compile_fn import compile_fn
-from gnu_make_functions.compiler.util import util
 from type.cbuild_exception import CbuildException, ErrorType, MachineCode
 
 if TYPE_CHECKING:
