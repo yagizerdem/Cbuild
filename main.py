@@ -23,7 +23,6 @@ def read_build_file(build_file_path: str) -> str:
 
 
 def _main() -> None:
-    print("hello")
     options: CBuildOptions = cli.parse_args(namespace=CBuildOptions())
     args: list[str] = options.args
 
