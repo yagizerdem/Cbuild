@@ -2,18 +2,19 @@ import glob
 import os
 
 
-def _to_host_separator(path: str) -> str:
-    # glob keeps literal pattern segments as written but joins matched segments
-    # with os.sep, so results can mix separators on Windows. Only os.altsep is
-    # rewritten: on POSIX a backslash is a valid file name character.
-    if os.altsep is None:
+def _to_posix_separator(path: str) -> str:
+    # GNU make returns wildcard matches with "/" on every platform. glob joins
+    # matched segments with os.sep, so it is rewritten to "/" where it differs.
+    # On POSIX os.sep is already "/" and a backslash is a valid file name
+    # character, so the path is left untouched there.
+    if os.sep == "/":
         return path
-    return path.replace(os.altsep, os.sep)
+    return path.replace(os.sep, "/")
 
 
 def resolve_glob_pattern(pattern: str) -> list[str]:
     return [
-        _to_host_separator(path)
+        _to_posix_separator(path)
         for path in glob.glob(
             pattern,
             root_dir=os.getcwd(),
