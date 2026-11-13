@@ -11,9 +11,9 @@ from cbuild_parser.cbuildVisitor import cbuildVisitor
 from gnu_make_functions.compiler.i_compiler_base import I_compiler_base
 from type.cbuild_exception import CbuildException, ErrorType, MachineCode
 
-# Lazy imports break the import cycle compile_fn -> CBuildCompiler -> dispatcher -> type -> compile_fn
-lazy from cbuild_compiler.cbuild_compiler import CBuildCompiler
-lazy from gnu_make_functions.make_function_dispatcher import make_function_dispatcher
+# CBuildCompiler and make_function_dispatcher are imported inside the methods that
+# use them to break the import cycle
+# compile_fn -> CBuildCompiler -> dispatcher -> type -> compile_fn
 
 if TYPE_CHECKING:
     from gnu_make_functions.type import MakeFunction
@@ -21,6 +21,10 @@ if TYPE_CHECKING:
 
 class compile_fn(cbuildVisitor, I_compiler_base):
     def __init__(self) -> None:
+        from gnu_make_functions.make_function_dispatcher import (
+            make_function_dispatcher,
+        )
+
         super().__init__()
         self._dispatcher: Final = make_function_dispatcher()
 
@@ -98,6 +102,8 @@ class compile_fn(cbuildVisitor, I_compiler_base):
             # and ctx.function().function_name() is not None
             # and not ctx.function().function_name().isEmpty()
         ):
+            from cbuild_compiler.cbuild_compiler import CBuildCompiler
+
             compiler = CBuildCompiler()
             fn_part = compiler.visitFunction(ctx.function())
             value.parts.append(fn_part)
@@ -150,6 +156,8 @@ class compile_fn(cbuildVisitor, I_compiler_base):
             return value
 
         if ctx.function() is not None:
+            from cbuild_compiler.cbuild_compiler import CBuildCompiler
+
             compiler = CBuildCompiler()
             fn_part = compiler.visitFunction(ctx.function())
             value.parts.append(fn_part)
