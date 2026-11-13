@@ -34,7 +34,7 @@ class ShellRunner:
                 variable.value,
             )
 
-        result = ProcessRunner().run_sync(
+        result = ProcessRunner().run(
             command,
             {
                 "shell": shell,

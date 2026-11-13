@@ -30,11 +30,11 @@ class ModelResolver(Executor):
         self.context: Final = context
         self.evaluation_state: Final = evaluation_state
 
-    async def build_async(self, instructions: Sequence[IR]) -> list[BaseModel]:
+    def build(self, instructions: Sequence[IR]) -> list[BaseModel]:
         for instruction in instructions:
             self.collect_models(
                 self.rule_models,
-                await self.exec_async(instruction),
+                self.exec(instruction),
             )
         return self.rule_models
 
@@ -47,10 +47,7 @@ class ModelResolver(Executor):
             target.append(resources)
         return target
 
-    def exec[T](self, node: IR) -> T:
-        raise Exception("Use execAsync instead")
-
-    async def exec_async[T](self, ir: Any) -> T:
+    def exec[T](self, ir: Any) -> T:
         return cast(T, self._resolve_normal_rule(ir))
 
     def _resolve_normal_rule(self, ir: NormalRuleIR) -> list[BaseModel]:

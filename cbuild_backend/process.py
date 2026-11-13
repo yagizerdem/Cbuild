@@ -1,9 +1,9 @@
-import asyncio
 import os
 import re
 import signal as signal_module
 import subprocess
 import sys
+import threading
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal, NotRequired, TypedDict, cast
@@ -25,7 +25,7 @@ class ProcessOptions(TypedDict, total=False):
     # Overrides inherited environment variables; None removes a variable.
     env: Mapping[str, str | None]
     output: Literal["inherit", "capture"]
-    signal: asyncio.Event
+    signal: threading.Event
     # Accept nonzero exit codes; launch errors and cancellation still reject.
     ignore_errors: bool
 
@@ -123,97 +123,7 @@ class ProcessRunner:
         )
 
     # Runs an already-expanded command. No variable expansion or prefix parsing.
-    async def run_async(
-        self,
-        command: str,
-        options: ProcessOptions | None = None,
-    ) -> ProcessResult:
-        options = options or {}
-        settings = cast(ProcessOptions, {**self._defaults, **options})
-        shell = settings.get("shell") or default_shell()
-        abort_signal = settings.get("signal")
-        if abort_signal is not None and abort_signal.is_set():
-            raise CbuildException(
-                column=-1,
-                row=-1,
-                error_type=ErrorType.PROCESS,
-                machine_code=MachineCode.SHELL_COMMAND_ABORTED,
-                message="cbuild: Command cancelled before launch. Stop.",
-            )
-        if not shell["executable"].strip():
-            raise TypeError("Shell executable must not be empty")
-        capture = settings.get("output") == "capture"
-        env = _merge_env(os.environ, self._defaults.get("env"), options.get("env"))
-
-        failure: Exception | None = None
-        stdout = b""
-        stderr = b""
-        try:
-            child = subprocess.Popen(
-                _spawn_args(shell, command),
-                shell=False,
-                cwd=settings.get("cwd"),
-                env=env,
-                stdin=subprocess.DEVNULL if capture else None,
-                stdout=subprocess.PIPE if capture else None,
-                stderr=subprocess.PIPE if capture else None,
-                **_windows_hide(),
-            )
-        except Exception:
-            raise CbuildException(
-                column=-1,
-                row=-1,
-                error_type=ErrorType.PROCESS,
-                machine_code=MachineCode.SHELL_COMMAND_FAILED,
-                message=f"cbuild: Could not start shell: {shell['executable']}. Stop. \n {{stdout: {_decode(stdout)}, stderr: {_decode(stderr)}}}",
-            )
-
-        communicate = asyncio.ensure_future(asyncio.to_thread(child.communicate))
-        try:
-            if abort_signal is not None:
-                aborted = asyncio.ensure_future(abort_signal.wait())
-                done, _ = await asyncio.wait(
-                    {communicate, aborted},
-                    return_when=asyncio.FIRST_COMPLETED,
-                )
-                if aborted in done and communicate not in done:
-                    child.kill()
-                    failure = Exception("The operation was aborted")
-                aborted.cancel()
-            stdout, stderr = await communicate
-        except Exception as error:
-            failure = error
-
-        exit_code = _exit_code(child.returncode)
-        signal = _signal_name(child.returncode)
-        result = ProcessResult(
-            command=command,
-            exit_code=exit_code,
-            signal=signal,
-            stdout=_decode(stdout),
-            stderr=_decode(stderr),
-        )
-        if failure:
-            raise CbuildException(
-                column=-1,
-                row=-1,
-                error_type=ErrorType.PROCESS,
-                machine_code=MachineCode.SHELL_COMMAND_FAILED,
-                message=f"cbuild: Command could not complete: {command}: {failure}. Stop.",
-            )
-        elif signal is not None or (
-            exit_code != 0 and not settings.get("ignore_errors")
-        ):
-            raise CbuildException(
-                column=-1,
-                row=-1,
-                error_type=ErrorType.PROCESS,
-                machine_code=MachineCode.SHELL_COMMAND_FAILED,
-                message=f"cbuild: Command failed ({signal if signal is not None else exit_code}): {command}. Stop. \n {{stdout: {result.stdout}, stderr: {result.stderr}}}",
-            )
-        return result
-
-    def run_sync(
+    def run(
         self, command: str, options: ProcessOptions | None = None
     ) -> ProcessResult:
         options = options or {}

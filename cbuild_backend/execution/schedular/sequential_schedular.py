@@ -13,7 +13,7 @@ class SequentialSchedular:
 
     # sequuential build
 
-    async def sequential_schedule_async(self, target_rule: NormalRule) -> None:
+    def sequential_schedule(self, target_rule: NormalRule) -> None:
         build = Build(self._context, self._explicit_rules)
 
         # should not have circular dependencies to sort
@@ -21,4 +21,4 @@ class SequentialSchedular:
 
         for i in range(len(sorted_rules)):
             current: NormalRule = sorted_rules[i]
-            await build.build_target_async(current)
+            build.build_target(current)

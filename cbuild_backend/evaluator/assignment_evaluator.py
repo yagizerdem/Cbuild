@@ -25,7 +25,7 @@ class AssignmentIREvaluator:
         self._value_expansion_engine: Final = ValueExpansionEngine(self._context)
         self._assignment_ir: Final = assignment_ir
 
-    async def evaluate(self) -> None:
+    def evaluate(self) -> None:
         identifier: str = cast(ValueIR, self._assignment_ir.left).exec(
             self._value_expansion_engine,
         )
@@ -91,7 +91,7 @@ class AssignmentIREvaluator:
             ) or ""
 
             runner = ProcessRunner()
-            result = await runner.run_async(
+            result = runner.run(
                 command,
                 {
                     "output": "capture",

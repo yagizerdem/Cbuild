@@ -50,7 +50,7 @@ class BuildFileEvaluator:
         self._irs: Final = irs
         self._evaluation_state = evaluation_state
 
-    async def evaluate_async(self) -> list[BaseModel]:
+    def evaluate(self) -> list[BaseModel]:
         for ir in self._irs:
             value_expansion_engine = ValueExpansionEngine(self._context)
 
@@ -59,7 +59,7 @@ class BuildFileEvaluator:
                     self._context,
                     ir,
                 )
-                await assignment_ir_evaluator.evaluate()
+                assignment_ir_evaluator.evaluate()
             elif isinstance(ir, UndefineIR):
                 undefine_ir_evaluator = UndefineIREvaluator(self._context, ir)
                 undefine_ir_evaluator.execute()
@@ -69,7 +69,7 @@ class BuildFileEvaluator:
             elif isinstance(ir, HookIR):
                 interpreter = Interpreter()
                 interpreter.init(self._context)
-                await interpreter.run_async(ir.hook_program)
+                interpreter.run(ir.hook_program)
             elif isinstance(ir, ConditionalIR):
                 condional_ir_evaluator = ConditionalIREvaluator(
                     self._context,
@@ -82,7 +82,7 @@ class BuildFileEvaluator:
                     active_branch,
                     self._evaluation_state,
                 )
-                await evaluator.evaluate_async()
+                evaluator.evaluate()
             elif isinstance(ir, DefineIR):
                 expanded_value: str = (
                     ir.value.exec(value_expansion_engine)
@@ -98,7 +98,7 @@ class BuildFileEvaluator:
                     self._context,
                     self._evaluation_state,
                 )
-                resolution_result: list[BaseModel] = await model_resolver.exec_async(ir)
+                resolution_result: list[BaseModel] = model_resolver.exec(ir)
                 self._evaluation_state.resolved_models.extend(resolution_result)
             elif isinstance(ir, VpathIR):
                 vpath_ir_evaluator = VpathIREvaluator(
@@ -114,7 +114,7 @@ class BuildFileEvaluator:
                     ir,
                     self._evaluation_state,
                 )
-                await include_ir_evaluator.execute_async()
+                include_ir_evaluator.execute()
             elif isinstance(ir, StaticPatternRuleIR):
                 static_pattern_rule_ir_evaluator = StaticPatternIREvaluator(
                     self._context,
@@ -129,7 +129,7 @@ class BuildFileEvaluator:
                 )
 
                 evaluation_states: list[TargetRuleEvaluationState] = (
-                    await target_rule_ir_evaluator.execute()
+                    target_rule_ir_evaluator.execute()
                 )
 
                 for evaluation_state in evaluation_states:

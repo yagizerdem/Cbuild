@@ -1,4 +1,3 @@
-import asyncio
 import os
 import re
 from typing import Final
@@ -31,7 +30,7 @@ class IncludeIREvaluator:
         self._evaluation_state: Final = evaluation_state
         self._value_expansion_engine: Final = ValueExpansionEngine(context)
 
-    async def execute_async(self) -> list[BaseModel]:
+    def execute(self) -> list[BaseModel]:
         # Imported here to avoid a circular import: BuildFileEvaluator imports
         # this module.
         from cbuild_backend.evaluator.core.buildfile_evaluator import (
@@ -92,14 +91,12 @@ class IncludeIREvaluator:
                     message=f"Circular include detected: {resolved_build_file_path}",
                 )
 
-            build_file_content = await asyncio.to_thread(
-                _read_text, resolved_build_file_path
-            )
+            build_file_content = _read_text(resolved_build_file_path)
 
             build_file = BuildFileMeta(
                 absolute_path=resolved_build_file_path,
                 raw_content=build_file_content,
-                size=(await asyncio.to_thread(os.stat, resolved_build_file_path)).st_size,
+                size=os.stat(resolved_build_file_path).st_size,
                 relative_path=os.path.relpath(resolved_build_file_path, os.getcwd()),
                 name=os.path.basename(resolved_build_file_path),
             )
@@ -113,7 +110,7 @@ class IncludeIREvaluator:
                     ir,
                     self._evaluation_state,
                 )
-                resolved_models = await build_file_evaluator.evaluate_async()
+                resolved_models = build_file_evaluator.evaluate()
                 models.extend(resolved_models)
             finally:
                 self._evaluation_state.include_guard = [

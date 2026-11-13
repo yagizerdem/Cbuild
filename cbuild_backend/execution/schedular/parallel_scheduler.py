@@ -1,5 +1,6 @@
-import asyncio
 import os
+import time
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from typing import Final
 
 from cbuild_backend.env import Env
@@ -25,8 +26,8 @@ class ParallelScheduler:
         self._completed_builds: set[RuleUUID] = set()
         self._failed_builds: set[RuleUUID] = set()
 
-        # holds tasks of currently running builds
-        self._running_builds: set[asyncio.Task[None]] = set()
+        # maps futures of currently running builds to their rule uuid
+        self._running_builds: dict[Future[None], RuleUUID] = {}
 
         # graph data strucure for tracking target dependencies
         self._target_map: Final = create_target_map(rules)
@@ -90,15 +91,15 @@ class ParallelScheduler:
             self._blocked_builds.add(dependent_uuid)
             self._block_dependents(dependent_uuid)
 
-    async def _build_rule(self, uuid: str) -> None:
+    # Runs on a worker thread; only the build itself happens here.
+    def _run_build(self, rule: NormalRule) -> None:
         build = Build(self._context, self._explicit_rules)
+        build.build_target(rule)
 
-        rule = self._rules_by_uuid.get(uuid)
-        if not rule:
-            raise Exception(f'Rule with uuid "{uuid}" does not exist')
-        self._current_builds.add(uuid)
+    # Runs on the scheduler thread so the bookkeeping sets are never shared.
+    def _finish_build(self, uuid: str, build_future: Future[None]) -> None:
         try:
-            await build.build_target_async(rule)
+            build_future.result()
             self._completed_builds.add(uuid)
             dependents = self._reverse_target_map.get(uuid, [])
             for dependent in dependents:
@@ -152,7 +153,7 @@ class ParallelScheduler:
                 message="cbuild: the '-j' option requires a positive integer argument",
             )
 
-    async def parallel_schedule(self) -> None:
+    def parallel_schedule(self) -> None:
         self._ensure_not_sequential()
         concurrency = (
             self._context.cli_options.jobs
@@ -161,6 +162,7 @@ class ParallelScheduler:
         )
         self._ensure_concurrency_is_positive_integer(concurrency)
 
+        executor = ThreadPoolExecutor(max_workers=concurrency)
         try:
             if self._context.cli_options.print_directory:
                 print(f"cbuild: Entering directory '{os.getcwd()}'")
@@ -170,15 +172,18 @@ class ParallelScheduler:
             ) < len(self._explicit_rules):
                 if len(self._current_builds) < concurrency:
                     if not self._can_start_job():
-                        await asyncio.sleep(0.1)
+                        time.sleep(0.1)
                         continue
                     available_slots = concurrency - len(self._current_builds)
                     next_builds = self._get_next_builds(available_slots)
 
                     for uuid in next_builds:
+                        rule = self._rules_by_uuid.get(uuid)
+                        if not rule:
+                            raise Exception(f'Rule with uuid "{uuid}" does not exist')
                         self._current_builds.add(uuid)
-                        build_task = asyncio.ensure_future(self._build_rule(uuid))
-                        self._running_builds.add(build_task)
+                        build_future = executor.submit(self._run_build, rule)
+                        self._running_builds[build_future] = uuid
 
                 if len(self._running_builds) == 0:
                     if len(self._completed_builds) + len(self._failed_builds) + len(
@@ -190,16 +195,13 @@ class ParallelScheduler:
                     break
 
                 # Wake the scheduler immediately when any build finishes.
-                done, _ = await asyncio.wait(
-                    self._running_builds, return_when=asyncio.FIRST_COMPLETED
-                )
-                self._running_builds.difference_update(done)
+                done, _ = wait(self._running_builds, return_when=FIRST_COMPLETED)
                 for finished in done:
-                    error = finished.exception()
-                    if error is not None:
-                        raise error
+                    self._finish_build(self._running_builds.pop(finished), finished)
 
             self._throw_if_build_failed()
         finally:
+            # Let already started recipes finish; never start queued ones.
+            executor.shutdown(wait=True, cancel_futures=True)
             if self._context.cli_options.print_directory:
                 print(f"cbuild: Leaving directory '{os.getcwd()}'")

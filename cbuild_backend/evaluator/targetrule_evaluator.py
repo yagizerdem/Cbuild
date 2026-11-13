@@ -14,7 +14,7 @@ class TargetRuleIREvaluator:
         self._ir: Final = ir
         self._value_expansion_engine: Final = ValueExpansionEngine(context)
 
-    async def execute(self) -> list[TargetRuleEvaluationState]:
+    def execute(self) -> list[TargetRuleEvaluationState]:
         target_evaluation_states: list[TargetRuleEvaluationState] = []
 
         if self._ir.assignment:
@@ -39,7 +39,7 @@ class TargetRuleIREvaluator:
                         self._ir.assignment,
                     )
 
-                    await assignment_evaluator.evaluate()
+                    assignment_evaluator.evaluate()
 
                     target_evaluation_states.append(
                         TargetRuleEvaluationState(

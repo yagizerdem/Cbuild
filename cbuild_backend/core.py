@@ -54,7 +54,7 @@ class Core:
     def __init__(self, context: Env) -> None:
         self._context: Final = context
 
-    async def run_async(
+    def run(
         self, rules: list[IR], options: RunnerOptions | None = None
     ) -> None:
         options = options or {}
@@ -82,7 +82,7 @@ class Core:
             rules,
             evaluation_state,
         )
-        resolved_models = await evaluator.evaluate_async()
+        resolved_models = evaluator.evaluate()
 
         if (
             self._context.cli_options.builtin_rules
@@ -151,12 +151,12 @@ class Core:
 
         if current_context.cli_options.sequential:
             sequential_schedular = SequentialSchedular(current_context, rules_sub_graph)
-            await sequential_schedular.sequential_schedule_async(
+            sequential_schedular.sequential_schedule(
                 find_target_rule(rules_sub_graph, target_name),
             )
         else:
             parallel_schedular = ParallelScheduler(current_context, rules_sub_graph)
-            await parallel_schedular.parallel_schedule()
+            parallel_schedular.parallel_schedule()
 
     def collect_normal_rule_models(self, base_modesl: list[BaseModel]) -> list[NormalRule]:
         return [model for model in base_modesl if isinstance(model, NormalRule)]

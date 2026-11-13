@@ -27,9 +27,6 @@ class BaseExpansionEngine(Executor):
     def exec[T](self, ir: IR | ValuePart) -> T:
         return cast(T, None)
 
-    async def exec_async[T](self, node: IR) -> T:
-        return self.exec(node)
-
 
 class ExpansionEngine(BaseExpansionEngine):
     def __init__(self, context: Env) -> None:
@@ -58,9 +55,6 @@ class ExpansionEngine(BaseExpansionEngine):
         if isinstance(ir, (ValueIR, RecipeIR)):
             return self.expand(ir)
         raise Exception("Unsupported IR node for expansion")
-
-    async def exec_async[T](self, ir: IR) -> T:
-        return self.exec(ir)
 
 
 class ValueExpansionEngine(BaseExpansionEngine):
@@ -95,9 +89,6 @@ class ValueExpansionEngine(BaseExpansionEngine):
 
     def exec[T](self, ir: Any) -> T:
         return cast(T, self._expand_value_to_string(ir, self._active_lookups))
-
-    async def exec_async[T](self, ir: Any) -> T:
-        return self.exec(ir)
 
     def _expand_value_to_string(self, ir: ValueIR, active_lookups: set[str]) -> str:
         # Imported here to avoid a circular import: the function runners
@@ -212,9 +203,6 @@ class RecipeExpansionEngine(BaseExpansionEngine):
             recipe_ir.recipe.command,
         )
         return cast(T, expanded_shell_command)
-
-    async def exec_async[T](self, node: Any) -> T:
-        return self.exec(node)
 
 
 class Expansion:

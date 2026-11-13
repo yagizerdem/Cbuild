@@ -98,7 +98,7 @@ class LuaEngine:
         set_metatable = lua.execute(_PREPARE_ENGINE, time.monotonic, _FUNCTION_TIMEOUT)
         self.global_ = LuaGlobal(lua, set_metatable)
 
-    async def do_string(self, code: str) -> Any:
+    def do_string(self, code: str) -> Any:
         return self.global_.lua.execute(code)
 
 
@@ -110,7 +110,7 @@ class Interpreter:
     def init(self, context: Env) -> None:
         self._context = context
 
-    async def run_async(self, code: str) -> None:
+    def run(self, code: str) -> None:
         if self._context is None:
             # programmatic error. the interpreter must be initialized with a context before running code.
             raise Exception("Interpreter context is not initialized.")
@@ -126,7 +126,7 @@ class Interpreter:
             register_os(self._lua)
             register_os(self._lua)
 
-            await self._lua.do_string(code)
+            self._lua.do_string(code)
         except Exception as error:
             raise error
         finally:
