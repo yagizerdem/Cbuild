@@ -6,7 +6,7 @@ import sys
 import threading
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Literal, NotRequired, TypedDict, cast
+from typing import Any, Literal, TypedDict, cast
 
 from cbuild_backend.os import get_os_info
 from type.cbuild_exception import CbuildException, ErrorType, MachineCode
