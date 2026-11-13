@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Literal, NotRequired, Protocol, TypedDict
-from ..type.buildfile_meta import BuildFileMeta
+from type.buildfile_meta import BuildFileMeta
 
 
 class Executor(Protocol):
