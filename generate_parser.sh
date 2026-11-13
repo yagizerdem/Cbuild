@@ -17,7 +17,7 @@ elif [[ -x "venv/bin/antlr4" ]]; then
 elif command -v antlr4 >/dev/null 2>&1; then
     ANTLR="antlr4"
 else
-    echo "antlr4 bulunamadı. Kur: pip install antlr4-tools antlr4-python3-runtime==$ANTLR_VERSION" >&2
+    echo "antlr4 not found. Setup: pip install antlr4-tools antlr4-python3-runtime==$ANTLR_VERSION" >&2
     exit 1
 fi
 
@@ -28,5 +28,5 @@ mkdir -p "$OUT_DIR"
 
 touch "$OUT_DIR/__init__.py"
 
-echo "Parser üretildi: $OUT_DIR/"
+echo "Parser generated: $OUT_DIR/"
 ls "$OUT_DIR"
