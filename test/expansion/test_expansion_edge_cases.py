@@ -1255,7 +1255,7 @@ class ExpansionEdgeCasesTest(unittest.TestCase):
         context = Env(empty_cli_options())
         engine = ExpansionEngine(context)
         expanded_value = engine.expand(value)
-        self.assertEqual(expanded_value, os.path.join("cbuild_compiler", "ir.py"))
+        self.assertEqual(expanded_value, os.path.join("cbuild_compiler", "ir.py").replace(os.sep, "/"))
 
     def test_wildcard_empty_input(self) -> None:
         fn = FunctionIR("wildcard")
@@ -1273,7 +1273,7 @@ class ExpansionEdgeCasesTest(unittest.TestCase):
         context = Env(empty_cli_options())
         engine = ExpansionEngine(context)
         expanded_value = engine.expand(value)
-        self.assertEqual(expanded_value, os.path.join("cbuild_compiler", "ir.py"))
+        self.assertEqual(expanded_value, os.path.join("cbuild_compiler", "ir.py").replace(os.sep, "/"))
 
     def test_wildcard_nested_function_input(self) -> None:
         nested = FunctionIR("strip")
@@ -1284,7 +1284,7 @@ class ExpansionEdgeCasesTest(unittest.TestCase):
         context = Env(empty_cli_options())
         engine = ExpansionEngine(context)
         expanded_value = engine.expand(value)
-        self.assertEqual(expanded_value, os.path.join("cbuild_compiler", "ir.py"))
+        self.assertEqual(expanded_value, os.path.join("cbuild_compiler", "ir.py").replace(os.sep, "/"))
 
     def test_value_normal_input(self) -> None:
         fn = FunctionIR("value")
@@ -4804,8 +4804,8 @@ class ExpansionEdgeCasesTest(unittest.TestCase):
             sorted(expanded_value.split(" ")),
             sorted(
                 [
-                    os.path.join("cbuild_backend", "env.py"),
-                    os.path.join("cbuild_compiler", "ir.py"),
+                    os.path.join("cbuild_backend", "env.py").replace(os.sep, "/"),
+                    os.path.join("cbuild_compiler", "ir.py").replace(os.sep, "/"),
                 ]
             ),
         )
