@@ -48,7 +48,7 @@ class CBuildCompiler(cbuildVisitor):
         self.compiled_program: list[IR] = []
         self._dispatcher: Final = make_function_dispatcher()
 
-    def defaultResult(self) -> Any:  # noqa: N802
+    def defaultResult(self) -> Any:
         return None
 
     def compile(self, cbuildfile_context: cbuildParser.CbuildfileContext) -> list[IR]:
@@ -56,13 +56,13 @@ class CBuildCompiler(cbuildVisitor):
         self.compiled_program = cast(list[IR], cbuildfile_context.accept(self))
         return self.compiled_program
 
-    def visitCbuildfile(self, ctx: cbuildParser.CbuildfileContext) -> Any:  # noqa: N802
+    def visitCbuildfile(self, ctx: cbuildParser.CbuildfileContext) -> Any:
         if ctx.statements() is None:
             return cast(list[IR], [])
 
         return ctx.statements().accept(self)
 
-    def visitStatements(self, ctx: cbuildParser.StatementsContext) -> Any:  # noqa: N802
+    def visitStatements(self, ctx: cbuildParser.StatementsContext) -> Any:
         statements: list[IR] = []
         for stmt_ctx in ctx.statement():
             ir = cast(IR, stmt_ctx.accept(self))
@@ -71,7 +71,7 @@ class CBuildCompiler(cbuildVisitor):
             statements.append(ir)
         return statements
 
-    def visitStatement(self, ctx: cbuildParser.StatementContext) -> Any:  # noqa: N802
+    def visitStatement(self, ctx: cbuildParser.StatementContext) -> Any:
         if ctx.assignment() is not None:
             return ctx.assignment().accept(self)
         elif ctx.conditional() is not None:
@@ -108,7 +108,7 @@ class CBuildCompiler(cbuildVisitor):
             f"Unsupported statement at line {ctx.start.line if ctx.start is not None else None}, column {ctx.start.column if ctx.start is not None else None}: `{ctx.getText()}`"
         )
 
-    def visitAssignment(self, ctx: cbuildParser.AssignmentContext) -> Any:  # noqa: N802
+    def visitAssignment(self, ctx: cbuildParser.AssignmentContext) -> Any:
         assignment_type = assignment_type_from_symbol(
             ctx.ASSIGN_OP().getText().strip(),
         )
@@ -149,7 +149,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return assignment_ir
 
-    def visitAssignment_prefix(  # noqa: N802
+    def visitAssignment_prefix(
         self,
         ctx: cbuildParser.Assignment_prefixContext,
     ) -> AssignmentPrefixPair:
@@ -159,7 +159,7 @@ class CBuildCompiler(cbuildVisitor):
         pair: AssignmentPrefixPair = (prefix, parts)
         return pair
 
-    def visitPattern(self, ctx: cbuildParser.PatternContext) -> list[ValuePart]:  # noqa: N802
+    def visitPattern(self, ctx: cbuildParser.PatternContext) -> list[ValuePart]:
         parts: list[ValuePart] = []
 
         for ast_node in ctx.children or []:
@@ -168,7 +168,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return parts
 
-    def visitExprs_in_assign(self, ctx: cbuildParser.Exprs_in_assignContext) -> Any:  # noqa: N802
+    def visitExprs_in_assign(self, ctx: cbuildParser.Exprs_in_assignContext) -> Any:
         parts: list[ValuePart] = []
         for i in range(len(ctx.children or [])):
             ast_node = ctx.children[i]
@@ -179,7 +179,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return parts
 
-    def visitExpr_in_assign(self, ctx: cbuildParser.Expr_in_assignContext) -> Any:  # noqa: N802
+    def visitExpr_in_assign(self, ctx: cbuildParser.Expr_in_assignContext) -> Any:
         parts: list[ValuePart] = []
         for atom_ctx in ctx.expr_in_assign_atom():
             if atom_ctx.function() is not None and not atom_ctx.function().isEmpty():
@@ -197,19 +197,19 @@ class CBuildCompiler(cbuildVisitor):
                 parts.append(text_part_)
         return parts
 
-    def visitChar_in_assign(self, ctx: cbuildParser.Char_in_assignContext) -> str:  # noqa: N802
+    def visitChar_in_assign(self, ctx: cbuildParser.Char_in_assignContext) -> str:
         if ctx.char_nested() is not None and not ctx.char_nested().isEmpty():
             return cast(str, ctx.char_nested().accept(self))
 
         return ctx.getText()
 
-    def visitChar_nested(self, ctx: cbuildParser.Char_nestedContext) -> str:  # noqa: N802
+    def visitChar_nested(self, ctx: cbuildParser.Char_nestedContext) -> str:
         if ctx.char() is not None and not ctx.char().isEmpty():
             return cast(str, ctx.char().accept(self))
 
         return ctx.getText()
 
-    def visitFunction(self, ctx: cbuildParser.FunctionContext) -> ValuePart:  # noqa: N802
+    def visitFunction(self, ctx: cbuildParser.FunctionContext) -> ValuePart:
         if ctx.VAR() is not None:
             return self._compile_var_ref(ctx)
 
@@ -233,7 +233,7 @@ class CBuildCompiler(cbuildVisitor):
         paren_type = "(" if ctx.DOLLAR_LPAREN() is not None else "{"
         return var_ref_part(ValueIR(parts), paren_type)
 
-    def visitFunction_name(self, ctx: cbuildParser.Function_nameContext) -> list[ValuePart]:  # noqa: N802
+    def visitFunction_name(self, ctx: cbuildParser.Function_nameContext) -> list[ValuePart]:
         parts: list[ValuePart] = []
         for atom_ctx in ctx.function_name_atom():
             if atom_ctx.function() is not None:
@@ -243,14 +243,14 @@ class CBuildCompiler(cbuildVisitor):
 
         return parts
 
-    def visitFunction_name_atom(self, ctx: cbuildParser.Function_name_atomContext) -> ValuePart:  # noqa: N802
+    def visitFunction_name_atom(self, ctx: cbuildParser.Function_name_atomContext) -> ValuePart:
         if ctx.CHARS() is not None:
             return text_part(ctx.CHARS().getText())
         if ctx.function() is not None:
             return cast(ValuePart, ctx.function().accept(self))
         return text_part("")
 
-    def visitArguments(self, ctx: cbuildParser.ArgumentsContext) -> list[ValuePart]:  # noqa: N802
+    def visitArguments(self, ctx: cbuildParser.ArgumentsContext) -> list[ValuePart]:
         parts: list[ValuePart] = []
         for args_ctx in ctx.argument():
             result = args_ctx.accept(self)
@@ -258,7 +258,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return parts
 
-    def visitArgument(self, ctx: cbuildParser.ArgumentContext) -> list[ValuePart]:  # noqa: N802
+    def visitArgument(self, ctx: cbuildParser.ArgumentContext) -> list[ValuePart]:
         parts: list[ValuePart] = []
         result = ctx.expressions().accept(self)
         self._collect_value_parts(parts, result)
@@ -272,7 +272,7 @@ class CBuildCompiler(cbuildVisitor):
         paren_type = "(" if ctx.DOLLAR_LPAREN() is not None else "{"
         return var_ref_part(value, paren_type)
 
-    def visitConditional(self, ctx: cbuildParser.ConditionalContext) -> ConditionalIR:  # noqa: N802
+    def visitConditional(self, ctx: cbuildParser.ConditionalContext) -> ConditionalIR:
         kind: ConditionKind | None = None
         condition: Condition | None = None
 
@@ -324,7 +324,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return conditional_ir
 
-    def visitCondition(self, ctx: cbuildParser.ConditionContext) -> Condition:  # noqa: N802
+    def visitCondition(self, ctx: cbuildParser.ConditionContext) -> Condition:
         condition: Condition | None = None
 
         if len(ctx.expressions_opt()) == 2:
@@ -350,17 +350,17 @@ class CBuildCompiler(cbuildVisitor):
 
         raise Exception("Invalid condition context")
 
-    def visitIdentifier(self, ctx: cbuildParser.IdentifierContext) -> ValuePart:  # noqa: N802
+    def visitIdentifier(self, ctx: cbuildParser.IdentifierContext) -> ValuePart:
         text_part_ = text_part(ctx.getText())
         return text_part_
 
-    def visitExpressions_opt(self, ctx: cbuildParser.Expressions_optContext) -> list[ValuePart]:  # noqa: N802
+    def visitExpressions_opt(self, ctx: cbuildParser.Expressions_optContext) -> list[ValuePart]:
         if ctx.expressions() is None:
             return cast(list[ValuePart], [])
 
         return cast(list[ValuePart], ctx.expressions().accept(self))
 
-    def visitExpressions(self, ctx: cbuildParser.ExpressionsContext) -> list[ValuePart]:  # noqa: N802
+    def visitExpressions(self, ctx: cbuildParser.ExpressionsContext) -> list[ValuePart]:
         parts: list[ValuePart] = []
 
         for ast_node in ctx.children or []:
@@ -370,7 +370,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return parts
 
-    def visitExpression(self, ctx: cbuildParser.ExpressionContext) -> Any:  # noqa: N802
+    def visitExpression(self, ctx: cbuildParser.ExpressionContext) -> Any:
         parts: list[ValuePart] = []
 
         for ast_node in ctx.children or []:
@@ -380,7 +380,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return parts
 
-    def visitExpression_atom(self, ctx: cbuildParser.Expression_atomContext) -> Any:  # noqa: N802
+    def visitExpression_atom(self, ctx: cbuildParser.Expression_atomContext) -> Any:
         if ctx.text() is not None:
             return text_part(ctx.text().getText())
 
@@ -394,7 +394,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return None
 
-    def visitExpr_nested(self, ctx: cbuildParser.Expr_nestedContext) -> Any:  # noqa: N802
+    def visitExpr_nested(self, ctx: cbuildParser.Expr_nestedContext) -> Any:
         parts: list[ValuePart] = []
 
         for ast_node in ctx.children or []:
@@ -404,7 +404,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return parts
 
-    def visitExpr_nested_atom(self, ctx: cbuildParser.Expr_nested_atomContext) -> Any:  # noqa: N802
+    def visitExpr_nested_atom(self, ctx: cbuildParser.Expr_nested_atomContext) -> Any:
         if ctx.text_nested() is not None:
             return text_part(ctx.text_nested().getText())
 
@@ -418,7 +418,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return None
 
-    def visitExprs_nested(self, ctx: cbuildParser.Exprs_nestedContext) -> list[ValuePart]:  # noqa: N802
+    def visitExprs_nested(self, ctx: cbuildParser.Exprs_nestedContext) -> list[ValuePart]:
         parts: list[ValuePart] = []
 
         for child in ctx.children or []:
@@ -426,13 +426,13 @@ class CBuildCompiler(cbuildVisitor):
 
         return parts
 
-    def visitStatements_opt(self, ctx: cbuildParser.Statements_optContext) -> Any:  # noqa: N802
+    def visitStatements_opt(self, ctx: cbuildParser.Statements_optContext) -> Any:
         if ctx.statements() is not None:
             return ctx.statements().accept(self)
 
         return []
 
-    def visitRule(self, ctx: cbuildParser.RuleContext) -> Any:  # noqa: N802
+    def visitRule(self, ctx: cbuildParser.RuleContext) -> Any:
         if ctx.static_pattern_rule() is not None:
             return ctx.static_pattern_rule().accept(self)
 
@@ -478,7 +478,7 @@ class CBuildCompiler(cbuildVisitor):
 
             return rule_ir
 
-    def visitTargets(self, ctx: cbuildParser.TargetsContext) -> Any:  # noqa: N802
+    def visitTargets(self, ctx: cbuildParser.TargetsContext) -> Any:
         targets_ir: list[ValueIR] = []
         for target_ctx in ctx.target():
             parts = cast(list[ValuePart], target_ctx.pattern().accept(self))
@@ -487,12 +487,12 @@ class CBuildCompiler(cbuildVisitor):
 
         return targets_ir
 
-    def visitPrerequisites(self, ctx: cbuildParser.PrerequisitesContext) -> Any:  # noqa: N802
+    def visitPrerequisites(self, ctx: cbuildParser.PrerequisitesContext) -> Any:
         if ctx.targets() is not None:
             return ctx.targets().accept(self)
         return cast(list[ValueIR], [])
 
-    def visitOrderonlyprerequisites(  # noqa: N802
+    def visitOrderonlyprerequisites(
         self,
         ctx: cbuildParser.OrderonlyprerequisitesContext,
     ) -> Any:
@@ -501,7 +501,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return ctx.targets().accept(self)
 
-    def visitRecipes(self, ctx: cbuildParser.RecipesContext) -> list[RecipeIR]:  # noqa: N802
+    def visitRecipes(self, ctx: cbuildParser.RecipesContext) -> list[RecipeIR]:
         recipes: list[RecipeIR] = []
 
         for recipe_ctx in ctx.recipe():
@@ -512,13 +512,13 @@ class CBuildCompiler(cbuildVisitor):
 
         return recipes
 
-    def visitRecipes_opt(self, ctx: cbuildParser.Recipes_optContext) -> Any:  # noqa: N802
+    def visitRecipes_opt(self, ctx: cbuildParser.Recipes_optContext) -> Any:
         if ctx.recipes() is not None:
             return ctx.recipes().accept(self)
 
         return cast(list[RecipeIR], [])
 
-    def visitRecipe(self, ctx: cbuildParser.RecipeContext) -> Any:  # noqa: N802
+    def visitRecipe(self, ctx: cbuildParser.RecipeContext) -> Any:
         if ctx.exprs_in_recipe() is not None:
             parts = cast(list[ValuePart], ctx.exprs_in_recipe().accept(self))
 
@@ -537,7 +537,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return None
 
-    def visitExprs_in_recipe(self, ctx: cbuildParser.Exprs_in_recipeContext) -> Any:  # noqa: N802
+    def visitExprs_in_recipe(self, ctx: cbuildParser.Exprs_in_recipeContext) -> Any:
         parts: list[ValuePart] = []
 
         for ast_node in ctx.children or []:
@@ -547,7 +547,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return parts
 
-    def visitExpr_in_recipe(self, ctx: cbuildParser.Expr_in_recipeContext) -> Any:  # noqa: N802
+    def visitExpr_in_recipe(self, ctx: cbuildParser.Expr_in_recipeContext) -> Any:
         parts: list[ValuePart] = []
 
         for atom_ctx in ctx.expr_in_recipe_atom():
@@ -557,7 +557,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return parts
 
-    def visitExpr_in_recipe_atom(self, ctx: cbuildParser.Expr_in_recipe_atomContext) -> ValuePart:  # noqa: N802
+    def visitExpr_in_recipe_atom(self, ctx: cbuildParser.Expr_in_recipe_atomContext) -> ValuePart:
         if ctx.text_in_recipe() is not None:
             return self.visitText_in_recipe(ctx.text_in_recipe())
         elif ctx.function() is not None:
@@ -565,7 +565,7 @@ class CBuildCompiler(cbuildVisitor):
 
         raise Exception("Unhandled condition in visitExpr_in_recipe_atom")
 
-    def visitText_in_recipe(self, ctx: cbuildParser.Text_in_recipeContext) -> ValuePart:  # noqa: N802
+    def visitText_in_recipe(self, ctx: cbuildParser.Text_in_recipeContext) -> ValuePart:
         text = ""
 
         for char_ctx in ctx.char_in_recipe():
@@ -573,7 +573,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return text_part(text)
 
-    def visitChar_in_recipe(self, ctx: cbuildParser.Char_in_recipeContext) -> str:  # noqa: N802
+    def visitChar_in_recipe(self, ctx: cbuildParser.Char_in_recipeContext) -> str:
         if ctx.char_in_assign() is not None:
             return self.visitChar_in_assign(ctx.char_in_assign())
         if ctx.COMMENT() is not None:
@@ -583,7 +583,7 @@ class CBuildCompiler(cbuildVisitor):
 
         raise Exception("Unhandled condition in visitChar_in_recipe")
 
-    def visitConditional_in_recipe(  # noqa: N802
+    def visitConditional_in_recipe(
         self,
         ctx: cbuildParser.Conditional_in_recipeContext,
     ) -> ConditionalIR:
@@ -638,7 +638,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return conditional_ir
 
-    def visitStatic_pattern_rule(self, ctx: cbuildParser.Static_pattern_ruleContext) -> Any:  # noqa: N802
+    def visitStatic_pattern_rule(self, ctx: cbuildParser.Static_pattern_ruleContext) -> Any:
         targets_ir = cast(list[ValueIR], ctx.targets().accept(self))
 
         rule_separator = rule_separator_from_symbol(
@@ -677,7 +677,7 @@ class CBuildCompiler(cbuildVisitor):
             }
         )
 
-    def visitDefine(self, ctx: cbuildParser.DefineContext) -> Any:  # noqa: N802
+    def visitDefine(self, ctx: cbuildParser.DefineContext) -> Any:
         define_ir = DefineIR()
 
         if ctx.specifiers() is not None:
@@ -697,7 +697,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return define_ir
 
-    def visitDefine_body(self, ctx: cbuildParser.Define_bodyContext) -> ValueIR:  # noqa: N802
+    def visitDefine_body(self, ctx: cbuildParser.Define_bodyContext) -> ValueIR:
         parts: list[ValuePart] = []
 
         for ast_node in ctx.children or []:
@@ -709,13 +709,13 @@ class CBuildCompiler(cbuildVisitor):
 
         return ValueIR(parts)
 
-    def visitDefinition(self, ctx: cbuildParser.DefinitionContext) -> list[ValuePart]:  # noqa: N802
+    def visitDefinition(self, ctx: cbuildParser.DefinitionContext) -> list[ValuePart]:
         if ctx.exprs_in_def() is None:
             return cast(list[ValuePart], [])
 
         return self.visitExprs_in_def(ctx.exprs_in_def())
 
-    def visitExprs_in_def(self, ctx: cbuildParser.Exprs_in_defContext) -> list[ValuePart]:  # noqa: N802
+    def visitExprs_in_def(self, ctx: cbuildParser.Exprs_in_defContext) -> list[ValuePart]:
         parts: list[ValuePart] = []
 
         if len(ctx.br()) > 0 and len(ctx.first_expr_in_def()) == 0:
@@ -732,7 +732,7 @@ class CBuildCompiler(cbuildVisitor):
 
         return parts
 
-    def visitFirst_expr_in_def(self, ctx: cbuildParser.First_expr_in_defContext) -> list[ValuePart]:  # noqa: N802
+    def visitFirst_expr_in_def(self, ctx: cbuildParser.First_expr_in_defContext) -> list[ValuePart]:
         parts: list[ValuePart] = []
 
         for ast_node in ctx.children or []:
@@ -742,13 +742,13 @@ class CBuildCompiler(cbuildVisitor):
 
         return parts
 
-    def visitChar_in_def(self, ctx: cbuildParser.Char_in_defContext) -> ValuePart:  # noqa: N802
+    def visitChar_in_def(self, ctx: cbuildParser.Char_in_defContext) -> ValuePart:
         if ctx.char() is not None and ctx.char().getText() is not None:
             return text_part(cast(str, ctx.char().accept(self)))
 
         return text_part(ctx.getText())
 
-    def visitChar(self, ctx: cbuildParser.CharContext) -> str:  # noqa: N802
+    def visitChar(self, ctx: cbuildParser.CharContext) -> str:
         if (
             ctx.DOUBLE_DOLLAR() is not None
             and len(ctx.DOUBLE_DOLLAR().getText()) > 0
@@ -757,13 +757,13 @@ class CBuildCompiler(cbuildVisitor):
 
         return ctx.getText()
 
-    def visitVpath(self, ctx: cbuildParser.VpathContext) -> VpathIR:  # noqa: N802
+    def visitVpath(self, ctx: cbuildParser.VpathContext) -> VpathIR:
         if ctx.vpath_args() is None:
             return VpathIR.clear_all()
 
         return cast(VpathIR, ctx.vpath_args().accept(self))
 
-    def visitVpath_args(self, ctx: cbuildParser.Vpath_argsContext) -> VpathIR:  # noqa: N802
+    def visitVpath_args(self, ctx: cbuildParser.Vpath_argsContext) -> VpathIR:
         arg = ValueIR(cast(list[ValuePart], ctx.pattern().accept(self)))
 
         if ctx.expressions() is None:
@@ -774,11 +774,11 @@ class CBuildCompiler(cbuildVisitor):
 
         return VpathIR.set_pattern(arg, directories)
 
-    def visitWs(self, ctx: cbuildParser.WsContext) -> ValuePart:  # noqa: N802
+    def visitWs(self, ctx: cbuildParser.WsContext) -> ValuePart:
         part = text_part(ctx.getText())
         return part
 
-    def visitInclude(self, ctx: cbuildParser.IncludeContext) -> IncludeIR:  # noqa: N802
+    def visitInclude(self, ctx: cbuildParser.IncludeContext) -> IncludeIR:
         parts = cast(list[ValuePart], ctx.expressions().accept(self))
 
         if ctx.include_kw().DASH_INCLUDE() is not None:
@@ -790,12 +790,12 @@ class CBuildCompiler(cbuildVisitor):
 
         raise Exception("Unknown include type")
 
-    def visitHook(self, ctx: cbuildParser.HookContext) -> HookIR:  # noqa: N802
+    def visitHook(self, ctx: cbuildParser.HookContext) -> HookIR:
         program: str = ctx.hook_program().getText().strip()
         hook_ir = HookIR(program)
         return hook_ir
 
-    def visitUndefine(self, ctx: cbuildParser.UndefineContext) -> UndefineIR:  # noqa: N802
+    def visitUndefine(self, ctx: cbuildParser.UndefineContext) -> UndefineIR:
         identifier = ValueIR(self.visitPattern(ctx.pattern()))
         prefix: UndefineSpecifier = (
             "override undefine"
@@ -804,7 +804,7 @@ class CBuildCompiler(cbuildVisitor):
         )
         return UndefineIR(identifier, prefix)
 
-    def visitExport(  # noqa: N802
+    def visitExport(
         self,
         ctx: cbuildParser.ExportContext,
     ) -> ExportIR | GlobalExportIR | GlobalUnexportIR:
