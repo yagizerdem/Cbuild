@@ -1,6 +1,6 @@
 import unittest
 
-from test.util.parse import run_build_file
+from core.frontend import parse_build_file
 
 
 class ParserFrontendTest(unittest.TestCase):
@@ -10,7 +10,7 @@ hello:
 \techo "Hello, World"
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_simple_command_preq(self) -> None:
         build_file = """\
@@ -20,7 +20,7 @@ targets: prerequisites
 \tcommand
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_simple_command_preq2(self) -> None:
         build_file = """\
@@ -35,7 +35,7 @@ blah.c:
 \techo "int main() { return 0; }" > blah.c # Runs first
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_complex_makefile_like_build(self) -> None:
         build_file = """\
@@ -98,7 +98,7 @@ install: edit
 \tcp edit /usr/local/bin/edit
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_pattern_rule(self) -> None:
         build_file = """\
@@ -112,7 +112,7 @@ app: main.o util.o
 \t$(CC) main.o util.o -o app
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_docker_compose_up(self) -> None:
         build_file = """\
@@ -125,7 +125,7 @@ up:
 \tdocker-compose up
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_complex_make_file(self) -> None:
         build_file = """\
@@ -173,7 +173,7 @@ clean:
 \texport $@ && $(MAKE) app -j4
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_multiple_targets(self) -> None:
         build_file = """\
@@ -190,7 +190,7 @@ clean:
 \trm -f one two three
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_wildcard(self) -> None:
         build_file = """\
@@ -212,7 +212,7 @@ three: $(thing_right)
 four: $(wildcard *.o)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_automatic_variables(self) -> None:
         build_file = """\
@@ -241,7 +241,7 @@ clean:
 \trm -f hey one two
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_c_program_recipe(self) -> None:
         build_file = """\
@@ -259,7 +259,7 @@ clean:
 \trm -f blah*
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_static_pattern_rule(self) -> None:
         build_file = """\
@@ -287,7 +287,7 @@ clean:
 \trm -f *.c *.o all
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_static_pattern_rule2(self) -> None:
         build_file = """\
@@ -312,7 +312,7 @@ clean:
 \trm -f *.c *.o all
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_static_pattern_rule_filters(self) -> None:
         build_file = """\
@@ -338,7 +338,7 @@ clean:
 \trm -f $(src_files)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_pattern_rule1(self) -> None:
         build_file = """\
@@ -347,7 +347,7 @@ clean:
 \t$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_pattern_rule2(self) -> None:
         build_file = """\
@@ -357,7 +357,7 @@ clean:
 \ttouch $@
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_double_colon_rules1(self) -> None:
         build_file = """\
@@ -370,7 +370,7 @@ blah::
 \techo "hello again"
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_default_shell(self) -> None:
         build_file = """\
@@ -380,7 +380,7 @@ cool:
 \techo "Hello from bash"
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_double_dollar_sign(self) -> None:
         build_file = """\
@@ -393,7 +393,7 @@ all:
 \techo $(make_var)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_error_handling_with_dash_prefix(self) -> None:
         build_file = """\
@@ -403,7 +403,7 @@ one:
 \ttouch one
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_recursive_make_invocation(self) -> None:
         build_file = """\
@@ -418,7 +418,7 @@ clean:
 \trm -rf subdir
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_environment_variable_imported_into_make(self) -> None:
         build_file = """\
@@ -431,7 +431,7 @@ all:
 \techo $(shell_env_var)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_export_directive_exports_variable_to_recipes(self) -> None:
         build_file = """\
@@ -443,7 +443,7 @@ all:
 \techo $$shell_env_var
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_export_variable_to_recursive_make(self) -> None:
         build_file = """\
@@ -466,7 +466,7 @@ clean:
 \trm -rf subdir
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_inline_export_assignment_for_shell_commands(self) -> None:
         build_file = """\
@@ -480,7 +480,7 @@ all:
 \t@echo $$two
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_export_all_variables_special_target(self) -> None:
         build_file = """\
@@ -502,7 +502,7 @@ clean:
 \trm -rf subdir
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_recursive_vs_simple_variables(self) -> None:
         build_file = """\
@@ -516,7 +516,7 @@ all:
 \techo $(two)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_append_to_simply_expanded_variable(self) -> None:
         build_file = """\
@@ -527,7 +527,7 @@ all:
 \techo $(one)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_conditional_assignment_operator(self) -> None:
         build_file = """\
@@ -540,7 +540,7 @@ all:
 \techo $(two)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_spaces_in_variables(self) -> None:
         build_file = """\
@@ -555,7 +555,7 @@ all:
 \techo start"$(space)"end
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_undefined_variable_expansion(self) -> None:
         build_file = """\
@@ -564,7 +564,7 @@ all:
 \techo $(nowhere)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_append_operator(self) -> None:
         build_file = """\
@@ -575,7 +575,7 @@ all:
 \techo $(foo)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_override_command_line_variable(self) -> None:
         build_file = """\
@@ -589,7 +589,7 @@ all:
 \techo $(option_two)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_define_directive_creates_command_list(self) -> None:
         build_file = """\
@@ -607,7 +607,7 @@ all:
 \t@$(two)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_target_specific_variables(self) -> None:
         build_file = """\
@@ -620,7 +620,7 @@ other:
 \techo one is nothing: $(one)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_pattern_specific_variables(self) -> None:
         build_file = """\
@@ -633,7 +633,7 @@ other:
 \techo one is nothing: $(one)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_conditional_if_else_in_recipe_context(self) -> None:
         build_file = """\
@@ -647,7 +647,7 @@ else
 endif
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_check_if_variable_is_empty(self) -> None:
         build_file = """\
@@ -663,7 +663,7 @@ ifeq ($(nullstring),)
 endif
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_check_if_variable_is_defined(self) -> None:
         build_file = """\
@@ -679,7 +679,7 @@ ifndef bar
 endif
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_check_make_flags_with_findstring(self) -> None:
         build_file = """\
@@ -690,7 +690,7 @@ ifneq (,$(findstring i, $(MAKEFLAGS)))
 endif
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_subst_function_basic_replacement(self) -> None:
         build_file = """\
@@ -700,7 +700,7 @@ all:
 \t@echo $(bar)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_subst_function_replace_spaces_with_comma(self) -> None:
         build_file = """\
@@ -714,7 +714,7 @@ all:
 \t@echo $(bar)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_subst_function_arguments_keep_spaces(self) -> None:
         build_file = """\
@@ -729,7 +729,7 @@ all:
 \t@echo $(bar)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_patsubst_function_and_substitution_references(self) -> None:
         build_file = """\
@@ -746,7 +746,7 @@ all:
 \techo $(three)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_foreach_function_appends_text_to_each_word(self) -> None:
         build_file = """\
@@ -759,7 +759,7 @@ all:
 \t@echo $(bar)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_if_function_chooses_then_or_else_branch(self) -> None:
         build_file = """\
@@ -772,7 +772,7 @@ all:
 \t@echo $(bar)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_call_function_passes_parameters_to_variable_function(self) -> None:
         build_file = """\
@@ -783,7 +783,7 @@ all:
 \t@echo $(call sweet_new_fn, go, tigers)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_shell_function_expands_command_output(self) -> None:
         build_file = """\
@@ -791,7 +791,7 @@ all:
 \t@echo $(shell ls -la) # Very ugly because the newlines are gone!
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_filter_function_selects_matching_files(self) -> None:
         build_file = """\
@@ -802,7 +802,7 @@ all:
 \t@echo $(filtered_files)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_filter_function_with_multiple_patterns(self) -> None:
         build_file = """\
@@ -813,7 +813,7 @@ all:
 \t@echo $(filtered_files)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_filter_out_function_excludes_matching_files(self) -> None:
         build_file = """\
@@ -824,7 +824,7 @@ all:
 \t@echo $(filtered_files)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_nested_filter_functions(self) -> None:
         build_file = """\
@@ -835,7 +835,7 @@ all:
 \t@echo $(filtered_objects)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_include_directive_with_single_makefile(self) -> None:
         build_file = """\
@@ -845,7 +845,7 @@ all:
 \t@echo included
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_vpath_directive_with_header_search_path(self) -> None:
         build_file = """\
@@ -868,7 +868,7 @@ clean:
 \trm -f some_binary
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_multiline_recipe_with_backslash_continuation(self) -> None:
         build_file = """\
@@ -877,7 +877,7 @@ some_file:
         it is broken up into multiple lines
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_phony_target_prevents_file_name_conflict(self) -> None:
         build_file = """\
@@ -891,7 +891,7 @@ clean:
 \trm -f clean
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_delete_on_error_special_target(self) -> None:
         build_file = """\
@@ -907,7 +907,7 @@ two:
 \tfalse
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
     def test_makefile_cookbook_medium_sized_project_example(self) -> None:
         build_file = """\
@@ -963,7 +963,7 @@ clean:
 -include $(DEPS)
 """
 
-        run_build_file(build_file)
+        parse_build_file(build_file)
 
 
 if __name__ == "__main__":
