@@ -86,7 +86,7 @@ const steps: {title: string; command: string; body: string}[] = [
   {
     title: 'Write a CBuildfile',
     command: 'app: main.o util.o',
-    body: 'Same syntax as a Makefile. An existing one usually works as is.',
+    body: 'Same syntax as GNU make. Existing make rules usually work as is.',
   },
   {
     title: 'Run cbuild',
@@ -133,7 +133,7 @@ function Hero(): ReactNode {
   return (
     <header className="mx-auto max-w-6xl px-4 pt-16 pb-12 md:px-8 md:pt-24">
       <h1 className="max-w-[16ch] text-[clamp(2.6rem,7vw,5.25rem)] leading-[0.98] font-black tracking-[-0.025em] text-ink [font-stretch:125%]">
-        Write a makefile. Build only what changed.
+        Write a Buildfile. Build only what changed.
       </h1>
       <p className="mt-7 max-w-[58ch] text-lg leading-relaxed text-ink-soft md:text-xl">
         CBuild reads GNU make syntax, runs independent targets in parallel, and
@@ -157,7 +157,7 @@ function SpeaksMake(): ReactNode {
     <Section title="Speaks make">
       <div className="grid gap-10 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-16">
         <p className="max-w-[44ch] text-lg leading-relaxed text-ink-soft">
-          CBuild parses Makefile syntax directly, so there is no new language to
+          CBuild parses GNU make syntax directly, so there is no new language to
           learn. Rules, variables and recipes mean what they mean in GNU make.
           Freshness comes from file timestamps, the same way make decides.
         </p>

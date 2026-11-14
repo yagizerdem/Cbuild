@@ -1,5 +1,5 @@
 ---
 title: Assignments
 description: my hello page description
-sidebar_position: 1
+sidebar_position: 2
 ---

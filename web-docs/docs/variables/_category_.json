@@ -1,0 +1,15 @@
+{
+  "position": 1,
+  "label": "Variables",
+  "collapsible": true,
+  "collapsed": false,
+  "link": {
+    "type": "generated-index",
+    "title": "Variables",
+    "description": "Define variables in a Buildfile and reference them in targets, prerequisites and recipes.",
+    "slug": "/variables"
+  },
+  "customProps": {
+    "description": "Define and reference variables in a Buildfile."
+  }
+}
