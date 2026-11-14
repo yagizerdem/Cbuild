@@ -351,8 +351,16 @@ class CBuildCompiler(cbuildVisitor):
         raise Exception("Invalid condition context")
 
     def visitIdentifier(self, ctx: cbuildParser.IdentifierContext) -> ValuePart:
-        text_part_ = text_part(ctx.getText())
+        text : str= ""
+        for ast_node in ctx.children or []:
+            text += ast_node.accept(self)
+        text_part_ = text_part(text)
         return text_part_
+
+    def visitIdentifier_atom(self, ctx) -> str:
+        if ctx.DOUBLE_DOLLAR() is not None:
+            return "$"
+        return ctx.getText()
 
     def visitExpressions_opt(self, ctx: cbuildParser.Expressions_optContext) -> list[ValuePart]:
         if ctx.expressions() is None:
