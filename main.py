@@ -15,7 +15,7 @@ from util.handle_cli_options import (
     normalize_options,
     resolve_build_file_path,
 )
-from cbuild_backend import globber
+import sys
 
 
 def read_build_file(build_file_path: str) -> str:
@@ -24,6 +24,8 @@ def read_build_file(build_file_path: str) -> str:
 
 
 def _main() -> None:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
     options: CBuildOptions = cli.parse_args(namespace=CBuildOptions())
     args: list[str] = options.args
 
