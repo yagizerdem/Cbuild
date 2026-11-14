@@ -1,7 +1,7 @@
 import re
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from enum import StrEnum
+from dataclasses import dataclass, field, fields, is_dataclass
+from enum import Enum, StrEnum
 from typing import Literal, NotRequired, Protocol, TypedDict
 from type.buildfile_meta import BuildFileMeta
 
@@ -26,6 +26,16 @@ class BaseIR(ABC):
 
     @abstractmethod
     def exec[T](self, executor: Executor) -> T: ...
+
+    def __str__(self) -> str:
+        return _format_debug(self, 0)
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def dump(self) -> None:
+        # Print this node and all of its children to stdout for debugging
+        print(self)
 
 
 @dataclass
@@ -74,6 +84,10 @@ class ValueIR(BaseIR):
 
     def exec[T](self, executor: Executor) -> T:
         return executor.exec(self)
+
+    def __str__(self) -> str:
+        # Values appear everywhere, so show them on one line in buildfile syntax
+        return f"ValueIR({_value_source(self)!r})"
 
 
 class FunctionIR(BaseIR):
@@ -522,3 +536,66 @@ class GlobalUnexportIR(BaseIR):
 
     def exec[T](self, executor: Executor) -> T:
         return executor.exec(self)
+
+
+# Debug formatting helpers used by BaseIR.__str__
+
+_DEBUG_INDENT = "  "
+_DEBUG_HIDDEN_FIELDS = frozenset({"row", "col", "build_file_meta"})
+
+
+def _value_source(value: ValueIR) -> str:
+    # Rebuild the buildfile text of a value from its parts
+    chunks: list[str] = []
+    for part in value.parts:
+        if isinstance(part, TextPart):
+            chunks.append(part.lexeme)
+        elif isinstance(part, VariableReferencePart):
+            name = _value_source(part.name_expr)
+            if part.paren_type is None:
+                chunks.append(f"${name}")
+            elif part.paren_type == "{":
+                chunks.append(f"${{{name}}}")
+            else:
+                chunks.append(f"$({name})")
+        else:
+            args = ",".join(_value_source(arg) for arg in part.function.args)
+            chunks.append(f"$({part.function.name} {args})")
+    return "".join(chunks)
+
+
+def _format_debug(value: object, depth: int) -> str:
+    pad = _DEBUG_INDENT * depth
+    inner_pad = _DEBUG_INDENT * (depth + 1)
+
+    if isinstance(value, ValueIR):
+        return str(value)
+
+    if isinstance(value, BaseIR):
+        header = type(value).__name__
+        if value.row or value.col:
+            header += f" @{value.row}:{value.col}"
+        items = [
+            (key, item)
+            for key, item in vars(value).items()
+            if key not in _DEBUG_HIDDEN_FIELDS
+        ]
+    elif is_dataclass(value) and not isinstance(value, type):
+        header = type(value).__name__
+        items = [(f.name, getattr(value, f.name)) for f in fields(value)]
+    elif isinstance(value, list):
+        if not value:
+            return "[]"
+        lines = [f"{inner_pad}{_format_debug(item, depth + 1)}" for item in value]
+        return "[\n" + "\n".join(lines) + f"\n{pad}]"
+    elif isinstance(value, Enum):
+        return repr(value.value)
+    else:
+        return repr(value)
+
+    if not items:
+        return f"{header}()"
+    lines = [
+        f"{inner_pad}{key}={_format_debug(item, depth + 1)}" for key, item in items
+    ]
+    return f"{header}(\n" + "\n".join(lines) + f"\n{pad})"
