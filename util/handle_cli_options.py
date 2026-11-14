@@ -83,5 +83,3 @@ def normalize_options(options: CBuildOptions) -> None:
     if not options.sequential and options.jobs == 0:
         options.jobs = 1
 
-    if not options.backend:
-        options.backend = "cbuild"
