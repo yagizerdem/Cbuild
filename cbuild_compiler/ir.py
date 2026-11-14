@@ -378,6 +378,10 @@ class DefineIR(BaseIR):
     def exec[T](self, executor: Executor) -> T:
         return executor.exec(self)
 
+    def should_export(self) -> bool:
+        ## check export substring 
+        return self.specifiers is not None and "export" in self.specifiers
+
 
 @dataclass
 class ClearAllVpath:

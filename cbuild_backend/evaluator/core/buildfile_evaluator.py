@@ -8,6 +8,7 @@ from cbuild_backend.evaluator.core.type import (
     BuildFileEvaluationState,
     TargetRuleEvaluationState,
 )
+from cbuild_backend.evaluator.define_evaluator import DefineIREvaluator
 from cbuild_backend.evaluator.export_evaluator import ExportIREvaluator
 from cbuild_backend.evaluator.include_evaluator import IncludeIREvaluator
 from cbuild_backend.evaluator.staticpattern_evaluator import StaticPatternIREvaluator
@@ -84,15 +85,11 @@ class BuildFileEvaluator:
                 )
                 evaluator.evaluate()
             elif isinstance(ir, DefineIR):
-                expanded_value: str = (
-                    ir.value.exec(value_expansion_engine)
-                    if ir.value is not None
-                    else None
-                ) or ""
-                identifier: str = (
-                    ir.name.exec(value_expansion_engine) if ir.name is not None else None
-                ) or ""
-                self._context.set_raw_variable(identifier, expanded_value)
+                define_ir_evaluator = DefineIREvaluator(
+                    self._context,
+                    ir,
+                )
+                define_ir_evaluator.execute()
             elif isinstance(ir, NormalRuleIR):
                 model_resolver = ModelResolver(
                     self._context,
