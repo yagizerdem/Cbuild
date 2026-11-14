@@ -12,7 +12,7 @@ class SyntaxErrorCollector(ErrorListener):
         super().__init__()
         self.errors: list[str] = []
 
-    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):  # noqa: N802
+    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
         self.errors.append(f"line {line}:{column} {msg}")
 
 

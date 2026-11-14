@@ -197,7 +197,7 @@ class _SyntaxErrorCollector(ErrorListener):
         self.errors: list[CbuildException] = []
         self._source = source
 
-    def syntaxError(  # noqa: N802
+    def syntaxError(
         self,
         recognizer: Recognizer,
         offending_symbol: Token | None,
@@ -219,7 +219,7 @@ class _SyntaxErrorCollector(ErrorListener):
             )
         )
 
-    def reportAmbiguity(  # noqa: N802
+    def reportAmbiguity(
         self,
         recognizer: Parser,
         dfa: DFA,
@@ -231,7 +231,7 @@ class _SyntaxErrorCollector(ErrorListener):
     ) -> None:
         pass
 
-    def reportAttemptingFullContext(  # noqa: N802
+    def reportAttemptingFullContext(
         self,
         recognizer: Parser,
         dfa: DFA,
@@ -242,7 +242,7 @@ class _SyntaxErrorCollector(ErrorListener):
     ) -> None:
         pass
 
-    def reportContextSensitivity(  # noqa: N802
+    def reportContextSensitivity(
         self,
         recognizer: Parser,
         dfa: DFA,

@@ -883,4 +883,4 @@ class CBuildCompiler(cbuildVisitor):
         return values
 
 
-cBuildCompiler = CBuildCompiler  # noqa: N816
+cBuildCompiler = CBuildCompiler

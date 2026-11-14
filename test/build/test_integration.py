@@ -3,13 +3,13 @@ import re
 import time as _time
 import unittest
 
-from test.build.rebuild_cases import (  # noqa: F401
+from test.build.rebuild_cases import (
     CliFreshnessControlsTest,
     IncrementalRebuildsOneJobTest,
     IncrementalRebuildsSequentialTest,
     IncrementalRebuildsThreeJobsTest,
 )
-from test.build.shell_cases import (  # noqa: F401
+from test.build.shell_cases import (
     NonExecutingModesAndPreExecutionErrorsTest,
     RealShellExecutionAndProcessBoundariesTest,
 )
