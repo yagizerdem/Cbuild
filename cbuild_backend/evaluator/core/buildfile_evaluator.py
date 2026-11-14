@@ -53,8 +53,6 @@ class BuildFileEvaluator:
 
     def evaluate(self) -> list[BaseModel]:
         for ir in self._irs:
-            value_expansion_engine = ValueExpansionEngine(self._context)
-
             if isinstance(ir, AssignmentIR):
                 assignment_ir_evaluator = AssignmentIREvaluator(
                     self._context,
