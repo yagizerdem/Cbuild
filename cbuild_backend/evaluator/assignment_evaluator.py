@@ -2,10 +2,8 @@ import re
 from typing import Final, cast
 
 from cbuild_backend.env import (
-    VARIABLE_ORIGIN_PRIORITY_MAP,
     Env,
     SymbolTableVariable,
-    VariableOrigin,
 )
 from cbuild_backend.expansion import ValueExpansionEngine
 from cbuild_backend.process import ProcessRunner
@@ -18,6 +16,8 @@ from cbuild_compiler.ir import (
     text_part,
 )
 
+from cbuild_compiler.auxilary import should_export, get_prefix_priority, assignment_prefix_to_variable_origin
+
 
 class AssignmentIREvaluator:
     def __init__(self, context: Env, assignment_ir: AssignmentIR) -> None:
@@ -25,7 +25,7 @@ class AssignmentIREvaluator:
         self._value_expansion_engine: Final = ValueExpansionEngine(self._context)
         self._assignment_ir: Final = assignment_ir
 
-    def evaluate(self) -> None:
+    def execute(self) -> None:
         identifier: str = cast(ValueIR, self._assignment_ir.left).exec(
             self._value_expansion_engine,
         )
@@ -40,7 +40,7 @@ class AssignmentIREvaluator:
             self._set_raw_variable(
                 identifier,
                 value,
-                self._should_export(identifier, prefix),
+                should_export(identifier, prefix, self._context),
             )
         elif self._assignment_ir.type == AssignmentType.POSIX_SIMPLE:
             value = cast(ValueIR, self._assignment_ir.right).exec(
@@ -49,7 +49,7 @@ class AssignmentIREvaluator:
             self._set_raw_variable(
                 identifier,
                 value,
-                self._should_export(identifier, prefix),
+                should_export(identifier, prefix, self._context),
             )
         elif self._assignment_ir.type == AssignmentType.CONDITIONAL:
             if not self._context.has_variable_recursive(identifier):
@@ -58,7 +58,7 @@ class AssignmentIREvaluator:
                     self._assignment_ir.right
                     if self._assignment_ir.right is not None
                     else ValueIR([TextPart("")]),
-                    self._should_export(identifier, prefix),
+                    should_export(identifier, prefix, self._context),
                 )
         elif self._assignment_ir.type == AssignmentType.APPEND:
             right = (
@@ -70,7 +70,7 @@ class AssignmentIREvaluator:
 
             self._context.set_variable_exported(
                 identifier,
-                self._should_export(identifier, prefix),
+                should_export(identifier, prefix, self._context),
             )
         elif self._assignment_ir.type == AssignmentType.IMMEDIATE_ESCAPED:
             value = (
@@ -81,7 +81,7 @@ class AssignmentIREvaluator:
             self._set_deferred_variable(
                 identifier,
                 ValueIR([TextPart(value)]),
-                self._should_export(identifier, prefix),
+                should_export(identifier, prefix, self._context),
             )
         elif self._assignment_ir.type == AssignmentType.SHELL:
             command: str = (
@@ -107,13 +107,13 @@ class AssignmentIREvaluator:
             self._set_deferred_variable(
                 identifier,
                 ValueIR([TextPart(value)]),
-                self._should_export(identifier, prefix),
+                should_export(identifier, prefix, self._context),
             )
         elif self._assignment_ir.type == AssignmentType.RECURSIVE:
             self._set_deferred_variable(
                 identifier,
                 cast(ValueIR, self._assignment_ir.right),
-                self._should_export(identifier, prefix),
+                should_export(identifier, prefix, self._context),
             )
 
     def _set_raw_variable(
@@ -127,13 +127,13 @@ class AssignmentIREvaluator:
         variable_priority = (
             self._context.get_variable_priority(identifier) if has_variable else -1
         )
-        prefix_priority = self._get_prefix_priority(prefix)
+        prefix_priority = get_prefix_priority(prefix)
 
         if not has_variable:
             self._context.set_raw_variable(
                 identifier,
                 value,
-                self._assignment_prefix_to_variable_origin(prefix),
+                assignment_prefix_to_variable_origin(prefix),
                 is_exported,
             )
             return
@@ -142,7 +142,7 @@ class AssignmentIREvaluator:
             self._context.set_raw_variable(
                 identifier,
                 value,
-                self._assignment_prefix_to_variable_origin(prefix),
+                assignment_prefix_to_variable_origin(prefix),
                 is_exported,
             )
 
@@ -157,13 +157,13 @@ class AssignmentIREvaluator:
         variable_priority = (
             self._context.get_variable_priority(identifier) if has_variable else -1
         )
-        prefix_priority = self._get_prefix_priority(prefix)
+        prefix_priority = get_prefix_priority(prefix)
 
         if not has_variable:
             self._context.set_deferred_variable(
                 identifier,
                 value,
-                self._assignment_prefix_to_variable_origin(prefix),
+                assignment_prefix_to_variable_origin(prefix),
                 is_exported,
             )
             return
@@ -172,7 +172,7 @@ class AssignmentIREvaluator:
             self._context.set_deferred_variable(
                 identifier,
                 value,
-                self._assignment_prefix_to_variable_origin(prefix),
+                assignment_prefix_to_variable_origin(prefix),
                 is_exported,
             )
 
@@ -182,14 +182,14 @@ class AssignmentIREvaluator:
         variable_priority = (
             self._context.get_variable_priority(identifier) if has_variable else -1
         )
-        prefix_priority = self._get_prefix_priority(prefix)
+        prefix_priority = get_prefix_priority(prefix)
 
         if not has_variable:
             self._context.set_deferred_variable(
                 identifier,
                 right,
-                self._assignment_prefix_to_variable_origin(prefix),
-                self._should_export(identifier, prefix),
+                assignment_prefix_to_variable_origin(prefix),
+                should_export(identifier, prefix, self._context),
             )
             return
 
@@ -215,44 +215,6 @@ class AssignmentIREvaluator:
 
             self._context.set_variable_origin(
                 cast(SymbolTableVariable, self._context.get_variable(identifier)),
-                self._assignment_prefix_to_variable_origin(prefix),
+                assignment_prefix_to_variable_origin(prefix),
             )
 
-    def _assignment_prefix_to_variable_origin(
-        self,
-        prefix: AssignmentPrefix | None,
-    ) -> VariableOrigin:
-        match prefix:
-            case "export override" | "override":
-                return "override"
-            case _:
-                return "file"
-
-    def _get_prefix_priority(self, prefix: AssignmentPrefix | None) -> int:
-        match prefix:
-            case "export override" | "override":
-                return VARIABLE_ORIGIN_PRIORITY_MAP["override"]
-            case _:
-                return VARIABLE_ORIGIN_PRIORITY_MAP["file"]
-
-    def _should_export(
-        self,
-        identifier: str,
-        prefix: AssignmentPrefix | None,
-    ) -> bool:
-        if prefix == "unexport":
-            return False
-
-        if prefix == "export override" or prefix == "export" or prefix == "override export":
-            return True
-
-        if (
-            self._context.has_variable(identifier)
-            and cast(SymbolTableVariable, self._context.get_variable(identifier)).is_exported
-        ):
-            return True
-
-        if prefix is None:
-            return False
-
-        return False
