@@ -277,6 +277,7 @@ identifier_atom
     | RPAREN
     | L_CURLY_BRACE
     | R_CURLY_BRACE
+    | DOUBLE_DOLLAR
     ;
 
 br : NL;

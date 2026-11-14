@@ -99,12 +99,12 @@ def serializedATN():
         26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,
         70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,102,104,106,108,
         110,112,114,116,118,120,122,124,126,128,130,132,134,136,138,0,7,
-        1,0,26,27,1,0,24,25,1,0,20,22,2,0,10,14,37,37,2,0,20,20,23,35,1,
-        0,6,9,1,0,40,41,1175,0,144,1,0,0,0,2,151,1,0,0,0,4,276,1,0,0,0,6,
-        346,1,0,0,0,8,348,1,0,0,0,10,402,1,0,0,0,12,405,1,0,0,0,14,427,1,
-        0,0,0,16,438,1,0,0,0,18,440,1,0,0,0,20,465,1,0,0,0,22,467,1,0,0,
-        0,24,474,1,0,0,0,26,501,1,0,0,0,28,503,1,0,0,0,30,507,1,0,0,0,32,
-        509,1,0,0,0,34,511,1,0,0,0,36,513,1,0,0,0,38,520,1,0,0,0,40,523,
+        1,0,26,27,1,0,24,25,1,0,20,22,3,0,5,5,10,14,37,37,2,0,20,20,23,35,
+        1,0,6,9,1,0,40,41,1175,0,144,1,0,0,0,2,151,1,0,0,0,4,276,1,0,0,0,
+        6,346,1,0,0,0,8,348,1,0,0,0,10,402,1,0,0,0,12,405,1,0,0,0,14,427,
+        1,0,0,0,16,438,1,0,0,0,18,440,1,0,0,0,20,465,1,0,0,0,22,467,1,0,
+        0,0,24,474,1,0,0,0,26,501,1,0,0,0,28,503,1,0,0,0,30,507,1,0,0,0,
+        32,509,1,0,0,0,34,511,1,0,0,0,36,513,1,0,0,0,38,520,1,0,0,0,40,523,
         1,0,0,0,42,541,1,0,0,0,44,559,1,0,0,0,46,577,1,0,0,0,48,611,1,0,
         0,0,50,615,1,0,0,0,52,621,1,0,0,0,54,631,1,0,0,0,56,634,1,0,0,0,
         58,644,1,0,0,0,60,647,1,0,0,0,62,653,1,0,0,0,64,656,1,0,0,0,66,662,
@@ -2385,7 +2385,7 @@ class cbuildParser ( Parser ):
             self.state = 501
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [2, 3, 4, 10, 11, 12, 13, 14, 37]:
+            if token in [2, 3, 4, 5, 10, 11, 12, 13, 14, 37]:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 481
                 self.pattern()
@@ -4916,7 +4916,7 @@ class cbuildParser ( Parser ):
                     self.state = 831
                     self._errHandler.sync(self)
                     token = self._input.LA(1)
-                    if token in [10, 11, 12, 13, 14, 37]:
+                    if token in [5, 10, 11, 12, 13, 14, 37]:
                         self.state = 829
                         self.identifier()
                         pass
@@ -4984,7 +4984,7 @@ class cbuildParser ( Parser ):
             self.state = 836
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if (((_la) & ~0x3f) == 0 and ((1 << _la) & 137438985244) != 0):
+            if (((_la) & ~0x3f) == 0 and ((1 << _la) & 137438985276) != 0):
                 self.state = 835
                 self.targets()
 
@@ -5039,7 +5039,7 @@ class cbuildParser ( Parser ):
             self.state = 839
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if (((_la) & ~0x3f) == 0 and ((1 << _la) & 137438985244) != 0):
+            if (((_la) & ~0x3f) == 0 and ((1 << _la) & 137438985276) != 0):
                 self.state = 838
                 self.targets()
 
@@ -5733,6 +5733,9 @@ class cbuildParser ( Parser ):
         def R_CURLY_BRACE(self):
             return self.getToken(cbuildParser.R_CURLY_BRACE, 0)
 
+        def DOUBLE_DOLLAR(self):
+            return self.getToken(cbuildParser.DOUBLE_DOLLAR, 0)
+
         def getRuleIndex(self):
             return cbuildParser.RULE_identifier_atom
 
@@ -5762,7 +5765,7 @@ class cbuildParser ( Parser ):
             self.enterOuterAlt(localctx, 1)
             self.state = 918
             _la = self._input.LA(1)
-            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 137438985216) != 0)):
+            if not((((_la) & ~0x3f) == 0 and ((1 << _la) & 137438985248) != 0)):
                 self._errHandler.recoverInline(self)
             else:
                 self._errHandler.reportMatch(self)
