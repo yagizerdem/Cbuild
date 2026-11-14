@@ -8,21 +8,42 @@ action, target, *args = sys.argv[1:]
 
 
 def log(event: str) -> None:
-    with open("execution.jsonl", "a", encoding="utf-8") as file:
-        file.write(
-            json.dumps(
-                {
-                    "event": event,
-                    "action": action,
-                    "target": target,
-                    "args": args,
-                    "cwd": os.getcwd(),
-                    "pid": os.getpid(),
-                },
-                ensure_ascii=False,
-            )
-            + "\n"
+    line = (
+        json.dumps(
+            {
+                "event": event,
+                "action": action,
+                "target": target,
+                "args": args,
+                "cwd": os.getcwd(),
+                "pid": os.getpid(),
+            },
+            ensure_ascii=False,
         )
+        + "\n"
+    ).encode("utf-8")
+    fd = os.open(
+        "execution.jsonl",
+        os.O_WRONLY | os.O_CREAT | os.O_APPEND | getattr(os, "O_BINARY", 0),
+    )
+    try:
+        if os.name == "nt":
+            # Windows emulates O_APPEND as seek-then-write, so parallel jobs can
+            # overwrite each other's lines; serialize writers with a byte lock.
+            import msvcrt
+
+            os.lseek(fd, 0, os.SEEK_SET)
+            msvcrt.locking(fd, msvcrt.LK_LOCK, 1)
+            try:
+                os.write(fd, line)
+            finally:
+                os.lseek(fd, 0, os.SEEK_SET)
+                msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+        else:
+            # POSIX O_APPEND writes of a single line are atomic.
+            os.write(fd, line)
+    finally:
+        os.close(fd)
 
 
 def read(name: str) -> str:
