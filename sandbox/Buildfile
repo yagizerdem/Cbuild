@@ -1,4 +1,4 @@
 foo = c
 a= $$a
-prog.o : $$a
+$$b : $$a
 	echo girdi $a
