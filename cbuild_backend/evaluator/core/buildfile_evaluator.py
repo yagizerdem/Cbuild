@@ -60,7 +60,7 @@ class BuildFileEvaluator:
                     self._context,
                     ir,
                 )
-                assignment_ir_evaluator.evaluate()
+                assignment_ir_evaluator.execute()
             elif isinstance(ir, UndefineIR):
                 undefine_ir_evaluator = UndefineIREvaluator(self._context, ir)
                 undefine_ir_evaluator.execute()
@@ -72,11 +72,11 @@ class BuildFileEvaluator:
                 interpreter.init(self._context)
                 interpreter.run(ir.hook_program)
             elif isinstance(ir, ConditionalIR):
-                condional_ir_evaluator = ConditionalIREvaluator(
+                conditional_ir_evaluator = ConditionalIREvaluator(
                     self._context,
                     ir,
                 )
-                active_branch: list[IR] = condional_ir_evaluator.execute()
+                active_branch: list[IR] = conditional_ir_evaluator.execute()
                 # recursively evaluate the active branch
                 evaluator = BuildFileEvaluator(
                     self._context,
