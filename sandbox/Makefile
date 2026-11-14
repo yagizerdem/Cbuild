@@ -1,4 +1,6 @@
+NAME = Yagiz = Erdem
 
 
-app: 
-	echo "app test"
+
+app:
+	echo $(NAME)
