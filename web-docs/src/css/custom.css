@@ -1,30 +1,154 @@
 /**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
+ * Global styles. Infima (Docusaurus) stays in charge of the docs pages, so
+ * Tailwind is loaded without its preflight reset to avoid fighting it.
  */
+@import 'tailwindcss/theme.css' layer(theme);
+/* Unlayered on purpose: Infima's element rules are unlayered too, so a layered
+   utility would always lose to them regardless of specificity. */
+@import 'tailwindcss/utilities.css';
+@import 'tw-animate-css';
 
-/* You can override the default Infima variables here. */
+@source '../';
+
+/* Docusaurus toggles dark mode with data-theme on <html>. */
+@custom-variant dark (&:is([data-theme='dark'] *));
+
+/* Build-state palette shared by the homepage and shadcn components. */
 :root {
-  --ifm-color-primary: #2e8555;
-  --ifm-color-primary-dark: #29784c;
-  --ifm-color-primary-darker: #277148;
-  --ifm-color-primary-darkest: #205d3b;
-  --ifm-color-primary-light: #33925d;
-  --ifm-color-primary-lighter: #359962;
-  --ifm-color-primary-lightest: #3cad6e;
+  --steel: #e4e7e6;
+  --steel-deep: #d3d8d6;
+  --ink: #16233a;
+  --ink-soft: #46546a;
+  --rule: #b9c1c0;
+  --rebuild: #e09a2b;
+  --fresh: #2e7d6b;
+  --skipped: #8a94a0;
+  --panel: #f3f5f4;
+  --terminal: #16233a;
+  --terminal-fg: #e4e7e6;
+
+  --background: var(--steel);
+  --foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: #f3f5f4;
+  --secondary: var(--steel-deep);
+  --secondary-foreground: var(--ink);
+  --muted: var(--steel-deep);
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--steel-deep);
+  --accent-foreground: var(--ink);
+  --destructive: #b3412e;
+  --border: var(--rule);
+  --input: var(--rule);
+  --ring: var(--ink);
+  --radius: 4px;
+
+  --ifm-color-primary: #16233a;
+  --ifm-color-primary-dark: #141f34;
+  --ifm-color-primary-darker: #121d31;
+  --ifm-color-primary-darkest: #0f1829;
+  --ifm-color-primary-light: #182740;
+  --ifm-color-primary-lighter: #1a2943;
+  --ifm-color-primary-lightest: #1d2f4b;
+  --ifm-font-family-base: 'Archivo', system-ui, sans-serif;
+  --ifm-font-family-monospace: 'IBM Plex Mono', ui-monospace, monospace;
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme='dark'] {
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32d8b4;
-  --ifm-color-primary-lightest: #4fddbf;
+  --steel: #18202b;
+  --steel-deep: #222c39;
+  --ink: #dde3e1;
+  --ink-soft: #a3adb8;
+  --rule: #344152;
+  --rebuild: #f0ad45;
+  --fresh: #4fb39b;
+  --skipped: #737e8b;
+  --panel: #1d2632;
+  --terminal: #0e141c;
+  --terminal-fg: #dde3e1;
+
+  --primary: #dde3e1;
+  --primary-foreground: #18202b;
+
+  --ifm-color-primary: #9fb6d6;
+  --ifm-color-primary-dark: #87a4cb;
+  --ifm-color-primary-darker: #7b9bc6;
+  --ifm-color-primary-darkest: #5781b8;
+  --ifm-color-primary-light: #b7c8e1;
+  --ifm-color-primary-lighter: #c3d1e6;
+  --ifm-color-primary-lightest: #e7edf5;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-steel: var(--steel);
+  --color-steel-deep: var(--steel-deep);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-rule: var(--rule);
+  --color-rebuild: var(--rebuild);
+  --color-fresh: var(--fresh);
+  --color-skipped: var(--skipped);
+  --color-panel: var(--panel);
+  --color-terminal: var(--terminal);
+  --color-terminal-fg: var(--terminal-fg);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --font-sans: 'Archivo', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+/* A minimal slice of Tailwind's preflight, scoped to Tailwind-built pages so
+   Infima keeps styling the docs. Unlayered so it overrides Infima's element
+   rules by source order; :where() keeps it at zero specificity so utilities
+   still win. */
+:where(.tw-scope) *,
+:where(.tw-scope) ::before,
+:where(.tw-scope) ::after {
+  border: 0 solid var(--border);
+}
+
+:where(.tw-scope) button {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+:where(.tw-scope) :is(h1, h2, h3, p, ul, ol, pre, dl, dd) {
+  margin: 0;
+}
+
+:where(.tw-scope) :is(ul, ol) {
+  padding: 0;
+  list-style: none;
+}
+
+:where(.tw-scope) code {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: inherit;
+  vertical-align: baseline;
+}
+
+:where(.tw-scope) a:hover {
+  text-decoration: none;
 }
