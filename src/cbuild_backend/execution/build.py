@@ -146,27 +146,33 @@ class Build:
                 else recipe
             )
 
-            start_with_at_symbol = command.startswith("@")
-            normalize_command = command[1:].strip() if start_with_at_symbol else command
+            # a multi-line expansion (e.g. a define) runs each line as its own command
+            for line in command.split("\n"):
+                line = line.strip()
+                if not line:
+                    continue
 
-            if not (
-                self._context.cli_options.dry_run
-                or self._context.cli_options.just_print
-                or self._context.cli_options.recon
-            ):
-                result: ProcessResult = self._run_command(normalize_command)
+                start_with_at_symbol = line.startswith("@")
+                normalize_command = line[1:].strip() if start_with_at_symbol else line
 
                 if not (
-                    self._context.cli_options.silent
-                    or self._context.cli_options.quiet
-                    or start_with_at_symbol
+                    self._context.cli_options.dry_run
+                    or self._context.cli_options.just_print
+                    or self._context.cli_options.recon
                 ):
-                    print(f"{normalize_command}")
+                    result: ProcessResult = self._run_command(normalize_command)
 
-                self._handle_process_result(rule, result)
-            else:
-                # just print the command that would be executed in a dry run
-                print(f"{normalize_command}")
+                    if not (
+                        self._context.cli_options.silent
+                        or self._context.cli_options.quiet
+                        or start_with_at_symbol
+                    ):
+                        print(f"{normalize_command}")
+
+                    self._handle_process_result(rule, result)
+                else:
+                    # just print the command that would be executed in a dry run
+                    print(f"{normalize_command}")
 
     def _prepare_execution_env(
         self,
