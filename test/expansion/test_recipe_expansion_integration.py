@@ -713,7 +713,7 @@ class ComputedVariableNamesAndRecipeIntegrationTest(_RestoreMocksTestCase):
         ir = compile("RESULT := $(error assignment-failed)\n")[0]
         self.assertIsInstance(ir, AssignmentIR)
         with self.assertRaises(Exception) as raised:
-            AssignmentIREvaluator(env, cast(AssignmentIR, ir)).evaluate()
+            AssignmentIREvaluator(env, cast(AssignmentIR, ir)).execute()
         self.assertEqual(raised.exception.machine_code, MachineCode.ERROR_FN)
         self.assertEqual(raised.exception.message, "assignment-failed")
         self.assertEqual(env.has_variable("RESULT"), False)
@@ -875,7 +875,7 @@ class VariableLifetimeEmptyResultsAndDeepExpansionTest(_RestoreMocksTestCase):
         env = _environment()
         env.set_raw_variable("BASE", "before")
         ir = compile("RESULT = $(BASE)\n")[0]
-        AssignmentIREvaluator(env, cast(AssignmentIR, ir)).evaluate()
+        AssignmentIREvaluator(env, cast(AssignmentIR, ir)).execute()
         engine = RecipeExpansionEngine(env)
         command = _recipe("$(RESULT)")
         self.assertEqual(command.exec(engine), "before")
@@ -888,7 +888,7 @@ class VariableLifetimeEmptyResultsAndDeepExpansionTest(_RestoreMocksTestCase):
         env = _environment()
         env.set_raw_variable("BASE", "before")
         ir = compile("RESULT := $(BASE)\n")[0]
-        AssignmentIREvaluator(env, cast(AssignmentIR, ir)).evaluate()
+        AssignmentIREvaluator(env, cast(AssignmentIR, ir)).execute()
         env.set_raw_variable("BASE", "after")
         self.assertEqual(_expand("$(RESULT)|$(BASE)", env), "before|after")
         self.assertEqual(env.require_variable("RESULT").is_deferred(), False)
