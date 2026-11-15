@@ -33,14 +33,14 @@ The assignment operator is optional. If you leave it out, CBuild uses `=` and cr
 
 All the usual operators are accepted after the name:
 
-| Form              | Meaning                                                 |
-| ----------------- | ------------------------------------------------------- |
-| `define VAR`      | Same as `define VAR =`, a recursively expanded variable |
-| `define VAR =`    | Recursively expanded variable                           |
-| `define VAR :=`   | Simply expanded variable                                |
-| `define VAR ::=`  | Simply expanded variable (POSIX form)                   |
-| `define VAR ?=`   | Defined only if `VAR` is not defined yet                |
-| `define VAR +=`   | Appended to the current value of `VAR`                  |
+| Form             | Meaning                                                 |
+| ---------------- | ------------------------------------------------------- |
+| `define VAR`     | Same as `define VAR =`, a recursively expanded variable |
+| `define VAR =`   | Recursively expanded variable                           |
+| `define VAR :=`  | Simply expanded variable                                |
+| `define VAR ::=` | Simply expanded variable (POSIX form)                   |
+| `define VAR ?=`  | Defined only if `VAR` is not defined yet                |
+| `define VAR +=`  | Appended to the current value of `VAR`                  |
 
 With `:=`, the body is expanded once, when the directive is read:
 
@@ -129,7 +129,7 @@ all:
 	$(two-lines)
 ```
 
-In GNU make, each line of the expanded value becomes its own recipe line and runs in a separate shell, so the example above behaves like:
+In Cbuild, each line of the expanded value becomes its own recipe line and runs in a separate shell, so the example above behaves like:
 
 ```buildfile
 two-lines = echo foo; echo $(bar)
@@ -141,6 +141,7 @@ CBuild currently gives the whole expanded value, newlines included, to the shell
 ```buildfile
 two-lines = echo foo && echo $(bar)
 ```
+
 :::
 
 ## Current Limitations

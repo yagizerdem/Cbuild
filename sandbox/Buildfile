@@ -1,10 +1,8 @@
-foo := foo
-bar = bar
-empty = a
+CFLAGS = -O2
 
-undefine foo
-undefine bar
+prog: CFLAGS = -g
+prog: prog.o
+	@echo prog: $(CFLAGS)
 
-all:
-	@echo $(origin foo) $(origin bar) $(origin empty)
-	@echo $(flavor foo) $(flavor bar) $(flavor empty)
+prog.o:
+	@echo prog.o: $(CFLAGS)
