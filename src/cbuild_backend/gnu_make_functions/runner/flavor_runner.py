@@ -17,10 +17,10 @@ class FlavorRunner:
     def run(self, function_ir: FunctionIR) -> str:
         identifier = self._value_expansion_engine.expand(function_ir.args[0]).strip()
 
-        if not self._context.has_variable(identifier):
+        if not self._context.has_variable_recursive(identifier):
             return "undefined"
 
-        variable = self._context.get_variable(identifier)
+        variable = self._context.get_variable_recursive(identifier)
         if variable is None:
             return "undefined"
 
