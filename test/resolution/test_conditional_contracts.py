@@ -135,6 +135,34 @@ class StringComparisonAndExpansionTest(unittest.TestCase):
                     "then" if directive == "ifeq" else "else",
                 )
 
+    def test_quoted_operands_compare_like_parenthesized_ones(self) -> None:
+        headers = [
+            "($(LEFT),$(RIGHT))",
+            "'$(LEFT)' '$(RIGHT)'",
+            '"$(LEFT)" "$(RIGHT)"',
+            "\"$(LEFT)\" '$(RIGHT)'",
+            "'$(LEFT)' \"$(RIGHT)\"",
+        ]
+
+        for directive in ["ifeq", "ifneq"]:
+            for header in headers:
+                for right in ["same", "different"]:
+                    with self.subTest(directive=directive, header=header, right=right):
+                        env = evaluate(
+                            f"LEFT = same\nRIGHT = {right}\n{directive} {header}\nRESULT := then\nelse\nRESULT := else\nendif\n"
+                        ).env
+                        equal = right == "same"
+                        self.assertEqual(
+                            expand("$(RESULT)", env),
+                            "then" if equal == (directive == "ifeq") else "else",
+                        )
+
+    def test_quoted_operands_keep_surrounding_whitespace(self) -> None:
+        env = evaluate(
+            'VALUE = a\nifeq " $(VALUE)" "a"\nRESULT := then\nelse\nRESULT := else\nendif\n'
+        ).env
+        self.assertEqual(expand("$(RESULT)", env), "else")
+
     def test_c17_nested_functions_compare_their_final_strings(self) -> None:
         env = evaluate(
             "NAMES = b a b\nifeq ($(strip $(addprefix obj/,$(sort $(NAMES)))),obj/a obj/b)\nRESULT := equal\nelse\nRESULT := unequal\nendif\n"

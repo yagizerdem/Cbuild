@@ -179,6 +179,42 @@ class cbuildListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by cbuildParser#quoted.
+    def enterQuoted(self, ctx:cbuildParser.QuotedContext):
+        pass
+
+    # Exit a parse tree produced by cbuildParser#quoted.
+    def exitQuoted(self, ctx:cbuildParser.QuotedContext):
+        pass
+
+
+    # Enter a parse tree produced by cbuildParser#dq_atom.
+    def enterDq_atom(self, ctx:cbuildParser.Dq_atomContext):
+        pass
+
+    # Exit a parse tree produced by cbuildParser#dq_atom.
+    def exitDq_atom(self, ctx:cbuildParser.Dq_atomContext):
+        pass
+
+
+    # Enter a parse tree produced by cbuildParser#sq_atom.
+    def enterSq_atom(self, ctx:cbuildParser.Sq_atomContext):
+        pass
+
+    # Exit a parse tree produced by cbuildParser#sq_atom.
+    def exitSq_atom(self, ctx:cbuildParser.Sq_atomContext):
+        pass
+
+
+    # Enter a parse tree produced by cbuildParser#quoted_atom.
+    def enterQuoted_atom(self, ctx:cbuildParser.Quoted_atomContext):
+        pass
+
+    # Exit a parse tree produced by cbuildParser#quoted_atom.
+    def exitQuoted_atom(self, ctx:cbuildParser.Quoted_atomContext):
+        pass
+
+
     # Enter a parse tree produced by cbuildParser#expressions_opt.
     def enterExpressions_opt(self, ctx:cbuildParser.Expressions_optContext):
         pass
@@ -509,6 +545,15 @@ class cbuildListener(ParseTreeListener):
 
     # Exit a parse tree produced by cbuildParser#char.
     def exitChar(self, ctx:cbuildParser.CharContext):
+        pass
+
+
+    # Enter a parse tree produced by cbuildParser#plain_char.
+    def enterPlain_char(self, ctx:cbuildParser.Plain_charContext):
+        pass
+
+    # Exit a parse tree produced by cbuildParser#plain_char.
+    def exitPlain_char(self, ctx:cbuildParser.Plain_charContext):
         pass
 
 

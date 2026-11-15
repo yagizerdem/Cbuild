@@ -690,6 +690,54 @@ endif
         self.assertEqual(_render(function.args[0]), "i")
         self.assertEqual(_render(function.args[1]).strip(), "$(MAKEFLAGS)")
 
+    def test_ifeq_and_ifneq_quoted_forms(self) -> None:
+        headers = [
+            "'$(A)' '$(B)'",
+            '"$(A)" "$(B)"',
+            "\"$(A)\" '$(B)'",
+            "'$(A)' \"$(B)\"",
+        ]
+
+        for keyword, kind in (("ifeq", ConditionKind.IFEQ), ("ifneq", ConditionKind.IFNEQ)):
+            for header in headers:
+                with self.subTest(keyword=keyword, header=header):
+                    conditional = self._single(
+                        f"{keyword} {header}\nX = 1\nendif\n", ConditionalIR
+                    )
+                    self.assertEqual(conditional.kind, kind)
+                    assert conditional.condition is not None
+                    self.assertEqual(_render(conditional.condition.left), "$(A)")
+                    self.assertEqual(_render(conditional.condition.right), "$(B)")
+
+    def test_quoted_condition_keeps_its_contents_verbatim(self) -> None:
+        cases = {
+            'ifeq " a b " "a b"\n': (" a b ", "a b"),
+            "ifeq \"it's\" 'say \"hi\"'\n": ("it's", 'say "hi"'),
+            "ifeq \"\" ''\n": ("", ""),
+            'ifeq "(a,b)" "$$x"\n': ("(a,b)", "$x"),
+            'ifeq "a"\t "b"\n': ("a", "b"),
+        }
+
+        for header, (left, right) in cases.items():
+            with self.subTest(header=header):
+                conditional = self._single(f"{header}X = 1\nendif\n", ConditionalIR)
+                assert conditional.condition is not None
+                self.assertEqual(_render(conditional.condition.left), left)
+                self.assertEqual(_render(conditional.condition.right), right)
+
+    def test_quotes_outside_conditionals_stay_plain_text(self) -> None:
+        build_file = """\
+X = "a b" it's
+all:
+\techo "$(X)" 'it''s'
+"""
+
+        assignment, rule = _compile(build_file)
+        assert isinstance(assignment, AssignmentIR)
+        assert isinstance(rule, NormalRuleIR)
+        self.assertEqual(_render(assignment.right), "\"a b\" it's")
+        self.assertEqual(_commands(rule.recipes), ["echo \"$(X)\" 'it''s'"])
+
     def test_ifdef_and_ifndef(self) -> None:
         for keyword, kind in (("ifdef", ConditionKind.IFDEF), ("ifndef", ConditionKind.IFNDEF)):
             with self.subTest(keyword=keyword):
@@ -1181,15 +1229,46 @@ all:
                     error_type=ErrorType.SEMANTIC,
                 )
 
-    @unittest.expectedFailure
-    def test_substitution_reference(self) -> None:
-        # Known gap: `$(foo:.o=.c)` currently compiles to the same IR as `$(foo)`,
-        # so the substitution is lost.
-        plain = self._single("X := $(foo)\n", AssignmentIR)
-        for source in ("$(foo:.o=.c)", "$(foo:%.o=%.c)", "${foo:.o=.c}"):
+    def test_substitution_reference_compiles_to_patsubst(self) -> None:
+        cases = {
+            "$(foo:.o=.c)": ("%.o", "%.c", "$(foo)"),
+            "$(foo:%.o=%.c)": ("%.o", "%.c", "$(foo)"),
+            "${foo:.o=.c}": ("%.o", "%.c", "$(foo)"),
+            "$(foo:=.c)": ("%", "%.c", "$(foo)"),
+            "$(foo:.o=)": ("%.o", "%", "$(foo)"),
+            "$(foo:.o=$(EXT))": ("%.o", "%$(EXT)", "$(foo)"),
+            "$($(name):.o=.c)": ("%.o", "%.c", "$($(name))"),
+            "$(dir:.o=.c)": ("%.o", "%.c", "$(dir)"),
+            # Whitespace before the colon belongs to the variable name.
+            "$(foo : .o=.c)": ("% .o", "%.c", "$(foo )"),
+            "$($(a1)_objects : .o=.c)": ("% .o", "%.c", "$($(a1)_objects )"),
+        }
+
+        for source, (pattern, replacement, words) in cases.items():
             with self.subTest(source=source):
-                substituted = self._single(f"X := {source}\n", AssignmentIR)
-                self.assertNotEqual(_dump(substituted.right), _dump(plain.right))
+                assignment = self._single(f"X := {source}\n", AssignmentIR)
+                function = _only_function(assignment.right)
+                self.assertEqual(function.name, "patsubst")
+                self.assertEqual(_renders(function.args), [pattern, replacement, words])
+
+    def test_reference_without_substitution_uses_the_whole_text_as_its_name(self) -> None:
+        for source, name in {
+            "$(foo:.o)": "foo:.o",
+            "$(foo bar)": "foo bar",
+            "$(foo,bar)": "foo,bar",
+            "$(foo?=x)": "foo?=x",
+        }.items():
+            with self.subTest(source=source):
+                assignment = self._single(f"X := {source}\n", AssignmentIR)
+                assert assignment.right is not None
+                [part] = assignment.right.parts
+                assert part.kind == "variable-reference"
+                self.assertEqual(_render(part.name_expr), name)
+
+    def test_function_name_followed_by_whitespace_stays_a_function_call(self) -> None:
+        assignment = self._single("X := $(dir : .o=.c)\n", AssignmentIR)
+        function = _only_function(assignment.right)
+        self.assertEqual(function.name, "dir")
 
     @unittest.expectedFailure
     def test_info_function(self) -> None:

@@ -1,5 +1,7 @@
 import re
-from typing import Any, Final, TypeIs, cast
+from typing import Any, Final, Literal, TypeIs, cast
+
+from antlr4.tree.Tree import TerminalNode
 
 from cbuild_compiler.ir import (
     IR,
@@ -220,18 +222,108 @@ class CBuildCompiler(cbuildVisitor):
 
         parts: list[ValuePart] = self.visitFunction_name(ctx.function_name())
 
+        paren_type: Literal["(", "{"] = "(" if ctx.DOLLAR_LPAREN() is not None else "{"
+
+        # `$(dir:.o=.c)` has no whitespace after the name, so it is a
+        # substitution on the variable `dir`, not a call to the dir function.
+        if ctx.COLON() is not None or ctx.ASSIGN_OP() is not None:
+            return self._compile_reference(
+                [*parts, *self._parts_after_name(ctx)], paren_type
+            )
+
         if self._dispatcher.has(name):
             handler: MakeFunctionHandler = self._dispatcher.get_handler(name)
             if handler.arity() != 0 and not has_ws_after_fn_name:
-                paren_type = "(" if ctx.DOLLAR_LPAREN() is not None else "{"
                 return var_ref_part(ValueIR(parts), paren_type)
             else:
                 function_ir: FunctionIR = handler.compile(ctx)
                 calee: ValuePart = function_call_part(function_ir)
                 return calee
 
-        paren_type = "(" if ctx.DOLLAR_LPAREN() is not None else "{"
-        return var_ref_part(ValueIR(parts), paren_type)
+        # Not a function: as in GNU make, everything between the parens is the
+        # reference, so `$(foo : .o=.c)` names the variable `foo ` (trailing
+        # space included) and `$(foo bar)` names `foo bar`.
+        return self._compile_reference(
+            [*parts, *self._parts_after_name(ctx)], paren_type
+        )
+
+    def _parts_after_name(self, ctx: cbuildParser.FunctionContext) -> list[ValuePart]:
+        # Rebuild the text between the name and the closing paren, keeping the
+        # separators (whitespace, commas, colons, `=`) that the grammar splits off.
+        parts: list[ValuePart] = []
+        children = (ctx.children or [])[2:-1]
+
+        for child in children:
+            if isinstance(child, cbuildParser.ArgumentsContext):
+                for argument_child in child.children or []:
+                    if isinstance(argument_child, cbuildParser.ArgumentContext):
+                        self._collect_value_parts(parts, argument_child.accept(self))
+                    else:
+                        parts.append(text_part(argument_child.getText()))
+            elif isinstance(child, TerminalNode):
+                parts.append(text_part(child.getText()))
+            else:
+                self._collect_value_parts(parts, child.accept(self))
+
+        return parts
+
+    def _compile_reference(
+        self,
+        content: list[ValuePart],
+        paren_type: Literal["(", "{"],
+    ) -> ValuePart:
+        # GNU make looks for the first `:` and then an `=` after it. With both,
+        # this is a substitution reference whose variable name is everything
+        # before the colon, verbatim; otherwise the whole text is the name.
+        colon_split = self._split_at_first(content, ":")
+        if colon_split is not None:
+            name_parts, substitution = colon_split
+            equals_split = self._split_at_first(substitution, "=")
+            if equals_split is not None:
+                pattern_parts, replacement_parts = equals_split
+                return self._compile_substitution_reference(
+                    name_parts, pattern_parts, replacement_parts, paren_type
+                )
+
+        return var_ref_part(ValueIR(content), paren_type)
+
+    def _compile_substitution_reference(
+        self,
+        name_parts: list[ValuePart],
+        pattern_parts: list[ValuePart],
+        replacement_parts: list[ValuePart],
+        paren_type: Literal["(", "{"],
+    ) -> ValuePart:
+        # $(var:a=b) is shorthand for $(patsubst a,b,$(var)). When `a` has no
+        # `%`, it only matches at the end of a word, i.e. $(patsubst %a,%b,...).
+
+        # Only literal text is checked for `%`; a `%` that arrives through a
+        # variable inside `a` is treated as plain text.
+        if not any(
+            isinstance(part, TextPart) and "%" in part.lexeme for part in pattern_parts
+        ):
+            pattern_parts = [text_part("%"), *pattern_parts]
+            replacement_parts = [text_part("%"), *replacement_parts]
+
+        function_ir = FunctionIR("patsubst")
+        function_ir.args = [
+            ValueIR(pattern_parts),
+            ValueIR(replacement_parts),
+            ValueIR([var_ref_part(ValueIR(name_parts), paren_type)]),
+        ]
+        return function_call_part(function_ir)
+
+    def _split_at_first(
+        self, parts: list[ValuePart], separator: str
+    ) -> tuple[list[ValuePart], list[ValuePart]] | None:
+        for index, part in enumerate(parts):
+            if isinstance(part, TextPart) and separator in part.lexeme:
+                before, after = part.lexeme.split(separator, 1)
+                left = [*parts[:index], *([text_part(before)] if before else [])]
+                right = [*([text_part(after)] if after else []), *parts[index + 1 :]]
+                return left, right
+
+        return None
 
     def visitFunction_name(self, ctx: cbuildParser.Function_nameContext) -> list[ValuePart]:
         parts: list[ValuePart] = []
@@ -348,7 +440,37 @@ class CBuildCompiler(cbuildVisitor):
 
             return condition
 
+        if len(ctx.quoted()) == 2:
+            return Condition(
+                left=ValueIR(self._quoted_parts(ctx.quoted(0))),
+                right=ValueIR(self._quoted_parts(ctx.quoted(1))),
+            )
+
         raise Exception("Invalid condition context")
+
+    def _quoted_parts(self, ctx: cbuildParser.QuotedContext) -> list[ValuePart]:
+        # The surrounding quotes are delimiters only; everything between them,
+        # whitespace included, is part of the value.
+        parts: list[ValuePart] = []
+        lexeme = ""
+        atoms = ctx.dq_atom() or ctx.sq_atom()
+
+        for atom_ctx in atoms:
+            quoted_atom = atom_ctx.quoted_atom()
+            if quoted_atom is not None and quoted_atom.function() is not None:
+                if lexeme:
+                    parts.append(text_part(lexeme))
+                    lexeme = ""
+                parts.append(self.visitFunction(quoted_atom.function()))
+            elif quoted_atom is not None and quoted_atom.plain_char() is not None:
+                lexeme += cast(str, quoted_atom.plain_char().accept(self))
+            else:
+                lexeme += atom_ctx.getText()
+
+        if lexeme:
+            parts.append(text_part(lexeme))
+
+        return parts
 
     def visitIdentifier(self, ctx: cbuildParser.IdentifierContext) -> ValuePart:
         text : str= ""
@@ -757,6 +879,12 @@ class CBuildCompiler(cbuildVisitor):
         return text_part(ctx.getText())
 
     def visitChar(self, ctx: cbuildParser.CharContext) -> str:
+        if ctx.plain_char() is not None:
+            return cast(str, ctx.plain_char().accept(self))
+
+        return ctx.getText()
+
+    def visitPlain_char(self, ctx: cbuildParser.Plain_charContext) -> str:
         if (
             ctx.DOUBLE_DOLLAR() is not None
             and len(ctx.DOUBLE_DOLLAR().getText()) > 0

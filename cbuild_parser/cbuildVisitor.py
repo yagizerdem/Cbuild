@@ -104,6 +104,26 @@ class cbuildVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by cbuildParser#quoted.
+    def visitQuoted(self, ctx:cbuildParser.QuotedContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by cbuildParser#dq_atom.
+    def visitDq_atom(self, ctx:cbuildParser.Dq_atomContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by cbuildParser#sq_atom.
+    def visitSq_atom(self, ctx:cbuildParser.Sq_atomContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by cbuildParser#quoted_atom.
+    def visitQuoted_atom(self, ctx:cbuildParser.Quoted_atomContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by cbuildParser#expressions_opt.
     def visitExpressions_opt(self, ctx:cbuildParser.Expressions_optContext):
         return self.visitChildren(ctx)
@@ -286,6 +306,11 @@ class cbuildVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by cbuildParser#char.
     def visitChar(self, ctx:cbuildParser.CharContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by cbuildParser#plain_char.
+    def visitPlain_char(self, ctx:cbuildParser.Plain_charContext):
         return self.visitChildren(ctx)
 
 

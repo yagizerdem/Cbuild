@@ -174,6 +174,36 @@ class AssignmentLifetimeTest(unittest.TestCase):
                 self.assertEqual(env.require_raw_variable("RESULT"), expected)
                 self.assertEqual(expand("$(RESULT)", env), expected)
 
+    def test_substitution_references_rewrite_word_endings(self) -> None:
+        for expression, expected in [
+            ("$(foo:.o=.c)", "a.c b.c l.a c.c"),
+            ("$(foo:%.o=%.c)", "a.c b.c l.a c.c"),
+            ("${foo:.o=.c}", "a.c b.c l.a c.c"),
+            ("$(foo:o=O)", "a.O b.O l.a c.O"),
+            ("$(foo:=.x)", "a.o.x b.o.x l.a.x c.o.x"),
+            ("$(foo:.o=)", "a b l.a c"),
+            ("$(foo:%=lib/%)", "lib/a.o lib/b.o lib/l.a lib/c.o"),
+            ("$(foo:.o=$(EXT))", "a.cc b.cc l.a c.cc"),
+            ("$($(name):.o=.c)", "a.c b.c l.a c.c"),
+            ("$(foo:.o)", ""),
+            ("$(dir:.o=.c)", "d/x.c"),
+            ("$($(a1)_objects:.o=.c)", "x.c y.c"),
+            # GNU make keeps whitespace before the colon in the variable name,
+            # so these look up `foo ` / `a_objects `, which are undefined.
+            ("$(foo : .o=.c)", ""),
+            ("$(foo :.o=.c)", ""),
+            ("$($(a1)_objects : .o=.c)", ""),
+            ("$(foo bar)", ""),
+            # A function name followed by whitespace is still a function call.
+            ("$(dir : .o=.c)", "./ ./"),
+        ]:
+            with self.subTest(expression=expression):
+                env = evaluate(
+                    "foo := a.o b.o l.a c.o\nEXT = .cc\nname = foo\ndir := d/x.o\n"
+                    f"a1 := a\na_objects := x.o y.o\nRESULT := {expression}\n"
+                ).env
+                self.assertEqual(env.require_raw_variable("RESULT"), expected)
+
     def test_call_parameters_and_foreach_iteration_symbols_do_not_leak_into_the_root_table(
         self,
     ) -> None:

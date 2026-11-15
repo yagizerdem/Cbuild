@@ -98,6 +98,36 @@ include_kw
 
 condition
     : LPAREN expressions_opt  COMMA expressions_opt RPAREN
+    | quoted ws+ quoted
+    ;
+
+// ifeq "a" "b", ifeq 'a' 'b' and the mixed forms. Quotes only delimit the
+// argument; whitespace inside them is kept.
+quoted
+    : DQUOTE dq_atom* DQUOTE
+    | SQUOTE sq_atom* SQUOTE
+    ;
+
+dq_atom
+    : quoted_atom
+    | SQUOTE
+    ;
+
+sq_atom
+    : quoted_atom
+    | DQUOTE
+    ;
+
+quoted_atom
+    : plain_char
+    | function
+    | ws
+    | LPAREN
+    | RPAREN
+    | L_CURLY_BRACE
+    | R_CURLY_BRACE
+    | COMMA
+    | PIPE
     ;
 
 expressions_opt
@@ -188,6 +218,8 @@ function_name
 
 function_name_atom
     : CHARS
+    | DQUOTE
+    | SQUOTE
     | PLUS
     | QUESTION
     | PIPE
@@ -278,12 +310,21 @@ identifier_atom
     | L_CURLY_BRACE
     | R_CURLY_BRACE
     | DOUBLE_DOLLAR
+    | DQUOTE
+    | SQUOTE
     ;
 
 br : NL;
 
 
-char: CHARS
+// Quotes are their own tokens so conditionals can use them as delimiters;
+// everywhere else they are ordinary text.
+char: plain_char
+    | DQUOTE
+    | SQUOTE
+    ;
+
+plain_char: CHARS
     | BACKSLASH
     | ASSIGN_OP
     | COLON
@@ -437,8 +478,11 @@ VPATH : 'vpath';
 HOOK: 'hook';
 
 
+DQUOTE : '"';
+SQUOTE : '\'';
+
 CHARS
-    : ~[ \t\r\n$(){}:,=#|\\+?!]+
+    : ~[ \t\r\n$(){}:,=#|\\+?!"']+
     ;
 
 NL : '\r'? '\n' ;

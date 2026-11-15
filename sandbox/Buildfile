@@ -1,4 +1,6 @@
-foo = c
-a= $$a
-$$b : $$a
-	echo girdi $a
+hash := $(shell echo '\043')
+
+
+app:
+	echo $(hash)
+	echo $(.SHELLSTATUS)
