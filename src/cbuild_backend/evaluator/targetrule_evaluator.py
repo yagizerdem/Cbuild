@@ -39,7 +39,7 @@ class TargetRuleIREvaluator:
                         self._ir.assignment,
                     )
 
-                    assignment_evaluator.evaluate()
+                    assignment_evaluator.execute()
 
                     target_evaluation_states.append(
                         TargetRuleEvaluationState(
