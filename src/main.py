@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 
 from cbuild_backend.core import Core
 from cbuild_backend.env import Env
@@ -15,7 +16,6 @@ from util.handle_cli_options import (
     normalize_options,
     resolve_build_file_path,
 )
-import sys
 
 
 def read_build_file(build_file_path: str) -> str:

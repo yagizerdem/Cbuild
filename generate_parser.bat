@@ -1,12 +1,12 @@
 @echo off
-rem Generates the Python3 parser from cbuild.g4 into cbuild_parser\
+rem Generates the Python3 parser from cbuild.g4 into src\cbuild_parser\
 setlocal
 
 rem must match the antlr4-python3-runtime version
 set "ANTLR_VERSION=4.13.2"
 set "ROOT=%~dp0"
 set "GRAMMAR=cbuild.g4"
-set "OUT_DIR=cbuild_parser"
+set "OUT_DIR=src\cbuild_parser"
 
 cd /d "%ROOT%" || exit /b 1
 

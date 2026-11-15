@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Generates the Python3 parser from cbuild.g4 into cbuild_parser/
+# Generates the Python3 parser from cbuild.g4 into src/cbuild_parser/
 set -euo pipefail
 
 ANTLR_VERSION="4.13.2"   # must match the antlr4-python3-runtime version
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 GRAMMAR="cbuild.g4"
-OUT_DIR="cbuild_parser"
+OUT_DIR="src/cbuild_parser"
 
 cd "$ROOT"
 

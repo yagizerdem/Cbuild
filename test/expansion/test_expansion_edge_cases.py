@@ -1174,12 +1174,12 @@ class ExpansionEdgeCasesTest(unittest.TestCase):
 
     def test_abspath_normal_input(self) -> None:
         fn = FunctionIR("abspath")
-        fn.args.append(ValueIR([TextPart("cbuild_compiler/ir.py")]))
+        fn.args.append(ValueIR([TextPart("src/cbuild_compiler/ir.py")]))
         value = ValueIR([FunctionCallPart(fn)])
         context = Env(empty_cli_options())
         engine = ExpansionEngine(context)
         expanded_value = engine.expand(value)
-        self.assertEqual(expanded_value, os.path.abspath("cbuild_compiler/ir.py"))
+        self.assertEqual(expanded_value, os.path.abspath("src/cbuild_compiler/ir.py"))
 
     def test_abspath_empty_input(self) -> None:
         fn = FunctionIR("abspath")
@@ -1192,32 +1192,32 @@ class ExpansionEdgeCasesTest(unittest.TestCase):
 
     def test_abspath_whitespace_input(self) -> None:
         fn = FunctionIR("abspath")
-        fn.args.append(ValueIR([TextPart(" \tcbuild_compiler/ir.py\n ")]))
+        fn.args.append(ValueIR([TextPart(" \tsrc/cbuild_compiler/ir.py\n ")]))
         value = ValueIR([FunctionCallPart(fn)])
         context = Env(empty_cli_options())
         engine = ExpansionEngine(context)
         expanded_value = engine.expand(value)
-        self.assertEqual(expanded_value, os.path.abspath("cbuild_compiler/ir.py"))
+        self.assertEqual(expanded_value, os.path.abspath("src/cbuild_compiler/ir.py"))
 
     def test_abspath_nested_function_input(self) -> None:
         nested = FunctionIR("strip")
-        nested.args.append(ValueIR([TextPart(" \tcbuild_compiler/ir.py  ")]))
+        nested.args.append(ValueIR([TextPart(" \tsrc/cbuild_compiler/ir.py  ")]))
         fn = FunctionIR("abspath")
         fn.args.append(ValueIR([FunctionCallPart(nested)]))
         value = ValueIR([FunctionCallPart(fn)])
         context = Env(empty_cli_options())
         engine = ExpansionEngine(context)
         expanded_value = engine.expand(value)
-        self.assertEqual(expanded_value, os.path.abspath("cbuild_compiler/ir.py"))
+        self.assertEqual(expanded_value, os.path.abspath("src/cbuild_compiler/ir.py"))
 
     def test_realpath_normal_input(self) -> None:
         fn = FunctionIR("realpath")
-        fn.args.append(ValueIR([TextPart("cbuild_compiler/ir.py")]))
+        fn.args.append(ValueIR([TextPart("src/cbuild_compiler/ir.py")]))
         value = ValueIR([FunctionCallPart(fn)])
         context = Env(empty_cli_options())
         engine = ExpansionEngine(context)
         expanded_value = engine.expand(value)
-        self.assertEqual(expanded_value, os.path.realpath("cbuild_compiler/ir.py"))
+        self.assertEqual(expanded_value, os.path.realpath("src/cbuild_compiler/ir.py"))
 
     def test_realpath_empty_input(self) -> None:
         fn = FunctionIR("realpath")
@@ -1230,32 +1230,32 @@ class ExpansionEdgeCasesTest(unittest.TestCase):
 
     def test_realpath_whitespace_input(self) -> None:
         fn = FunctionIR("realpath")
-        fn.args.append(ValueIR([TextPart(" \tcbuild_compiler/ir.py\n ")]))
+        fn.args.append(ValueIR([TextPart(" \tsrc/cbuild_compiler/ir.py\n ")]))
         value = ValueIR([FunctionCallPart(fn)])
         context = Env(empty_cli_options())
         engine = ExpansionEngine(context)
         expanded_value = engine.expand(value)
-        self.assertEqual(expanded_value, os.path.realpath("cbuild_compiler/ir.py"))
+        self.assertEqual(expanded_value, os.path.realpath("src/cbuild_compiler/ir.py"))
 
     def test_realpath_nested_function_input(self) -> None:
         nested = FunctionIR("strip")
-        nested.args.append(ValueIR([TextPart(" \tcbuild_compiler/ir.py  ")]))
+        nested.args.append(ValueIR([TextPart(" \tsrc/cbuild_compiler/ir.py  ")]))
         fn = FunctionIR("realpath")
         fn.args.append(ValueIR([FunctionCallPart(nested)]))
         value = ValueIR([FunctionCallPart(fn)])
         context = Env(empty_cli_options())
         engine = ExpansionEngine(context)
         expanded_value = engine.expand(value)
-        self.assertEqual(expanded_value, os.path.realpath("cbuild_compiler/ir.py"))
+        self.assertEqual(expanded_value, os.path.realpath("src/cbuild_compiler/ir.py"))
 
     def test_wildcard_normal_input(self) -> None:
         fn = FunctionIR("wildcard")
-        fn.args.append(ValueIR([TextPart("cbuild_compiler/ir.py")]))
+        fn.args.append(ValueIR([TextPart("src/cbuild_compiler/ir.py")]))
         value = ValueIR([FunctionCallPart(fn)])
         context = Env(empty_cli_options())
         engine = ExpansionEngine(context)
         expanded_value = engine.expand(value)
-        self.assertEqual(expanded_value, os.path.join("cbuild_compiler", "ir.py").replace(os.sep, "/"))
+        self.assertEqual(expanded_value, os.path.join("src", "cbuild_compiler", "ir.py").replace(os.sep, "/"))
 
     def test_wildcard_empty_input(self) -> None:
         fn = FunctionIR("wildcard")
@@ -1268,23 +1268,23 @@ class ExpansionEdgeCasesTest(unittest.TestCase):
 
     def test_wildcard_whitespace_input(self) -> None:
         fn = FunctionIR("wildcard")
-        fn.args.append(ValueIR([TextPart(" \tcbuild_compiler/ir.py\n ")]))
+        fn.args.append(ValueIR([TextPart(" \tsrc/cbuild_compiler/ir.py\n ")]))
         value = ValueIR([FunctionCallPart(fn)])
         context = Env(empty_cli_options())
         engine = ExpansionEngine(context)
         expanded_value = engine.expand(value)
-        self.assertEqual(expanded_value, os.path.join("cbuild_compiler", "ir.py").replace(os.sep, "/"))
+        self.assertEqual(expanded_value, os.path.join("src", "cbuild_compiler", "ir.py").replace(os.sep, "/"))
 
     def test_wildcard_nested_function_input(self) -> None:
         nested = FunctionIR("strip")
-        nested.args.append(ValueIR([TextPart(" \tcbuild_compiler/ir.py  ")]))
+        nested.args.append(ValueIR([TextPart(" \tsrc/cbuild_compiler/ir.py  ")]))
         fn = FunctionIR("wildcard")
         fn.args.append(ValueIR([FunctionCallPart(nested)]))
         value = ValueIR([FunctionCallPart(fn)])
         context = Env(empty_cli_options())
         engine = ExpansionEngine(context)
         expanded_value = engine.expand(value)
-        self.assertEqual(expanded_value, os.path.join("cbuild_compiler", "ir.py").replace(os.sep, "/"))
+        self.assertEqual(expanded_value, os.path.join("src", "cbuild_compiler", "ir.py").replace(os.sep, "/"))
 
     def test_value_normal_input(self) -> None:
         fn = FunctionIR("value")
@@ -4794,7 +4794,7 @@ class ExpansionEdgeCasesTest(unittest.TestCase):
     def test_wildcard_supports_multiple_whitespace_separated_patterns(self) -> None:
         fn = FunctionIR("wildcard")
         fn.args.append(
-            ValueIR([TextPart("cbuild_compiler/ir.py\tcbuild_backend/env.py")])
+            ValueIR([TextPart("src/cbuild_compiler/ir.py\tsrc/cbuild_backend/env.py")])
         )
         value = ValueIR([FunctionCallPart(fn)])
         context = Env(empty_cli_options())
@@ -4804,8 +4804,8 @@ class ExpansionEdgeCasesTest(unittest.TestCase):
             sorted(expanded_value.split(" ")),
             sorted(
                 [
-                    os.path.join("cbuild_backend", "env.py").replace(os.sep, "/"),
-                    os.path.join("cbuild_compiler", "ir.py").replace(os.sep, "/"),
+                    os.path.join("src", "cbuild_backend", "env.py").replace(os.sep, "/"),
+                    os.path.join("src", "cbuild_compiler", "ir.py").replace(os.sep, "/"),
                 ]
             ),
         )

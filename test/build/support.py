@@ -74,7 +74,7 @@ def prepare_runtime() -> None:
     global _cli_entry
     if _cli_entry is not None:
         return
-    entry = os.path.join(_repo_root, "main.py")
+    entry = os.path.join(_repo_root, "src", "main.py")
     if not os.path.exists(entry):
         raise Exception("CLI entry is missing")
     smoke = _execute([entry, "--version"], _test_root)
