@@ -1,6 +1,10 @@
-hash := $(shell echo '\043')
+foo := foo
+bar = bar
+empty = a
 
+undefine foo
+undefine bar
 
-app:
-	echo $(hash)
-	echo $(.SHELLSTATUS)
+all:
+	@echo $(origin foo) $(origin bar) $(origin empty)
+	@echo $(flavor foo) $(flavor bar) $(flavor empty)
